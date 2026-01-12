@@ -11,6 +11,7 @@ export default function Modal({
     children,
     size = 'md',
     showClose = true,
+    className,
 }) {
     // Lock body scroll when modal is open
     useEffect(() => {
@@ -48,7 +49,8 @@ export default function Modal({
             <div className={cn(
                 'relative w-full bg-white rounded-2xl shadow-xl animate-fade-in',
                 'max-h-[90vh] overflow-hidden flex flex-col',
-                sizeClasses[size]
+                sizeClasses[size],
+                className
             )}>
                 {/* Header */}
                 {(title || showClose) && (

@@ -17,11 +17,12 @@ import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Pagination from '@/components/ui/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
+import DatePicker from '@/components/ui/DatePicker';
 
 const INITIAL_FORM = {
     nama_periode: '',
-    tanggal_mulai: '',
-    tanggal_selesai: '',
+    tanggal_mulai: null,
+    tanggal_selesai: null,
     isActive: true,
 };
 
@@ -94,8 +95,8 @@ export default function PeriodeManagementPage() {
         setEditingItem(item);
         setFormData({
             nama_periode: item.nama_periode || '',
-            tanggal_mulai: toDateInputValue(item.tanggal_mulai),
-            tanggal_selesai: toDateInputValue(item.tanggal_selesai),
+            tanggal_mulai: item.tanggal_mulai ? new Date(item.tanggal_mulai) : null,
+            tanggal_selesai: item.tanggal_selesai ? new Date(item.tanggal_selesai) : null,
             isActive: item.isActive ?? true,
         });
         setModalOpen(true);
@@ -112,6 +113,13 @@ export default function PeriodeManagementPage() {
         setFormData((prev) => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value,
+        }));
+    };
+
+    const handleDateChange = (name, date) => {
+        setFormData((prev) => ({
+            ...prev,
+            [name]: date,
         }));
     };
 
@@ -250,28 +258,38 @@ export default function PeriodeManagementPage() {
                     <>
                         <div className="overflow-x-auto">
                             <table className="w-full">
-                                <thead className="bg-gray-50">
+                                <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
-                                        <th className="text-left">Nama Periode</th>
-                                        <th className="text-left">Tanggal Mulai</th>
-                                        <th className="text-left">Tanggal Selesai</th>
-                                        <th className="text-center">Status</th>
-                                        <th className="text-center">Aksi</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                            Nama Periode
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                            Tanggal Mulai
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                            Tanggal Selesai
+                                        </th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                            Aksi
+                                        </th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="bg-white divide-y divide-gray-200">
                                     {data.map((item) => (
-                                        <tr key={item._id}>
-                                            <td>
+                                        <tr key={item._id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <p className="font-medium text-gray-900">{item.nama_periode}</p>
                                             </td>
-                                            <td>
-                                                <p className="text-gray-700">{formatDate(item.tanggal_mulai)}</p>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <p className="text-sm text-gray-700">{formatDate(item.tanggal_mulai)}</p>
                                             </td>
-                                            <td>
-                                                <p className="text-gray-700">{formatDate(item.tanggal_selesai)}</p>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <p className="text-sm text-gray-700">{formatDate(item.tanggal_selesai)}</p>
                                             </td>
-                                            <td className="text-center">
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full
                             ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
@@ -286,7 +304,7 @@ export default function PeriodeManagementPage() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center justify-center gap-2">
                                                     {!item.isClosed && (
                                                         <>
@@ -346,9 +364,10 @@ export default function PeriodeManagementPage() {
                 isOpen={modalOpen}
                 onClose={closeModal}
                 title={editingItem ? 'Edit Periode' : 'Tambah Periode Baru'}
-                size="md"
+                size="xl"
+                className="min-h-[400px]"
             >
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4 p-10 pt-15">
                     {/* Nama Periode */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -371,26 +390,22 @@ export default function PeriodeManagementPage() {
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Tanggal Mulai <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                type="date"
-                                name="tanggal_mulai"
-                                value={formData.tanggal_mulai}
-                                onChange={handleFormChange}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg
-                         focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            <DatePicker
+                                selected={formData.tanggal_mulai}
+                                onChange={(date) => handleDateChange('tanggal_mulai', date)}
+                                placeholder="Pilih tanggal mulai"
+                                maxDate={formData.tanggal_selesai}
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Tanggal Selesai <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                type="date"
-                                name="tanggal_selesai"
-                                value={formData.tanggal_selesai}
-                                onChange={handleFormChange}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg
-                         focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            <DatePicker
+                                selected={formData.tanggal_selesai}
+                                onChange={(date) => handleDateChange('tanggal_selesai', date)}
+                                placeholder="Pilih tanggal selesai"
+                                minDate={formData.tanggal_mulai}
                             />
                         </div>
                     </div>
