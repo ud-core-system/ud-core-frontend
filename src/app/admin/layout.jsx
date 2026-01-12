@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import Sidebar from '@/components/componentv2/SidebarV2';
-import Header from '@/components/admin/Header';
+import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
+import AppSidebar from '@/components/layout/AppSidebar';
+import AppHeader from '@/components/layout/AppHeader';
+import Backdrop from '@/components/layout/Backdrop';
 
-export default function AdminLayout({ children }) {
+function AdminLayoutContent({ children }) {
     const router = useRouter();
-    const pathname = usePathname();
     const { user, loading } = useAuth();
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const { isExpanded, isHovered, isMobileOpen } = useSidebar();
 
     useEffect(() => {
         if (!loading && !user) {
@@ -20,10 +21,10 @@ export default function AdminLayout({ children }) {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
                 <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-600">Memuat...</p>
+                    <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600 dark:text-gray-400">Memuat...</p>
                 </div>
             </div>
         );
@@ -33,25 +34,39 @@ export default function AdminLayout({ children }) {
         return null;
     }
 
-    return (
-        <div className="min-h-screen bg-gray-50 flex overflow-x-hidden">
-            {/* Sidebar */}
-            <Sidebar
-                currentPath={pathname}
-                isCollapsed={isCollapsed}
-                setIsCollapsed={setIsCollapsed}
-            />
+    // Dynamic class for main content margin based on sidebar state
+    const mainContentMargin = isMobileOpen
+        ? 'ml-0'
+        : isExpanded || isHovered
+            ? 'lg:ml-[290px]'
+            : 'lg:ml-[90px]';
 
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300">
+    return (
+        <div className="min-h-screen xl:flex bg-gray-50 dark:bg-gray-900">
+            {/* Sidebar and Backdrop */}
+            <AppSidebar />
+            <Backdrop />
+
+            {/* Main Content Area */}
+            <div
+                className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
+            >
                 {/* Header */}
-                <Header />
+                <AppHeader />
 
                 {/* Page Content */}
-                <main className="flex-1 p-4 md:p-6 lg:p-8">
+                <div className="p-4 mx-auto max-w-screen-2xl md:p-6">
                     {children}
-                </main>
+                </div>
             </div>
         </div>
+    );
+}
+
+export default function AdminLayout({ children }) {
+    return (
+        <SidebarProvider>
+            <AdminLayoutContent>{children}</AdminLayoutContent>
+        </SidebarProvider>
     );
 }
