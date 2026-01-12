@@ -13,6 +13,7 @@ import {
     ArrowLeft,
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, barangAPI } from '@/lib/api';
+import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, toDateInputValue, debounce } from '@/lib/utils';
 
@@ -24,7 +25,7 @@ export default function NewTransaksiPage() {
     // Form state
     const [periodeId, setPeriodeId] = useState('');
     const [dapurId, setDapurId] = useState('');
-    const [tanggal, setTanggal] = useState(toDateInputValue(new Date()));
+    const [tanggal, setTanggal] = useState(new Date());
     const [items, setItems] = useState([]);
 
     // Options state
@@ -168,7 +169,7 @@ export default function NewTransaksiPage() {
             const payload = {
                 periode_id: periodeId,
                 dapur_id: dapurId,
-                tanggal,
+                tanggal: tanggal.toISOString(),
                 items: items.map((item) => ({
                     barang_id: item.barang_id,
                     qty: item.qty,
@@ -275,12 +276,10 @@ export default function NewTransaksiPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Tanggal
                         </label>
-                        <input
-                            type="date"
-                            value={tanggal}
-                            onChange={(e) => setTanggal(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        <DatePicker
+                            selected={tanggal}
+                            onChange={(date) => setTanggal(date)}
+                            placeholder="Pilih tanggal"
                         />
                     </div>
                 </div>
@@ -383,6 +382,7 @@ export default function NewTransaksiPage() {
                                                     type="number"
                                                     value={item.qty}
                                                     onChange={(e) => handleQtyChange(index, e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
                                                     min="1"
                                                     className="w-20 px-2 py-1 border border-gray-200 rounded text-center mx-auto"
                                                 />
