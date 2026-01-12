@@ -16,6 +16,7 @@ import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue } fr
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import * as XLSX_STYLE from 'xlsx-js-style';
 
 export default function LaporanPage() {
     const { toast } = useToast();
@@ -208,53 +209,55 @@ export default function LaporanPage() {
 
         setGenerating(true);
         try {
-            const wb = XLSX.utils.book_new();
+            const wb = XLSX_STYLE.utils.book_new();
 
             // Find selected period info
             const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
             const periodName = period ? period.nama_periode : 'Semua Periode';
             const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
+            const periodeLabel = `${periodName.toUpperCase()} ${periodRange}`;
 
             // Calculate global totals
             const totalJualAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_jual, 0) || 0), 0);
             const totalModalAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_modal, 0) || 0), 0);
             const totalUntungAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.keuntungan, 0) || 0), 0);
 
-            // --- Sheet 1: DATA PESANAN (Tidy Grouping) ---
+            // --- Sheet 1: DATA PESANAN (Styled) ---
             const allOrdersAOA = [
-                [`LAPORAN PENJUALAN - ${periodName.toUpperCase()} ${periodRange}`],
+                [`DATA PENJUALAN ${periodeLabel}`],
                 [''],
                 ['RINGKASAN PERIODE'],
-                ['Total Penjualan', formatCurrency(totalJualAll)],
-                ['Total Modal', formatCurrency(totalModalAll)],
-                ['Total Keuntungan', formatCurrency(totalUntungAll)],
+                ['Total Penjualan', totalJualAll],
+                ['Total Modal', totalModalAll],
+                ['Total Keuntungan', totalUntungAll],
                 [''],
-                ['----------------------------------------------------------------------------------------------------------']
+                ['----------------------------------------------------------------------------------------------------------------']
             ];
 
             // Group by date THEN by UD for strict clustering
             const groupedData = {};
             transactions.forEach(trx => {
                 const dateKey = trx.tanggal.split('T')[0];
-                if (!groupedData[dateKey]) groupedData[dateKey] = {};
+                if (!groupedData[dateKey]) groupedData[dateKey] = { tanggal: dateKey, uds: {} };
 
                 trx.items?.forEach(item => {
                     const udId = item.ud_id?._id || 'unknown';
-                    if (!groupedData[dateKey][udId]) {
-                        groupedData[dateKey][udId] = {
+                    if (!groupedData[dateKey].uds[udId]) {
+                        groupedData[dateKey].uds[udId] = {
                             nama_ud: item.ud_id?.nama_ud || 'Unknown UD',
                             items: []
                         };
                     }
-                    groupedData[dateKey][udId].items.push(item);
+                    groupedData[dateKey].uds[udId].items.push(item);
                 });
             });
 
-            // Sort dates descending (Newest first like in reference)
+            // Sort dates descending
             const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a));
 
             sortedDates.forEach(dateKey => {
-                const udGroups = groupedData[dateKey];
+                const dayData = groupedData[dateKey];
+                const udGroups = dayData.uds;
 
                 // Calculate date totals
                 let dateJual = 0;
@@ -268,12 +271,12 @@ export default function LaporanPage() {
                     });
                 });
 
-                // Date Summary Header (Tidy Layout)
+                // Date Summary Header (Styled)
                 allOrdersAOA.push(['']);
-                allOrdersAOA.push([formatDateShort(dateKey).toUpperCase()]);
-                allOrdersAOA.push([`Penjualan: ${formatCurrency(dateJual)}`]);
-                allOrdersAOA.push([`Modal: ${formatCurrency(dateModal)}`]);
-                allOrdersAOA.push([`Keuntungan: ${formatCurrency(dateProfit)}`]);
+                allOrdersAOA.push([formatIndoDate(dateKey).toUpperCase()]);
+                allOrdersAOA.push([`Penjualan: `, dateJual]);
+                allOrdersAOA.push([`Modal: `, dateModal]);
+                allOrdersAOA.push([`Keuntungan: `, dateProfit]);
 
                 // Table Header
                 allOrdersAOA.push(['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual', 'Total Jual', 'Harga Modal', 'Total Modal', 'Keuntungan']);
@@ -309,37 +312,44 @@ export default function LaporanPage() {
                     allOrdersAOA.push([`Subtotal ${group.nama_ud}`, '', '', '', '', udJual, '', udModal, udProfit]);
                 });
 
-                // Date Footer Total
+                // Date Footer Row
                 allOrdersAOA.push([`TOTAL ${formatDateShort(dateKey)}`, '', '', '', '', dateJual, '', dateModal, dateProfit]);
-                allOrdersAOA.push(['----------------------------------------------------------------------------------------------------------']);
+                allOrdersAOA.push(['----------------------------------------------------------------------------------------------------------------']);
             });
 
             // Final Recap Block
             allOrdersAOA.push(['']);
-            allOrdersAOA.push(['TOTAL KESELURUHAN (GRAND TOTAL)']);
+            allOrdersAOA.push(['GRAND TOTAL KESELURUHAN']);
             allOrdersAOA.push(['Rekapitulasi seluruh periode yang dipilih']);
-            allOrdersAOA.push(['Total Penjualan', formatCurrency(totalJualAll)]);
-            allOrdersAOA.push(['Total Modal', formatCurrency(totalModalAll)]);
-            allOrdersAOA.push(['Total Keuntungan', formatCurrency(totalUntungAll)]);
+            allOrdersAOA.push(['Total Penjualan', totalJualAll]);
+            allOrdersAOA.push(['Total Modal', totalModalAll]);
+            allOrdersAOA.push(['Total Keuntungan', totalUntungAll]);
 
-            const ws1 = XLSX.utils.aoa_to_sheet(allOrdersAOA);
+            const ws1 = XLSX_STYLE.utils.aoa_to_sheet(allOrdersAOA);
 
-            // Set Column Widths for professional look
+            // --- Merge & Styling DATA PESANAN ---
+            ws1['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
             ws1['!cols'] = [
-                { wch: 30 }, // No / Label / UD
-                { wch: 40 }, // Nama Barang
-                { wch: 8 },  // Qty
-                { wch: 10 }, // Satuan
-                { wch: 15 }, // Harga Jual
-                { wch: 18 }, // Total Jual
-                { wch: 15 }, // Harga Modal
-                { wch: 18 }, // Total Modal
-                { wch: 15 }, // Keuntungan
+                { wch: 30 }, { wch: 40 }, { wch: 8 }, { wch: 10 }, { wch: 15 }, { wch: 18 }, { wch: 15 }, { wch: 18 }, { wch: 15 }
             ];
 
-            XLSX.utils.book_append_sheet(wb, ws1, 'DATA PESANAN');
+            // Apply global alignment and title style
+            Object.keys(ws1).forEach(key => {
+                if (!key.startsWith('!')) {
+                    if (!ws1[key].s) ws1[key].s = {};
+                    ws1[key].s.alignment = { vertical: 'center' };
 
-            // --- Sheets per UD (Lampiran) ---
+                    const row = parseInt(key.replace(/[A-Z]/g, '')) - 1;
+                    if (row === 0) { // Title
+                        ws1[key].s.font = { bold: true, sz: 14 };
+                        ws1[key].s.alignment.horizontal = 'center';
+                    }
+                }
+            });
+
+            XLSX_STYLE.utils.book_append_sheet(wb, ws1, 'DATA PESANAN');
+
+            // --- Sheets per UD (Styled) ---
             itemsByUD.forEach((ud) => {
                 const udAOA = [
                     [`NOTE : ${ud.nama_ud.toUpperCase()}`],
@@ -369,19 +379,28 @@ export default function LaporanPage() {
                     '', 'TOTAL', '', '', '', ud.totalJual, '', ud.totalModal, ud.totalKeuntungan
                 ]);
 
-                const wsUD = XLSX.utils.aoa_to_sheet(udAOA);
+                const wsUD = XLSX_STYLE.utils.aoa_to_sheet(udAOA);
                 wsUD['!cols'] = [
                     { wch: 5 }, { wch: 35 }, { wch: 8 }, { wch: 10 }, { wch: 15 }, { wch: 18 }, { wch: 15 }, { wch: 18 }, { wch: 15 }
                 ];
 
+                wsUD['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
+
+                Object.keys(wsUD).forEach(key => {
+                    if (!key.startsWith('!')) {
+                        if (!wsUD[key].s) wsUD[key].s = {};
+                        wsUD[key].s.alignment = { vertical: 'center' };
+                    }
+                });
+
                 let sheetName = `LAP. UD. ${ud.nama_ud}`.substring(0, 31).replace(/[\[\]\*\?\/\\]/g, '');
-                XLSX.utils.book_append_sheet(wb, wsUD, sheetName);
+                XLSX_STYLE.utils.book_append_sheet(wb, wsUD, sheetName);
             });
 
-            // Save
+            // Save using styles
             const timestamp = new Date().toISOString().split('T')[0];
             const fileName = `Laporan_Penjualan_${periodName.replace(/\s+/g, '_')}_${timestamp}.xlsx`;
-            XLSX.writeFile(wb, fileName);
+            XLSX_STYLE.writeFile(wb, fileName);
             toast.success('Laporan Excel berhasil dibuat');
         } catch (error) {
             toast.error('Gagal membuat laporan Excel');
