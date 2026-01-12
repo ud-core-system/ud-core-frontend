@@ -59,14 +59,14 @@ const transactionItems = [
         path: '/admin/transaksi',
     },
     {
-        icon: FileBarChart2,
-        name: 'Cetak Laporan',
-        path: '/admin/laporan',
-    },
-    {
         icon: ClipboardList,
         name: 'Laporan Rekap',
         path: '/admin/laporan/rekap',
+    },
+    {
+        icon: FileBarChart2,
+        name: 'Cetak Laporan',
+        path: '/admin/laporan',
     },
 ];
 
