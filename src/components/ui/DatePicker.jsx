@@ -165,18 +165,22 @@ export default function DatePicker({
                         color: #6b7280;
                         font-size: 0.6rem;
                         font-weight: 600;
-                        width: 1.35rem;
-                        line-height: 1.35rem;
-                        margin: 0.05rem;
+                        width: 1.5rem;
+                        line-height: 1.5rem;
+                        margin: 0.08rem;
+                        text-align: center;
+                        display: inline-block;
                     }
 
                     .react-datepicker__day {
-                        width: 1.35rem;
-                        line-height: 1.35rem;
-                        margin: 0.05rem;
+                        width: 1.5rem;
+                        line-height: 1.5rem;
+                        margin: 0.08rem;
                         border-radius: 0.25rem;
                         color: #374151;
                         font-size: 0.7rem;
+                        text-align: center;
+                        display: inline-block;
                     }
 
                     .react-datepicker__day:hover {
