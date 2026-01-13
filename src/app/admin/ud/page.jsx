@@ -236,7 +236,7 @@ export default function UDManagementPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-20">
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
@@ -245,8 +245,8 @@ export default function UDManagementPage() {
                 </div>
                 <button
                     onClick={openCreateModal}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
-                   hover:bg-blue-700 transition-colors font-medium"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
+                   hover:bg-blue-700 transition-colors font-medium w-full sm:w-auto"
                 >
                     <Plus className="w-5 h-5" />
                     Tambah UD
@@ -291,7 +291,8 @@ export default function UDManagementPage() {
                     />
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
+                        {/* Table View (Desktop) */}
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
@@ -301,10 +302,10 @@ export default function UDManagementPage() {
                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                             Nama UD
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden md:table-cell">
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
                                             Pemilik
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden xl:table-cell">
                                             Bank
                                         </th>
                                         <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -326,15 +327,15 @@ export default function UDManagementPage() {
                                             <td className="px-6 py-4">
                                                 <div>
                                                     <p className="font-medium text-gray-900">{item.nama_ud}</p>
-                                                    <p className="text-sm text-gray-500 truncate max-w-[250px] mt-0.5">
+                                                    <p className="text-sm text-gray-500 truncate max-w-[200px] lg:max-w-xs mt-0.5">
                                                         {item.alamat || '-'}
                                                     </p>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-gray-700 hidden md:table-cell">
+                                            <td className="px-6 py-4 text-gray-700 hidden lg:table-cell">
                                                 {item.nama_pemilik || '-'}
                                             </td>
-                                            <td className="px-6 py-4 hidden lg:table-cell">
+                                            <td className="px-6 py-4 hidden xl:table-cell">
                                                 <div className="text-sm">
                                                     <p className="text-gray-900 font-medium">{item.bank || '-'}</p>
                                                     <p className="text-gray-500 mt-0.5">{item.no_rekening || '-'}</p>
@@ -342,8 +343,8 @@ export default function UDManagementPage() {
                                             </td>
                                             <td className="px-6 py-4 text-center whitespace-nowrap">
                                                 <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full
-                          ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-                        `}>
+                                                    ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                                                `}>
                                                     {item.isActive ? 'Aktif' : 'Nonaktif'}
                                                 </span>
                                             </td>
@@ -378,17 +379,84 @@ export default function UDManagementPage() {
                             </table>
                         </div>
 
+                        {/* Card View (Mobile) */}
+                        <div className="md:hidden divide-y divide-gray-100">
+                            {data.map((item) => (
+                                <div key={item._id} className="p-4 space-y-4 text-[10px] sm:text-xs">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="font-mono bg-gray-100 px-2 py-0.5 rounded font-medium text-gray-600">
+                                                    {item.kode_ud}
+                                                </span>
+                                                <span className={`px-2 py-0.5 font-semibold rounded-full
+                                                    ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                                                `}>
+                                                    {item.isActive ? 'Aktif' : 'Nonaktif'}
+                                                </span>
+                                            </div>
+                                            <h3 className="font-bold text-gray-900 truncate text-sm sm:text-base">
+                                                {item.nama_ud}
+                                            </h3>
+                                            <p className="text-gray-500 line-clamp-2 mt-1">
+                                                {item.alamat || 'Tidak ada alamat'}
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <button
+                                                onClick={() => openViewModal(item)}
+                                                className="p-2 bg-green-50 text-green-600 rounded-lg"
+                                            >
+                                                <Eye className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={() => openEditModal(item)}
+                                                className="p-2 bg-blue-50 text-blue-600 rounded-lg"
+                                            >
+                                                <Edit className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={() => openDeleteDialog(item)}
+                                                className="p-2 bg-red-50 text-red-600 rounded-lg"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {(item.nama_pemilik || item.bank) && (
+                                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-50">
+                                            {item.nama_pemilik && (
+                                                <div>
+                                                    <p className="font-semibold text-gray-400 uppercase tracking-wider">Pemilik</p>
+                                                    <p className="text-gray-700 font-medium truncate">{item.nama_pemilik}</p>
+                                                </div>
+                                            )}
+                                            {item.bank && (
+                                                <div>
+                                                    <p className="font-semibold text-gray-400 uppercase tracking-wider">Bank</p>
+                                                    <p className="text-gray-700 font-medium truncate">{item.bank}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
                         {/* Pagination */}
                         <div className="p-4 border-t border-gray-100">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm text-gray-500">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p className="text-sm text-gray-500 order-2 sm:order-1">
                                     Menampilkan {data.length} dari {pagination.totalDocuments} data
                                 </p>
-                                <Pagination
-                                    currentPage={pagination.page}
-                                    totalPages={pagination.totalPages}
-                                    onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-                                />
+                                <div className="order-1 sm:order-2">
+                                    <Pagination
+                                        currentPage={pagination.page}
+                                        totalPages={pagination.totalPages}
+                                        onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </>
@@ -452,7 +520,7 @@ export default function UDManagementPage() {
                     </div>
 
                     {/* Bank & Rekening */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Bank
@@ -488,7 +556,7 @@ export default function UDManagementPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             KBLI (Kategori Barang)
                         </label>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {KBLI_OPTIONS.map((kbli) => (
                                 <label
                                     key={kbli}

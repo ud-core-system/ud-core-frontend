@@ -165,13 +165,13 @@ export default function DapurManagementPage() {
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Management Dapur</h1>
-                    <p className="text-gray-500 mt-1">Kelola data Dapur MBG</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">Management Dapur</h1>
+                    <p className="text-sm sm:text-base text-gray-500 mt-0.5 sm:mt-1">Kelola data Dapur MBG</p>
                 </div>
                 <button
                     onClick={openCreateModal}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
-                   hover:bg-blue-700 transition-colors font-medium"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl
+                   hover:bg-blue-700 active:bg-blue-800 transition-all font-medium shadow-sm shadow-blue-200 w-full sm:w-auto"
                 >
                     <Plus className="w-5 h-5" />
                     Tambah Dapur
@@ -179,122 +179,173 @@ export default function DapurManagementPage() {
             </div>
 
             {/* Search Bar */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm">
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                         type="text"
                         value={search}
                         onChange={handleSearch}
                         placeholder="Cari nama dapur atau kode..."
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        className="w-full pl-11 pr-4 py-3 sm:py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl
+                     focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all
+                     text-sm sm:text-base"
                     />
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {/* Content Container */}
+            <div className="space-y-4">
                 {loading ? (
-                    <div className="flex items-center justify-center py-12">
+                    <div className="bg-white rounded-2xl border border-gray-100 py-12 flex items-center justify-center">
                         <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                     </div>
                 ) : data.length === 0 ? (
-                    <EmptyState
-                        icon={ChefHat}
-                        title="Belum ada data dapur"
-                        description="Tambahkan data dapur baru untuk memulai"
-                        action={
-                            <button
-                                onClick={openCreateModal}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                            >
-                                <Plus className="w-4 h-4" />
-                                Tambah Dapur
-                            </button>
-                        }
-                    />
+                    <div className="bg-white rounded-2xl border border-gray-100">
+                        <EmptyState
+                            icon={ChefHat}
+                            title="Belum ada data dapur"
+                            description="Tambahkan data dapur baru untuk memulai"
+                            action={
+                                <button
+                                    onClick={openCreateModal}
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Tambah Dapur
+                                </button>
+                            }
+                        />
+                    </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50 border-b border-gray-200">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            Kode Dapur
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            Nama Dapur
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">
-                                            Alamat
-                                        </th>
-                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            Aksi
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                    {data.map((item) => (
-                                        <tr key={item._id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                        {/* Mobile View (Cards) */}
+                        <div className="grid grid-cols-1 gap-4 md:hidden">
+                            {data.map((item) => (
+                                <div key={item._id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md border border-gray-200">
                                                     {item.kode_dapur}
                                                 </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <p className="font-medium text-gray-900">{item.nama_dapur}</p>
-                                            </td>
-                                            <td className="px-6 py-4 hidden md:table-cell">
-                                                <p className="text-gray-500 truncate max-w-[250px]">
-                                                    {item.alamat || '-'}
-                                                </p>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full
-                          ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-                        `}>
+                                                <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full uppercase tracking-wider
+                                                    ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
+                                                `}>
                                                     {item.isActive ? 'Aktif' : 'Nonaktif'}
                                                 </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <button
-                                                        onClick={() => openEditModal(item)}
-                                                        className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                                                        title="Edit"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openDeleteDialog(item)}
-                                                        className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-                                                        title="Hapus"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            </div>
+                                            <h3 className="font-bold text-gray-900 text-lg">{item.nama_dapur}</h3>
+                                            <p className="text-gray-500 text-sm line-clamp-2">
+                                                {item.alamat || 'Alamat tidak tersedia'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 pt-4 border-t border-gray-50">
+                                        <button
+                                            onClick={() => openEditModal(item)}
+                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-100 transition-colors"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => openDeleteDialog(item)}
+                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            Hapus
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
 
-                        {/* Pagination */}
-                        <div className="p-4 border-t border-gray-100">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm text-gray-500">
-                                    Menampilkan {data.length} dari {pagination.totalDocuments} data
+                        {/* Desktop View (Table) */}
+                        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                Kode Dapur
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                Nama Dapur
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                Alamat
+                                            </th>
+                                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                Status
+                                            </th>
+                                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                Aksi
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {data.map((item) => (
+                                            <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="font-mono text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">
+                                                        {item.kode_dapur}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <p className="font-semibold text-gray-900">{item.nama_dapur}</p>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <p className="text-gray-500 truncate max-w-[250px]">
+                                                        {item.alamat || '-'}
+                                                    </p>
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider
+                              ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
+                            `}>
+                                                        {item.isActive ? 'Aktif' : 'Nonaktif'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <button
+                                                            onClick={() => openEditModal(item)}
+                                                            className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
+                                                            title="Edit"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => openDeleteDialog(item)}
+                                                            className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
+                                                            title="Hapus"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Pagination Container */}
+                        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p className="text-sm text-gray-500 font-medium">
+                                    Menampilkan <span className="text-gray-900">{data.length}</span> dari <span className="text-gray-900">{pagination.totalDocuments}</span> data
                                 </p>
-                                <Pagination
-                                    currentPage={pagination.page}
-                                    totalPages={pagination.totalPages}
-                                    onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-                                />
+                                <div className="w-full sm:w-auto overflow-x-auto flex justify-center">
+                                    <Pagination
+                                        currentPage={pagination.page}
+                                        totalPages={pagination.totalPages}
+                                        onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </>

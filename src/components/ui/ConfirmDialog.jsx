@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle, X } from 'lucide-react';
+import { useEffect } from 'react';
 
 export default function ConfirmDialog({
     isOpen,
@@ -13,6 +14,21 @@ export default function ConfirmDialog({
     variant = 'danger', // 'danger' | 'warning' | 'info'
     loading = false,
 }) {
+    // Lock body scroll and handle bottom bar visibility when modal is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+            document.body.classList.add('modal-open');
+        } else {
+            document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
+        }
+        return () => {
+            document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
+        };
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const variantStyles = {

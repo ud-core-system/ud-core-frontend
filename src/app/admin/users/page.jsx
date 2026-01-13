@@ -250,16 +250,20 @@ export default function UserManagementPage() {
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Management User</h1>
-                    <p className="text-gray-500 mt-1">Kelola data pengguna sistem</p>
+                    <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                        Management User
+                    </h1>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 font-medium italic">
+                        Kelola data pengguna dan hak akses sistem
+                    </p>
                 </div>
                 <button
                     onClick={openCreateModal}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
-                   hover:bg-blue-700 transition-colors font-medium"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl
+                   hover:bg-blue-700 transition-all font-semibold shadow-lg shadow-blue-500/20 active:scale-95 group"
                 >
-                    <Plus className="w-5 h-5" />
-                    Tambah User
+                    <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                    <span>Tambah User</span>
                 </button>
             </div>
 
@@ -301,14 +305,15 @@ export default function UserManagementPage() {
                     />
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-gray-50/50">
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Username</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Email</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Email</th>
                                         <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">UD</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden xl:table-cell">UD</th>
                                         <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                                         <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
                                     </tr>
@@ -318,13 +323,13 @@ export default function UserManagementPage() {
                                         <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-sm">
+                                                    <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-sm shrink-0">
                                                         {item.username?.[0]?.toUpperCase()}
                                                     </div>
                                                     <span className="font-medium text-gray-900">{item.username}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell text-gray-600 font-medium">
+                                            <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-gray-600 font-medium">
                                                 {item.email}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -338,7 +343,7 @@ export default function UserManagementPage() {
                                                     {item.role?.replace('_', ' ')}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                                            <td className="px-6 py-4 whitespace-nowrap hidden xl:table-cell">
                                                 <span className="text-gray-600 font-medium">
                                                     {item.ud_id?.nama_ud || <span className="text-gray-400 italic">Umum</span>}
                                                 </span>
@@ -384,17 +389,90 @@ export default function UserManagementPage() {
                             </table>
                         </div>
 
+                        {/* Mobile Card View */}
+                        <div className="md:hidden divide-y divide-gray-100">
+                            {data.map((item) => (
+                                <div key={item._id} className="p-4 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm shrink-0">
+                                                {item.username?.[0]?.toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-gray-900">{item.username}</h3>
+                                                <p className="text-xs text-gray-500 font-medium">{item.email}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => openDetailModal(item)}
+                                                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                                            >
+                                                <Search className="w-4.5 h-4.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => openEditModal(item)}
+                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            >
+                                                <Edit className="w-4.5 h-4.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => openDeleteDialog(item)}
+                                                disabled={item._id === currentUser?._id}
+                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30"
+                                            >
+                                                <Trash2 className="w-4.5 h-4.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-gray-50 rounded-lg p-2.5">
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Role</p>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold capitalize
+                                                ${item.role === 'superuser'
+                                                    ? 'bg-red-100 text-red-700'
+                                                    : item.role === 'admin'
+                                                        ? 'bg-purple-100 text-purple-700'
+                                                        : 'bg-blue-100 text-blue-700'}
+                                            `}>
+                                                {item.role?.replace('_', ' ')}
+                                            </span>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-lg p-2.5">
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Status</p>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold
+                                                ${item.isActive
+                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    : 'bg-gray-100 text-gray-700'}
+                                            `}>
+                                                {item.isActive ? 'Aktif' : 'Nonaktif'}
+                                            </span>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-lg p-2.5 col-span-2">
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Unit Dagang (UD)</p>
+                                            <p className="text-xs font-semibold text-gray-700">
+                                                {item.ud_id?.nama_ud || <span className="text-gray-400 italic font-normal">Umum / Tidak Terikat UD</span>}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
                         {/* Pagination */}
-                        <div className="p-4 border-t border-gray-100">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm text-gray-500">
-                                    Menampilkan {data.length} dari {pagination.totalDocuments} data
+                        <div className="p-4 border-t border-gray-100 bg-gray-50/30">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p className="text-xs sm:text-sm text-gray-500 font-medium order-2 sm:order-1">
+                                    Menampilkan <span className="text-gray-900 font-semibold">{data.length}</span> dari <span className="text-gray-900 font-semibold">{pagination.totalDocuments}</span> data
                                 </p>
-                                <Pagination
-                                    currentPage={pagination.page}
-                                    totalPages={pagination.totalPages}
-                                    onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-                                />
+                                <div className="order-1 sm:order-2 w-full sm:w-auto overflow-x-auto flex justify-center">
+                                    <Pagination
+                                        currentPage={pagination.page}
+                                        totalPages={pagination.totalPages}
+                                        onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </>

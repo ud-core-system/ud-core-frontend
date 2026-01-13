@@ -295,3 +295,8 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Modal Open state - hide mobile bottom bar */
+body.modal-open .mobile-bottom-bar {
+  display: none !important;
+}

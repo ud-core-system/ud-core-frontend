@@ -232,9 +232,9 @@ export default function NewTransaksiPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6 pb-24 md:pb-0">
             {/* Page Header */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 md:gap-4">
                 <button
                     onClick={() => router.back()}
                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -242,15 +242,15 @@ export default function NewTransaksiPage() {
                     <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Input Transaksi Baru</h1>
-                    <p className="text-gray-500 mt-1">Masukkan data barang untuk transaksi</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Input Transaksi Baru</h1>
+                    <p className="text-sm md:text-gray-500 mt-0.5">Masukkan data barang untuk transaksi</p>
                 </div>
             </div>
 
             {/* Form */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 shadow-sm">
                 {/* Header Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {/* Periode */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -259,8 +259,8 @@ export default function NewTransaksiPage() {
                         <select
                             value={periodeId}
                             onChange={(e) => setPeriodeId(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
                         >
                             <option value="">Pilih Periode</option>
                             {periodeList.map((p) => (
@@ -279,8 +279,8 @@ export default function NewTransaksiPage() {
                         <select
                             value={dapurId}
                             onChange={(e) => setDapurId(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
                         >
                             <option value="">Pilih Dapur</option>
                             {dapurList.map((d) => (
@@ -292,7 +292,7 @@ export default function NewTransaksiPage() {
                     </div>
 
                     {/* Tanggal */}
-                    <div>
+                    <div className="sm:col-span-2 lg:col-span-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Tanggal
                         </label>
@@ -358,15 +358,16 @@ export default function NewTransaksiPage() {
                     )}
                 </div>
 
-                {/* Items Table */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                    <div className="overflow-x-auto">
+                {/* Items List */}
+                <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">No</th>
                                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Nama Barang</th>
-                                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase hidden md:table-cell">UD</th>
+                                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">UD</th>
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Satuan</th>
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Qty</th>
                                     <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga Modal</th>
@@ -375,66 +376,67 @@ export default function NewTransaksiPage() {
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-gray-100">
                                 {items.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="text-center py-8 text-gray-500">
-                                            <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                                            <p>Belum ada barang ditambahkan</p>
+                                        <td colSpan={9} className="text-center py-12 text-gray-500">
+                                            <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                            <p className="text-lg font-medium">Belum ada barang ditambahkan</p>
                                             <p className="text-sm">Cari dan pilih barang dari kolom pencarian di atas</p>
                                         </td>
                                     </tr>
                                 ) : (
                                     items.map((item, index) => (
-                                        <tr key={item.barang_id} className="border-t border-gray-100">
-                                            <td className="px-4 py-3 text-gray-600">{index + 1}</td>
-                                            <td className="px-4 py-3">
+                                        <tr key={item.barang_id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-4 py-4 text-gray-600">{index + 1}</td>
+                                            <td className="px-4 py-4">
                                                 <p className="font-medium text-gray-900">{item.nama_barang}</p>
                                             </td>
-                                            <td className="px-4 py-3 hidden md:table-cell">
+                                            <td className="px-4 py-4">
                                                 <p className="text-sm text-gray-600">{item.ud_nama}</p>
                                                 <p className="text-xs text-gray-400">{item.ud_kode}</p>
                                             </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <span className="px-2 py-1 text-xs bg-gray-100 rounded">{item.satuan}</span>
+                                            <td className="px-4 py-4 text-center">
+                                                <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-md font-medium">{item.satuan}</span>
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="px-4 py-4">
                                                 <input
                                                     type="number"
                                                     value={item.qty}
                                                     onChange={(e) => handleQtyChange(index, e.target.value)}
                                                     onFocus={(e) => e.target.select()}
                                                     min="1"
-                                                    className="w-20 px-2 py-1 border border-gray-200 rounded text-center mx-auto"
+                                                    className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                                                 />
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="px-4 py-4">
                                                 <input
                                                     type="number"
                                                     value={item.harga_modal}
                                                     onChange={(e) => handleHargaModalChange(index, e.target.value)}
                                                     onFocus={(e) => e.target.select()}
                                                     min="0"
-                                                    className="w-24 px-2 py-1 border border-gray-200 rounded text-right ml-auto block"
+                                                    className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                                                 />
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="px-4 py-4">
                                                 <input
                                                     type="number"
                                                     value={item.harga_jual}
                                                     onChange={(e) => handleHargaJualChange(index, e.target.value)}
                                                     onFocus={(e) => e.target.select()}
                                                     min="0"
-                                                    className="w-24 px-2 py-1 border border-gray-200 rounded text-right ml-auto block"
+                                                    className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                                                 />
                                             </td>
-                                            <td className="px-4 py-3 text-right font-medium text-gray-900">
+                                            <td className="px-4 py-4 text-right font-semibold text-gray-900">
                                                 {formatCurrency(calculateSubtotal(item))}
                                             </td>
-                                            <td className="px-4 py-3 text-center">
+                                            <td className="px-4 py-4 text-center">
                                                 <button
                                                     onClick={() => handleRemoveItem(index)}
                                                     className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                                    title="Hapus Barang"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
@@ -443,43 +445,106 @@ export default function NewTransaksiPage() {
                                     ))
                                 )}
                             </tbody>
-                            {items.length > 0 && (
-                                <tfoot className="bg-gray-50">
-                                    <tr>
-                                        <td colSpan={6} className="px-4 py-4 text-right font-semibold text-gray-700">
-                                            TOTAL
-                                        </td>
-                                        <td className="px-4 py-4 text-right text-xl font-bold text-blue-600">
-                                            {formatCurrency(calculateTotal())}
-                                        </td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan={6} className="px-4 py-2 text-right text-sm text-gray-500">
-                                            Total Modal
-                                        </td>
-                                        <td className="px-4 py-2 text-right text-sm text-gray-600">
-                                            {formatCurrency(calculateTotalModal())}
-                                        </td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan={6} className="px-4 py-2 text-right text-sm text-gray-500">
-                                            Estimasi Keuntungan
-                                        </td>
-                                        <td className="px-4 py-2 text-right text-sm font-semibold text-green-600">
-                                            {formatCurrency(calculateTotal() - calculateTotalModal())}
-                                        </td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            )}
                         </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden">
+                        {items.length === 0 ? (
+                            <div className="text-center py-12 px-4 text-gray-500">
+                                <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                <p className="text-lg font-medium">Belum ada barang</p>
+                                <p className="text-sm">Cari dan pilih barang di atas</p>
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-gray-100">
+                                {items.map((item, index) => (
+                                    <div key={item.barang_id} className="p-4 space-y-4">
+                                        <div className="flex justify-between items-start">
+                                            <div className="space-y-1">
+                                                <p className="font-bold text-gray-900 leading-tight">{item.nama_barang}</p>
+                                                <p className="text-xs text-gray-500">
+                                                    {item.ud_nama} • <span className="font-medium text-gray-700">{item.satuan}</span>
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => handleRemoveItem(index)}
+                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Qty</label>
+                                                <input
+                                                    type="number"
+                                                    value={item.qty}
+                                                    onChange={(e) => handleQtyChange(index, e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
+                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                                />
+                                            </div>
+                                            <div className="space-y-1 text-right">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Subtotal</label>
+                                                <p className="py-2 font-bold text-blue-600">
+                                                    {formatCurrency(calculateSubtotal(item))}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Harga Modal</label>
+                                                <input
+                                                    type="number"
+                                                    value={item.harga_modal}
+                                                    onChange={(e) => handleHargaModalChange(index, e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
+                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Harga Jual</label>
+                                                <input
+                                                    type="number"
+                                                    value={item.harga_jual}
+                                                    onChange={(e) => handleHargaJualChange(index, e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
+                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex justify-end gap-3 mt-6">
+                {/* Summary Section (Mobile Optimized) */}
+                {items.length > 0 && (
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-500">Total Modal</span>
+                            <span className="text-gray-900 font-medium">{formatCurrency(calculateTotalModal())}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-500">Estimasi Keuntungan</span>
+                            <span className="text-green-600 font-bold">{formatCurrency(calculateTotal() - calculateTotalModal())}</span>
+                        </div>
+                        <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
+                            <span className="text-base font-bold text-gray-700">TOTAL</span>
+                            <span className="text-2xl font-black text-blue-600 tracking-tight">
+                                {formatCurrency(calculateTotal())}
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Actions - Desktop */}
+                <div className="hidden md:flex justify-end gap-3 mt-8">
                     <button
                         onClick={() => router.back()}
                         disabled={submitting}
@@ -501,7 +566,33 @@ export default function NewTransaksiPage() {
                         onClick={() => handleSubmit(true)}
                         disabled={submitting || items.length === 0}
                         className="inline-flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg font-medium
-                     hover:bg-green-700 transition-colors disabled:opacity-50"
+                     hover:bg-green-700 transition-colors disabled:opacity-50 shadow-lg shadow-green-500/20"
+                    >
+                        {submitting ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                            <CheckCircle className="w-5 h-5" />
+                        )}
+                        Simpan & Selesai
+                    </button>
+                </div>
+            </div>
+
+            {/* Mobile Bottom Action Bar */}
+            <div className="md:hidden fixed bottom-16 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-40">
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => handleSubmit(false)}
+                        disabled={submitting || items.length === 0}
+                        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 bg-gray-50 text-gray-700 rounded-xl border border-gray-200 disabled:opacity-50"
+                    >
+                        <Save className="w-5 h-5" />
+                        <span className="text-[10px] font-bold uppercase">Draft</span>
+                    </button>
+                    <button
+                        onClick={() => handleSubmit(true)}
+                        disabled={submitting || items.length === 0}
+                        className="flex-[2.5] flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 active:scale-[0.98] transition-transform disabled:opacity-50"
                     >
                         {submitting ? (
                             <Loader2 className="w-5 h-5 animate-spin" />

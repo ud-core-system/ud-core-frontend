@@ -85,7 +85,7 @@ const othersItems = [
 ];
 
 const AppSidebar = () => {
-    const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+    const { isExpanded, isMobileOpen, isHovered, setIsHovered, setIsMobileOpen } = useSidebar();
     const { isAdmin } = useAuth();
     const pathname = usePathname();
 
@@ -122,6 +122,11 @@ const AppSidebar = () => {
             <li key={item.path}>
                 <Link
                     href={item.path}
+                    onClick={() => {
+                        if (window.innerWidth < 1024) {
+                            setIsMobileOpen(false);
+                        }
+                    }}
                     className={`menu-item group ${active ? 'menu-item-active' : 'menu-item-inactive'
                         } ${!isExpanded && !isHovered ? 'lg:justify-center' : 'lg:justify-start'}`}
                 >
@@ -153,7 +158,15 @@ const AppSidebar = () => {
         >
             {/* Logo Section */}
             <div className={`py-8 flex ${!isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start'}`}>
-                <Link href="/admin" className="flex items-center gap-3">
+                <Link
+                    href="/admin"
+                    onClick={() => {
+                        if (window.innerWidth < 1024) {
+                            setIsMobileOpen(false);
+                        }
+                    }}
+                    className="flex items-center gap-3"
+                >
                     <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center flex-shrink-0">
                         <Building2 className="w-6 h-6 text-white" />
                     </div>

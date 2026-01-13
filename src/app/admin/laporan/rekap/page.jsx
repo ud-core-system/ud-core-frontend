@@ -477,8 +477,8 @@ export default function LaporanRekapPage() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 p-6 shadow-sm print:hidden">
-                <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-4">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 p-4 md:p-6 shadow-sm print:hidden">
+                <div className="flex flex-col md:grid md:grid-cols-3 items-end gap-4">
                     <div className="w-full">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-gray-400" />
@@ -487,7 +487,7 @@ export default function LaporanRekapPage() {
                         <select
                             value={filterPeriode}
                             onChange={(e) => setFilterPeriode(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm"
                         >
                             <option value="">Semua Periode</option>
                             {periodeList.map((p) => (
@@ -505,7 +505,7 @@ export default function LaporanRekapPage() {
                         <select
                             value={filterUD}
                             onChange={(e) => setFilterUD(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm"
                         >
                             <option value="">Semua UD</option>
                             {udList.map((u) => (
@@ -515,11 +515,11 @@ export default function LaporanRekapPage() {
                             ))}
                         </select>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex w-full gap-2">
                         <button
                             onClick={fetchTransactions}
                             disabled={loading}
-                            className="flex-1 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="flex-1 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
                         >
                             {loading ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -529,20 +529,18 @@ export default function LaporanRekapPage() {
                             Cari Data
                         </button>
                         {Object.keys(groupedData).length > 0 && (
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={handleDownloadPDF}
-                                    disabled={generating}
-                                    className="p-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all border border-slate-200 disabled:opacity-50"
-                                    title="Generate PDF"
-                                >
-                                    {generating ? (
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                    ) : (
-                                        <FileText className="w-5 h-5" />
-                                    )}
-                                </button>
-                            </div>
+                            <button
+                                onClick={handleDownloadPDF}
+                                disabled={generating}
+                                className="p-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all border border-slate-200 disabled:opacity-50"
+                                title="Generate PDF"
+                            >
+                                {generating ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    <FileText className="w-5 h-5" />
+                                )}
+                            </button>
                         )}
                     </div>
                 </div>
@@ -553,55 +551,55 @@ export default function LaporanRekapPage() {
                 /* Specialized UD Report View (Matches Reference Image) */
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 print:space-y-0 print:m-0">
                     {/* UD Header Details */}
-                    <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm print:shadow-none print:border-none print:p-0">
+                    <div className="bg-white rounded-2xl border border-gray-200 p-5 md:p-8 shadow-sm print:shadow-none print:border-none print:p-0">
                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 print:flex-row">
                             <div className="space-y-4 flex-1">
                                 <div>
-                                    <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest print:text-black">UD Details</h2>
-                                    <h3 className="text-3xl font-black text-gray-900 mt-1 print:text-2xl">{selectedUDData.nama_ud}</h3>
+                                    <h2 className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-widest print:text-black">UD Details</h2>
+                                    <h3 className="text-xl md:text-3xl font-black text-gray-900 mt-1 print:text-2xl">{selectedUDData.nama_ud}</h3>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                                     <div className="flex items-start gap-3">
-                                        <div className="p-2 bg-blue-50 rounded-lg print:hidden">
+                                        <div className="p-2 bg-blue-50 rounded-lg print:hidden shrink-0">
                                             <Building2 className="w-4 h-4 text-blue-600" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-semibold text-gray-400 uppercase print:text-black">Pemilik (An.)</p>
-                                            <p className="text-sm font-bold text-gray-800 print:text-black">{selectedUDData.nama_pemilik || '-'}</p>
+                                            <p className="text-[10px] font-semibold text-gray-400 uppercase print:text-black">Pemilik (An.)</p>
+                                            <p className="text-xs md:text-sm font-bold text-gray-800 print:text-black">{selectedUDData.nama_pemilik || '-'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3">
-                                        <div className="p-2 bg-green-50 rounded-lg print:hidden">
+                                        <div className="p-2 bg-green-50 rounded-lg print:hidden shrink-0">
                                             <CreditCard className="w-4 h-4 text-green-600" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-semibold text-gray-400 uppercase print:text-black">No Rekening</p>
-                                            <p className="text-sm font-bold text-gray-800 font-mono print:text-black">{selectedUDData.bank} : {selectedUDData.no_rekening || '-'}</p>
+                                            <p className="text-[10px] font-semibold text-gray-400 uppercase print:text-black">No Rekening</p>
+                                            <p className="text-xs md:text-sm font-bold text-gray-800 font-mono print:text-black">{selectedUDData.bank} : {selectedUDData.no_rekening || '-'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3 sm:col-span-2">
-                                        <div className="p-2 bg-purple-50 rounded-lg print:hidden">
+                                        <div className="p-2 bg-purple-50 rounded-lg print:hidden shrink-0">
                                             <MapPin className="w-4 h-4 text-purple-600" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-semibold text-gray-400 uppercase print:text-black">Alamat</p>
-                                            <p className="text-sm font-medium text-gray-700 print:text-black">{selectedUDData.alamat || '-'}</p>
+                                            <p className="text-[10px] font-semibold text-gray-400 uppercase print:text-black">Alamat</p>
+                                            <p className="text-xs md:text-sm font-medium text-gray-700 print:text-black">{selectedUDData.alamat || '-'}</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div className="md:w-64 space-y-4 print:text-right">
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-400 uppercase print:text-black">KBLI Meliputi</p>
-                                    <div className="flex flex-wrap gap-1 mt-2 print:justify-end">
+                                    <p className="text-[10px] font-semibold text-gray-400 uppercase print:text-black">KBLI Meliputi</p>
+                                    <div className="flex flex-wrap gap-1 mt-1 md:mt-2 print:justify-end">
                                         {selectedUDData.kbli?.map((k, idx) => (
-                                            <span key={idx} className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md text-xs font-bold uppercase print:bg-transparent print:border print:border-black print:text-black">{k}</span>
+                                            <span key={idx} className="bg-gray-100 text-gray-600 px-2 py-0.5 md:px-2.5 md:py-1 rounded-md text-[10px] font-bold uppercase print:bg-transparent print:border print:border-black print:text-black">{k}</span>
                                         ))}
                                     </div>
                                 </div>
-                                <div className="pt-4 border-t border-gray-100 print:border-black">
-                                    <p className="text-xs font-semibold text-gray-400 uppercase print:text-black">Periode Laporan</p>
-                                    <p className="text-sm font-bold text-gray-800 print:text-black">
+                                <div className="pt-3 md:pt-4 border-t border-gray-100 print:border-black">
+                                    <p className="text-[10px] font-semibold text-gray-400 uppercase print:text-black">Periode Laporan</p>
+                                    <p className="text-xs md:text-sm font-bold text-gray-800 print:text-black">
                                         {periodeList.find(p => p._id === filterPeriode)?.nama_periode}
                                     </p>
                                 </div>
@@ -609,8 +607,8 @@ export default function LaporanRekapPage() {
                         </div>
                     </div>
 
-                    {/* Specialized Table */}
-                    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm print:shadow-none print:border-black">
+                    {/* Specialized View - Desktop Table */}
+                    <div className="hidden lg:block bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm print:block print:shadow-none print:border-black">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead className="bg-gray-50 print:bg-gray-200">
@@ -688,24 +686,101 @@ export default function LaporanRekapPage() {
                             </table>
                         </div>
                     </div>
+
+                    {/* Specialized View - Mobile Cards */}
+                    <div className="lg:hidden space-y-6 print:hidden">
+                        {Object.keys(groupedData).map((dateStr) => {
+                            const dayData = groupedData[dateStr];
+                            const udData = dayData.uds[filterUD];
+                            if (!udData) return null;
+
+                            return (
+                                <div key={dateStr} className="space-y-3">
+                                    <div className="flex items-center gap-2 px-1">
+                                        <div className="h-px flex-1 bg-gray-200"></div>
+                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{dateStr}</span>
+                                        <div className="h-px flex-1 bg-gray-200"></div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {udData.items.map((item, idx) => (
+                                            <div key={idx} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm space-y-3">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h4 className="font-bold text-gray-900">{item.nama_barang || item.barang_id?.nama_barang || '-'}</h4>
+                                                        <p className="text-xs text-gray-500">{item.qty} {item.satuan || item.barang_id?.satuan || '-'}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Keuntungan</p>
+                                                        <p className="text-sm font-bold text-green-600">{formatCurrency(item.keuntungan)}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-50">
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-blue-600 uppercase">Budget</p>
+                                                        <p className="text-xs font-bold text-gray-900">{formatCurrency(item.itemBudgetTotal)}</p>
+                                                        <p className="text-[8px] text-gray-400">@{formatCurrency(item.masterPrice)}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-orange-600 uppercase">Jual</p>
+                                                        <p className="text-xs font-bold text-gray-900">{formatCurrency(item.subtotal_jual)}</p>
+                                                        <p className="text-[8px] text-gray-400">@{formatCurrency(item.harga_jual)}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-purple-600 uppercase">Modal</p>
+                                                        <p className="text-xs font-bold text-gray-900">{formatCurrency(item.subtotal_modal)}</p>
+                                                        <p className="text-[8px] text-gray-400">@{formatCurrency(item.harga_modal)}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Mobile Subtotal Card */}
+                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-2">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Subtotal {dateStr}</p>
+                                        <div className="grid grid-cols-2 gap-y-3">
+                                            <div>
+                                                <p className="text-[10px] text-gray-500">Total Budget</p>
+                                                <p className="text-sm font-bold text-blue-700">{formatCurrency(udData.totalBudget)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-gray-500">Total Jual</p>
+                                                <p className="text-sm font-bold text-orange-700">{formatCurrency(udData.totalJual)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-gray-500">Total Modal</p>
+                                                <p className="text-sm font-bold text-purple-700">{formatCurrency(udData.totalModal)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-gray-500">Keuntungan</p>
+                                                <p className="text-sm font-bold text-green-700">{formatCurrency(udData.totalKeuntungan)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             ) : (
                 /* Standard Grouped Laporan Table */
                 <div className="space-y-8 animate-in fade-in duration-500">
                     {/* Summary Cards */}
                     {Object.keys(groupedData).length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:hidden">
-                            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                                <p className="text-sm font-medium text-gray-500">Total Penjualan</p>
-                                <p className="text-3xl font-bold text-gray-900 mt-1">{formatCurrency(grandTotalJual)}</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 print:hidden">
+                            <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-100 shadow-sm">
+                                <p className="text-[10px] md:text-sm font-medium text-gray-500 uppercase tracking-wider">Total Penjualan</p>
+                                <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1">{formatCurrency(grandTotalJual)}</p>
                             </div>
-                            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                                <p className="text-sm font-medium text-gray-500">Total Modal</p>
-                                <p className="text-3xl font-bold text-gray-900 mt-1">{formatCurrency(grandTotalModal)}</p>
+                            <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-100 shadow-sm">
+                                <p className="text-[10px] md:text-sm font-medium text-gray-500 uppercase tracking-wider">Total Modal</p>
+                                <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1">{formatCurrency(grandTotalModal)}</p>
                             </div>
-                            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm group">
-                                <p className="text-sm font-medium text-gray-500">Total Keuntungan</p>
-                                <p className="text-3xl font-bold text-green-600 mt-1">{formatCurrency(grandTotalKeuntungan)}</p>
+                            <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-100 shadow-sm group sm:col-span-2 md:col-span-1">
+                                <p className="text-[10px] md:text-sm font-medium text-gray-500 uppercase tracking-wider">Total Keuntungan</p>
+                                <p className="text-xl md:text-3xl font-bold text-green-600 mt-1">{formatCurrency(grandTotalKeuntungan)}</p>
                             </div>
                         </div>
                     )}
@@ -714,15 +789,15 @@ export default function LaporanRekapPage() {
                         const dayData = groupedData[dateStr];
                         return (
                             <div key={dateStr} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm print:shadow-none print:border-black">
-                                <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-200 flex justify-between items-center print:bg-gray-100 print:border-black">
-                                    <h2 className="text-lg font-bold text-gray-900">{dateStr}</h2>
-                                    <div className="flex gap-4 text-sm print:hidden">
+                                <div className="bg-gray-50/50 px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 print:bg-gray-100 print:border-black">
+                                    <h2 className="text-md md:text-lg font-bold text-gray-900">{dateStr}</h2>
+                                    <div className="flex flex-wrap gap-2 md:gap-4 text-[10px] md:text-sm print:hidden">
                                         <span className="text-gray-600">Jual: <span className="font-bold text-gray-900">{formatCurrency(dayData.subtotalJual)}</span></span>
                                         <span className="text-gray-600">Modal: <span className="font-bold text-gray-900">{formatCurrency(dayData.subtotalModal)}</span></span>
                                         <span className="text-gray-600">Keuntungan: <span className="font-bold text-green-600">{formatCurrency(dayData.subtotalKeuntungan)}</span></span>
                                     </div>
                                 </div>
-                                <div className="overflow-x-auto">
+                                <div className="hidden lg:block overflow-x-auto print:block">
                                     <table className="w-full border-collapse">
                                         <thead>
                                             <tr className="bg-gray-50/30 text-xs font-semibold text-gray-500 uppercase tracking-wider print:bg-gray-50">
@@ -781,29 +856,79 @@ export default function LaporanRekapPage() {
                                         </tbody>
                                     </table>
                                 </div>
+
+                                {/* Standard View - Mobile Cards */}
+                                <div className="lg:hidden divide-y divide-gray-100 print:hidden">
+                                    {Object.values(dayData.uds).map((ud, udIdx) => (
+                                        <div key={`ud-mobile-${dateStr}-${udIdx}`} className="p-4 space-y-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded uppercase italic">{ud.name}</span>
+                                                <div className="h-px flex-1 bg-blue-50"></div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {ud.items.map((item, itemIdx) => (
+                                                    <div key={`item-mobile-${itemIdx}`} className="bg-gray-50/50 rounded-lg p-3 border border-gray-100">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <h4 className="text-sm font-bold text-gray-900">{item.nama_barang || item.barang_id?.nama_barang || '-'}</h4>
+                                                            <span className="text-xs font-bold text-green-600">{formatCurrency(item.keuntungan)}</span>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                                                            <div>
+                                                                <p className="text-gray-500 uppercase">Qty</p>
+                                                                <p className="font-bold">{item.qty} {item.satuan || item.barang_id?.satuan || '-'}</p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-gray-500 uppercase">Jual</p>
+                                                                <p className="font-bold">{formatCurrency(item.subtotal_jual)}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-gray-500 uppercase">Hrg Jual</p>
+                                                                <p className="font-medium text-gray-600">{formatCurrency(item.harga_jual)}</p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-gray-500 uppercase">Hrg Modal</p>
+                                                                <p className="font-medium text-gray-600">{formatCurrency(item.harga_modal)}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* UD Subtotal Mobile */}
+                                            <div className="flex justify-between items-center py-2 border-t border-dashed border-gray-200">
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase">Subtotal {ud.name}</span>
+                                                <div className="text-right">
+                                                    <p className="text-xs font-bold text-gray-900">{formatCurrency(ud.totalJual)}</p>
+                                                    <p className="text-[10px] font-bold text-green-600">{formatCurrency(ud.totalKeuntungan)}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         );
                     })}
 
                     {/* Grand Total Row */}
                     {Object.keys(groupedData).length > 0 && (
-                        <div className="bg-blue-600 rounded-2xl p-6 text-white shadow-xl shadow-blue-500/20 flex flex-col md:flex-row justify-between items-center gap-6 print:bg-black print:text-white print:shadow-none">
+                        <div className="bg-blue-600 rounded-2xl p-5 md:p-6 text-white shadow-xl shadow-blue-500/20 flex flex-col md:flex-row justify-between items-center gap-6 print:bg-black print:text-white print:shadow-none">
                             <div className="text-center md:text-left">
-                                <h3 className="text-xl font-bold">TOTAL KESELURUHAN</h3>
-                                <p className="text-blue-100 text-sm opacity-80 mt-1 print:hidden">Rekapitulasi seluruh periode yang dipilih</p>
+                                <h3 className="text-lg md:text-xl font-bold">TOTAL KESELURUHAN</h3>
+                                <p className="text-blue-100 text-[10px] md:text-sm opacity-80 mt-1 print:hidden">Rekapitulasi seluruh periode yang dipilih</p>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-                                <div>
-                                    <p className="text-xs font-medium text-blue-200 uppercase tracking-widest mb-1 print:text-white">Total Jual</p>
-                                    <p className="text-2xl font-black">{formatCurrency(grandTotalJual)}</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-8 text-center w-full md:w-auto">
+                                <div className="bg-white/5 md:bg-transparent p-3 md:p-0 rounded-xl">
+                                    <p className="text-[10px] font-medium text-blue-200 uppercase tracking-widest mb-1 print:text-white">Total Jual</p>
+                                    <p className="text-xl md:text-2xl font-black">{formatCurrency(grandTotalJual)}</p>
                                 </div>
-                                <div>
-                                    <p className="text-xs font-medium text-blue-200 uppercase tracking-widest mb-1 print:text-white">Total Modal</p>
-                                    <p className="text-2xl font-black">{formatCurrency(grandTotalModal)}</p>
+                                <div className="bg-white/5 md:bg-transparent p-3 md:p-0 rounded-xl">
+                                    <p className="text-[10px] font-medium text-blue-200 uppercase tracking-widest mb-1 print:text-white">Total Modal</p>
+                                    <p className="text-xl md:text-2xl font-black">{formatCurrency(grandTotalModal)}</p>
                                 </div>
                                 <div className="bg-white/10 px-6 py-3 rounded-xl backdrop-blur-md border border-white/20 print:bg-transparent">
-                                    <p className="text-xs font-medium text-green-300 uppercase tracking-widest mb-1 print:text-white">Total Untung</p>
-                                    <p className="text-2xl font-black text-green-400 print:text-white">{formatCurrency(grandTotalKeuntungan)}</p>
+                                    <p className="text-[10px] font-medium text-green-300 uppercase tracking-widest mb-1 print:text-white">Total Untung</p>
+                                    <p className="text-xl md:text-2xl font-black text-green-400 print:text-white">{formatCurrency(grandTotalKeuntungan)}</p>
                                 </div>
                             </div>
                         </div>

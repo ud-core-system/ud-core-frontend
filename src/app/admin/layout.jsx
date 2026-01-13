@@ -7,6 +7,7 @@ import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
 import AppSidebar from '@/components/layout/AppSidebar';
 import AppHeader from '@/components/layout/AppHeader';
 import Backdrop from '@/components/layout/Backdrop';
+import QuickActions from '@/components/dashboard/QuickActions';
 
 function AdminLayoutContent({ children }) {
     const router = useRouter();
@@ -55,9 +56,12 @@ function AdminLayoutContent({ children }) {
                 <AppHeader />
 
                 {/* Page Content */}
-                <div className="p-4 mx-auto max-w-screen-2xl md:p-6">
+                <div className="p-4 mx-auto max-w-screen-2xl md:p-6 pb-20 lg:pb-6">
                     {children}
                 </div>
+
+                {/* Mobile Bottom Bar */}
+                <QuickActions variant="bottom-bar" />
             </div>
         </div>
     );

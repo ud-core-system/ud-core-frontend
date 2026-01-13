@@ -231,13 +231,13 @@ export default function BarangManagementPage() {
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Management Barang</h1>
-                    <p className="text-gray-500 mt-1">Kelola data barang dari berbagai UD</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Management Barang</h1>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">Kelola data barang dari berbagai UD</p>
                 </div>
                 <button
                     onClick={openCreateModal}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
-                   hover:bg-blue-700 transition-colors font-medium"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
+                   hover:bg-blue-700 transition-colors font-medium text-sm sm:text-base"
                 >
                     <Plus className="w-5 h-5" />
                     Tambah Barang
@@ -245,28 +245,28 @@ export default function BarangManagementPage() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-                <div className="flex flex-col sm:flex-row gap-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     {/* Search */}
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 text-gray-400" />
                         <input
                             type="text"
                             value={search}
                             onChange={handleSearch}
                             placeholder="Cari nama barang..."
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg
+                            className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-200 rounded-lg
                        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                         />
                     </div>
 
                     {/* Filter by UD */}
                     <div className="relative sm:w-64">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 text-gray-400" />
                         <select
                             value={filterUD}
                             onChange={handleFilterUD}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg appearance-none
+                            className="w-full pl-9 sm:pl-10 pr-10 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-200 rounded-lg appearance-none
                        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
                         >
                             <option value="">Semua UD</option>
@@ -276,6 +276,11 @@ export default function BarangManagementPage() {
                                 </option>
                             ))}
                         </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -331,7 +336,8 @@ export default function BarangManagementPage() {
                     />
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
+                        {/* Desktop View Table */}
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
@@ -344,10 +350,10 @@ export default function BarangManagementPage() {
                                         <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Harga Jual
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">
+                                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Harga Modal
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden lg:table-cell">
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider lg:table-cell">
                                             UD
                                         </th>
                                         <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -365,17 +371,17 @@ export default function BarangManagementPage() {
                                                 <p className="font-medium text-gray-900">{item.nama_barang}</p>
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                                                <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded uppercase">
                                                     {item.satuan}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-right font-medium text-gray-900">
                                                 {formatCurrency(item.harga_jual)}
                                             </td>
-                                            <td className="px-6 py-4 text-right text-gray-500 hidden md:table-cell">
+                                            <td className="px-6 py-4 text-right text-gray-500">
                                                 {formatCurrency(item.harga_modal || 0)}
                                             </td>
-                                            <td className="px-6 py-4 hidden lg:table-cell">
+                                            <td className="px-6 py-4 lg:table-cell">
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-900">{item.ud_id?.nama_ud || '-'}</p>
                                                     <p className="text-xs text-gray-500">{item.ud_id?.kode_ud || ''}</p>
@@ -383,8 +389,8 @@ export default function BarangManagementPage() {
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <span className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full
-                          ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-                        `}>
+                                          ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                                        `}>
                                                     {item.isActive ? 'Aktif' : 'Nonaktif'}
                                                 </span>
                                             </td>
@@ -412,17 +418,83 @@ export default function BarangManagementPage() {
                             </table>
                         </div>
 
+                        {/* Mobile View Cards */}
+                        <div className="md:hidden divide-y divide-gray-100">
+                            {data.map((item) => (
+                                <div key={item._id} className="p-4 space-y-3 hover:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-start gap-4">
+                                        <div className="flex-1">
+                                            <h3 className="font-semibold text-gray-900 leading-tight">
+                                                {item.nama_barang}
+                                            </h3>
+                                            <div className="flex items-center gap-2 mt-1.5 font-sm">
+                                                <span className="px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-700 rounded uppercase">
+                                                    {item.satuan}
+                                                </span>
+                                                <span className={`px-2 py-0.5 text-[10px] font-medium rounded-full
+                                                  ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                                                `}>
+                                                    {item.isActive ? 'Aktif' : 'Nonaktif'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => openEditModal(item)}
+                                                className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => openDeleteDialog(item)}
+                                                className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-0.5">Harga Jual</p>
+                                            <p className="font-bold text-blue-600">{formatCurrency(item.harga_jual)}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-0.5">Harga Modal</p>
+                                            <p className="text-gray-900 font-medium">{formatCurrency(item.harga_modal || 0)}</p>
+                                        </div>
+                                    </div>
+
+                                    {item.ud_id && (
+                                        <div className="flex items-center gap-2.5 pt-2 border-t border-gray-50">
+                                            <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
+                                                <Package className="w-3.5 h-3.5 text-blue-600" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-semibold text-gray-900 truncate">
+                                                    {item.ud_id.nama_ud}
+                                                </p>
+                                                <p className="text-[10px] text-gray-500">{item.ud_id.kode_ud}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
                         {/* Pagination */}
                         <div className="p-4 border-t border-gray-100">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm text-gray-500">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p className="text-xs sm:text-sm text-gray-500 order-2 sm:order-1">
                                     Menampilkan {data.length} dari {pagination.totalDocuments} data
                                 </p>
-                                <Pagination
-                                    currentPage={pagination.page}
-                                    totalPages={pagination.totalPages}
-                                    onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-                                />
+                                <div className="order-1 sm:order-2">
+                                    <Pagination
+                                        currentPage={pagination.page}
+                                        totalPages={pagination.totalPages}
+                                        onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </>

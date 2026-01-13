@@ -53,6 +53,7 @@ export default function ActivityLogsPage() {
     const [filterAction, setFilterAction] = useState('');
     const [filterModule, setFilterModule] = useState('');
     const [filterUser, setFilterUser] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
         if (isAdmin()) {
@@ -109,26 +110,37 @@ export default function ActivityLogsPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             {/* Page Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Activity Logs</h1>
-                <p className="text-gray-500 mt-1">Riwayat aktivitas pengguna dalam sistem</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Activity Logs</h1>
+                    <p className="text-sm text-gray-500 mt-1">Riwayat aktivitas pengguna dalam sistem</p>
+                </div>
+                <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="flex sm:hidden items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 active:bg-gray-50 transition-colors"
+                >
+                    <Filter className="w-4 h-4" />
+                    {showFilters ? 'Sembunyikan Filter' : 'Tampilkan Filter'}
+                </button>
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className={`bg-white rounded-xl border border-gray-200 p-4 ${showFilters ? 'block' : 'hidden sm:block'}`}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Action Filter */}
                     <div className="relative">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                            <Activity className="w-4 h-4" />
+                        </span>
                         <select
                             value={filterAction}
                             onChange={(e) => {
                                 setFilterAction(e.target.value);
                                 setPagination((prev) => ({ ...prev, page: 1 }));
                             }}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg appearance-none
+                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg appearance-none text-sm
                        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
                         >
                             <option value="">Semua Action</option>
@@ -143,14 +155,16 @@ export default function ActivityLogsPage() {
 
                     {/* Module Filter */}
                     <div className="relative">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                            <Filter className="w-4 h-4" />
+                        </span>
                         <select
                             value={filterModule}
                             onChange={(e) => {
                                 setFilterModule(e.target.value);
                                 setPagination((prev) => ({ ...prev, page: 1 }));
                             }}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg appearance-none
+                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg appearance-none text-sm
                        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
                         >
                             <option value="">Semua Module</option>
@@ -166,14 +180,14 @@ export default function ActivityLogsPage() {
                     {/* User Filter */}
                     {isAdmin() && (
                         <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <select
                                 value={filterUser}
                                 onChange={(e) => {
                                     setFilterUser(e.target.value);
                                     setPagination((prev) => ({ ...prev, page: 1 }));
                                 }}
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg appearance-none
+                                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg appearance-none text-sm
                          focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
                             >
                                 <option value="">Semua User</option>
@@ -189,7 +203,7 @@ export default function ActivityLogsPage() {
                     {/* Reset */}
                     <button
                         onClick={resetFilters}
-                        className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium
+                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 font-medium
                      hover:bg-gray-50 transition-colors"
                     >
                         Reset Filter
@@ -198,7 +212,7 @@ export default function ActivityLogsPage() {
             </div>
 
             {/* Activity List */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
                         <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
@@ -213,36 +227,41 @@ export default function ActivityLogsPage() {
                     <>
                         <div className="divide-y divide-gray-100">
                             {data.map((item) => (
-                                <div key={item._id} className="p-4 hover:bg-gray-50 transition-colors">
-                                    <div className="flex items-start gap-4">
+                                <div key={item._id} className="p-4 sm:px-6 hover:bg-gray-50 transition-colors">
+                                    <div className="flex items-start gap-3 sm:gap-4">
                                         {/* User Avatar */}
-                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm">
                                             {item.user_id?.username?.[0]?.toUpperCase() || '?'}
                                         </div>
 
                                         {/* Content */}
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                                                <span className="font-medium text-gray-900">
-                                                    {item.user_id?.username || 'Unknown'}
-                                                </span>
-                                                <span className={`px-2 py-0.5 text-xs font-medium rounded ${ACTION_COLORS[item.action] || 'bg-gray-100 text-gray-800'}`}>
-                                                    {item.action}
-                                                </span>
-                                                <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded">
-                                                    {item.module}
-                                                </span>
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 mb-1.5">
+                                                <div className="flex items-center gap-2 flex-wrap text-sm">
+                                                    <span className="font-semibold text-gray-900">
+                                                        {item.user_id?.username || 'System'}
+                                                    </span>
+                                                    <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md border ${ACTION_COLORS[item.action] || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                                                        {item.action}
+                                                    </span>
+                                                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-gray-50 text-gray-600 rounded-md border border-gray-200">
+                                                        {item.module}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <p className="text-sm text-gray-600 mb-2">
+                                            <p className="text-sm text-gray-600 mb-2 leading-relaxed">
                                                 {item.description}
                                             </p>
-                                            <div className="flex items-center gap-4 text-xs text-gray-400">
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-400">
                                                 <span className="flex items-center gap-1">
                                                     <Calendar className="w-3 h-3" />
                                                     {formatDateTime(item.createdAt)}
                                                 </span>
                                                 {item.ip_address && (
-                                                    <span>IP: {item.ip_address}</span>
+                                                    <span className="flex items-center gap-1">
+                                                        <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                                                        IP: {item.ip_address}
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
@@ -252,16 +271,18 @@ export default function ActivityLogsPage() {
                         </div>
 
                         {/* Pagination */}
-                        <div className="p-4 border-t border-gray-100">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm text-gray-500">
-                                    Menampilkan {data.length} dari {pagination.totalDocuments} aktivitas
+                        <div className="p-4 sm:px-6 border-t border-gray-100 bg-gray-50/50">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p className="text-xs sm:text-sm text-gray-500 order-2 sm:order-1">
+                                    Menampilkan <span className="font-medium text-gray-900">{data.length}</span> dari <span className="font-medium text-gray-900">{pagination.totalDocuments}</span> aktivitas
                                 </p>
-                                <Pagination
-                                    currentPage={pagination.page}
-                                    totalPages={pagination.totalPages}
-                                    onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-                                />
+                                <div className="order-1 sm:order-2">
+                                    <Pagination
+                                        currentPage={pagination.page}
+                                        totalPages={pagination.totalPages}
+                                        onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </>

@@ -129,17 +129,17 @@ export default function TransaksiListPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">List Transaksi</h1>
-                    <p className="text-gray-500 mt-1">Daftar semua transaksi</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">List Transaksi</h1>
+                    <p className="text-sm md:text-base text-gray-500 mt-0.5">Daftar semua transaksi</p>
                 </div>
                 <Link
                     href="/admin/transaksi/new"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
-                   hover:bg-blue-700 transition-colors font-medium"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl
+                           hover:bg-blue-700 transition-all font-semibold shadow-lg shadow-blue-500/20 active:scale-95"
                 >
                     <Plus className="w-5 h-5" />
                     Input Transaksi
@@ -147,8 +147,8 @@ export default function TransaksiListPage() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                     {/* Periode */}
                     <div className="relative">
                         <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -159,7 +159,7 @@ export default function TransaksiListPage() {
                                 setPagination((prev) => ({ ...prev, page: 1 }));
                             }}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg appearance-none
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-sm"
                         >
                             <option value="">Semua Periode</option>
                             {periodeList.map((p) => (
@@ -180,7 +180,7 @@ export default function TransaksiListPage() {
                                 setPagination((prev) => ({ ...prev, page: 1 }));
                             }}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg appearance-none
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-sm"
                         >
                             <option value="">Semua Dapur</option>
                             {dapurList.map((d) => (
@@ -201,7 +201,7 @@ export default function TransaksiListPage() {
                                 setPagination((prev) => ({ ...prev, page: 1 }));
                             }}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg appearance-none
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-sm"
                         >
                             <option value="">Semua Status</option>
                             <option value="draft">Draft</option>
@@ -219,18 +219,19 @@ export default function TransaksiListPage() {
                             setPagination((prev) => ({ ...prev, page: 1 }));
                         }}
                         className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium
-                     hover:bg-gray-50 transition-colors"
+                                 hover:bg-gray-50 transition-colors text-sm"
                     >
                         Reset Filter
                     </button>
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {/* List / Table Content */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                 {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-3" />
+                        <p className="text-gray-500 text-sm animate-pulse">Memuat data transaksi...</p>
                     </div>
                 ) : data.length === 0 ? (
                     <EmptyState
@@ -240,16 +241,17 @@ export default function TransaksiListPage() {
                         action={
                             <Link
                                 href="/admin/transaksi/new"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold transition-all active:scale-95"
                             >
-                                <Plus className="w-4 h-4" />
+                                <Plus className="w-5 h-5" />
                                 Input Transaksi
                             </Link>
                         }
                     />
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
@@ -259,16 +261,16 @@ export default function TransaksiListPage() {
                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Dapur
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider lg:table-cell">
                                             Periode
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden lg:table-cell">
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden xl:table-cell">
                                             Tanggal
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Total
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">
+                                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider hidden lg:table-cell">
                                             Keuntungan
                                         </th>
                                         <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -279,28 +281,28 @@ export default function TransaksiListPage() {
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-200">
+                                <tbody className="divide-y divide-gray-100">
                                     {data.map((item) => (
-                                        <tr key={item._id} className="hover:bg-gray-50 transition-colors">
+                                        <tr key={item._id} className="hover:bg-blue-50/30 transition-colors">
                                             <td className="px-6 py-4">
-                                                <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                                                <span className="font-mono text-xs font-bold bg-gray-100 px-2 py-1 rounded text-gray-700 border border-gray-200">
                                                     {item.kode_transaksi}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <p className="font-medium text-gray-900">{item.dapur_id?.nama_dapur || '-'}</p>
+                                                <p className="font-semibold text-gray-900">{item.dapur_id?.nama_dapur || '-'}</p>
                                             </td>
-                                            <td className="px-6 py-4 hidden md:table-cell">
-                                                <p className="text-gray-600">{item.periode_id?.nama_periode || '-'}</p>
+                                            <td className="px-6 py-4 lg:table-cell">
+                                                <p className="text-gray-600 text-sm">{item.periode_id?.nama_periode || '-'}</p>
                                             </td>
-                                            <td className="px-6 py-4 hidden lg:table-cell">
-                                                <p className="text-gray-600">{formatDateShort(item.tanggal)}</p>
+                                            <td className="px-6 py-4 hidden xl:table-cell">
+                                                <p className="text-gray-500 text-sm">{formatDateShort(item.tanggal)}</p>
                                             </td>
-                                            <td className="px-6 py-4 text-right font-medium text-gray-900">
+                                            <td className="px-6 py-4 text-right font-bold text-gray-900">
                                                 {formatCurrency(item.total_harga_jual)}
                                             </td>
-                                            <td className="px-6 py-4 text-right hidden md:table-cell">
-                                                <span className="text-green-600 font-medium">
+                                            <td className="px-6 py-4 text-right hidden lg:table-cell">
+                                                <span className="text-green-600 font-bold">
                                                     {formatCurrency(item.total_keuntungan)}
                                                 </span>
                                             </td>
@@ -311,7 +313,7 @@ export default function TransaksiListPage() {
                                                 <div className="flex items-center justify-center gap-1">
                                                     <Link
                                                         href={`/admin/transaksi/${item._id}`}
-                                                        className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                                                        className="p-2 hover:bg-blue-100 rounded-lg text-blue-600 transition-colors"
                                                         title="Lihat Detail"
                                                     >
                                                         <Eye className="w-4 h-4" />
@@ -320,7 +322,7 @@ export default function TransaksiListPage() {
                                                         <>
                                                             <Link
                                                                 href={`/admin/transaksi/${item._id}/edit`}
-                                                                className="p-2 hover:bg-yellow-50 rounded-lg text-yellow-600 transition-colors"
+                                                                className="p-2 hover:bg-yellow-100 rounded-lg text-yellow-600 transition-colors"
                                                                 title="Edit Transaksi"
                                                             >
                                                                 <Edit className="w-4 h-4" />
@@ -330,7 +332,7 @@ export default function TransaksiListPage() {
                                                                     setDeletingItem(item);
                                                                     setDeleteDialogOpen(true);
                                                                 }}
-                                                                className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                                                className="p-2 hover:bg-red-100 rounded-lg text-red-600 transition-colors"
                                                                 title="Hapus Transaksi"
                                                             >
                                                                 <Trash2 className="w-4 h-4" />
@@ -345,11 +347,75 @@ export default function TransaksiListPage() {
                             </table>
                         </div>
 
+                        {/* Mobile Card View */}
+                        <div className="md:hidden divide-y divide-gray-100">
+                            {data.map((item) => (
+                                <div key={item._id} className="p-4 space-y-3 active:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-start">
+                                        <div className="space-y-1">
+                                            <span className="font-mono text-[10px] font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-600 border border-gray-200">
+                                                {item.kode_transaksi}
+                                            </span>
+                                            <h3 className="font-bold text-gray-900 leading-tight">
+                                                {item.dapur_id?.nama_dapur || 'Unknown Dapur'}
+                                            </h3>
+                                            <p className="text-xs text-gray-500">
+                                                {item.periode_id?.nama_periode} • {formatDateShort(item.tanggal)}
+                                            </p>
+                                        </div>
+                                        {getStatusBadge(item.status)}
+                                    </div>
+
+                                    <div className="flex justify-between items-end">
+                                        <div className="space-y-0.5">
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Transaksi</p>
+                                            <p className="font-black text-blue-600 text-lg">
+                                                {formatCurrency(item.total_harga_jual)}
+                                            </p>
+                                            <p className="text-[10px] text-green-600 font-bold">
+                                                Untung: {formatCurrency(item.total_keuntungan)}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Link
+                                                href={`/admin/transaksi/${item._id}`}
+                                                className="flex flex-col items-center justify-center w-10 h-10 bg-blue-50 text-blue-600 rounded-xl"
+                                                title="Lihat Detail"
+                                            >
+                                                <Eye className="w-5 h-5" />
+                                            </Link>
+                                            {item.status === 'draft' && (
+                                                <>
+                                                    <Link
+                                                        href={`/admin/transaksi/${item._id}/edit`}
+                                                        className="flex flex-col items-center justify-center w-10 h-10 bg-yellow-50 text-yellow-600 rounded-xl"
+                                                        title="Edit Transaksi"
+                                                    >
+                                                        <Edit className="w-5 h-5" />
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => {
+                                                            setDeletingItem(item);
+                                                            setDeleteDialogOpen(true);
+                                                        }}
+                                                        className="flex flex-col items-center justify-center w-10 h-10 bg-red-50 text-red-600 rounded-xl"
+                                                        title="Hapus Transaksi"
+                                                    >
+                                                        <Trash2 className="w-5 h-5" />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
                         {/* Pagination */}
-                        <div className="p-4 border-t border-gray-100">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm text-gray-500">
-                                    Menampilkan {data.length} dari {pagination.totalDocuments} data
+                        <div className="p-4 border-t border-gray-100 bg-gray-50/30">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p className="text-xs md:text-sm text-gray-500 font-medium">
+                                    Menampilkan <span className="text-gray-900">{data.length}</span> dari <span className="text-gray-900">{pagination.totalDocuments}</span> data
                                 </p>
                                 <Pagination
                                     currentPage={pagination.page}

@@ -157,29 +157,29 @@ export default function TransaksiDetailPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
             {/* Page Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 md:gap-4">
                     <button
                         onClick={() => router.back()}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 lg:border-none"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Detail Transaksi</h1>
-                        <p className="text-gray-500 font-mono">{data.kode_transaksi}</p>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Detail Transaksi</h1>
+                        <p className="text-sm text-gray-500 font-mono mt-0.5">{data.kode_transaksi}</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
                     {data.status === 'draft' && (
                         <button
                             onClick={handleComplete}
                             disabled={completing}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg
-                       hover:bg-green-700 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl
+                                   hover:bg-green-700 transition-all font-semibold shadow-lg shadow-green-500/20 active:scale-95 disabled:opacity-50 text-sm"
                         >
                             {completing ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -191,16 +191,16 @@ export default function TransaksiDetailPage() {
                     )}
                     <button
                         onClick={handlePrintAll}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg
-                     hover:bg-blue-700 transition-colors"
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl
+                                 hover:bg-blue-700 transition-all font-semibold shadow-lg shadow-blue-500/20 active:scale-95 text-sm"
                     >
                         <Printer className="w-4 h-4" />
-                        Cetak Semua Nota
+                        Cetak Nota
                     </button>
                     <button
                         onClick={() => window.print()}
-                        className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg
-                     hover:bg-gray-50 transition-colors"
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-xl
+                                 hover:bg-gray-50 transition-all font-semibold active:scale-95 text-sm"
                     >
                         <FileText className="w-4 h-4" />
                         Print Detail
@@ -209,139 +209,180 @@ export default function TransaksiDetailPage() {
             </div>
 
             {/* Info Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <div>
-                        <p className="text-sm text-gray-500 mb-1">Dapur</p>
-                        <p className="font-medium text-gray-900">{data.dapur_id?.nama_dapur || '-'}</p>
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 md:p-6 shadow-sm overflow-hidden">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Dapur</p>
+                        <p className="font-bold text-gray-900">{data.dapur_id?.nama_dapur || '-'}</p>
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-500 mb-1">Periode</p>
-                        <p className="font-medium text-gray-900">{data.periode_id?.nama_periode || '-'}</p>
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Periode</p>
+                        <p className="font-bold text-gray-900">{data.periode_id?.nama_periode || '-'}</p>
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-500 mb-1">Tanggal</p>
-                        <p className="font-medium text-gray-900">{formatDate(data.tanggal)}</p>
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</p>
+                        <p className="font-bold text-gray-900">{formatDate(data.tanggal)}</p>
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-500 mb-1">Status</p>
-                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusClass(data.status)}`}>
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</p>
+                        <span className={`inline-flex px-2.5 py-1 text-xs font-bold rounded-lg border ${getStatusClass(data.status)}`}>
                             {statusLabels[data.status] || data.status}
                         </span>
                     </div>
                 </div>
 
-                <hr className="my-6" />
+                <div className="h-px bg-gray-100 my-6" />
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-blue-50 rounded-lg p-4">
-                        <p className="text-sm text-blue-600 mb-1">Total Penjualan</p>
-                        <p className="text-2xl font-bold text-blue-700">{formatCurrency(data.total_harga_jual)}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
+                    <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100/50">
+                        <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Total Penjualan</p>
+                        <p className="text-xl md:text-2xl font-black text-blue-700 tracking-tight">{formatCurrency(data.total_harga_jual)}</p>
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-sm text-gray-600 mb-1">Total Modal</p>
-                        <p className="text-2xl font-bold text-gray-700">{formatCurrency(data.total_harga_modal)}</p>
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200/50">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Modal</p>
+                        <p className="text-xl md:text-2xl font-black text-gray-700 tracking-tight">{formatCurrency(data.total_harga_modal)}</p>
                     </div>
-                    <div className="bg-green-50 rounded-lg p-4">
-                        <p className="text-sm text-green-600 mb-1">Keuntungan</p>
-                        <p className="text-2xl font-bold text-green-700">{formatCurrency(data.total_keuntungan)}</p>
+                    <div className="bg-green-50/50 rounded-xl p-4 border border-green-100/50">
+                        <p className="text-[10px] font-bold text-green-500 uppercase tracking-widest mb-1">Keuntungan</p>
+                        <p className="text-xl md:text-2xl font-black text-green-700 tracking-tight">{formatCurrency(data.total_keuntungan)}</p>
                     </div>
                 </div>
             </div>
 
             {/* Items by UD */}
-            {Object.entries(itemsByUD).map(([udId, udData]) => (
-                <div key={udId} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    {/* UD Header */}
-                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <FileText className="w-5 h-5 text-gray-500" />
-                                <div>
-                                    <h3 className="font-semibold text-gray-900">{udData.nama_ud}</h3>
-                                    <p className="text-sm text-gray-500">{udData.kode_ud}</p>
+            <div className="space-y-4 md:space-y-6">
+                {Object.entries(itemsByUD).map(([udId, udData]) => (
+                    <div key={udId} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                        {/* UD Header */}
+                        <div className="bg-gray-50/50 px-4 md:px-6 py-4 border-b border-gray-200">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+                                        <FileText className="w-5 h-5 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-gray-900 leading-tight">{udData.nama_ud}</h3>
+                                        <p className="text-xs text-gray-500 font-medium">{udData.kode_ud}</p>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="flex items-center gap-4">
-                                <div className="text-right hidden sm:block">
-                                    <p className="text-sm text-gray-500">Subtotal UD</p>
-                                    <p className="font-semibold text-gray-900">{formatCurrency(udData.total)}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handlePrintIndividual(udId)}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg
-                                                 hover:bg-gray-50 transition-colors text-sm font-medium"
-                                    >
-                                        <Printer className="w-4 h-4" />
-                                        Cetak
-                                    </button>
-                                    <button
-                                        onClick={() => handleDownloadIndividual(udId, udData.nama_ud)}
-                                        disabled={downloading === udId}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg
-                                                 hover:bg-blue-100 transition-colors text-sm font-medium disabled:opacity-50"
-                                    >
-                                        {downloading === udId ? (
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : (
-                                            <FileText className="w-4 h-4" />
-                                        )}
-                                        PDF
-                                    </button>
+                                <div className="flex items-center justify-between sm:justify-end gap-4">
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Subtotal UD</p>
+                                        <p className="font-black text-gray-900 text-sm md:text-base tracking-tight">{formatCurrency(udData.total)}</p>
+                                    </div>
+                                    <div className="h-8 w-px bg-gray-200 mx-2 hidden sm:block" />
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handlePrintIndividual(udId)}
+                                            className="p-2 bg-white border border-gray-300 text-gray-700 rounded-xl
+                                                     hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
+                                            title="Cetak Nota UD"
+                                        >
+                                            <Printer className="w-5 h-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDownloadIndividual(udId, udData.nama_ud)}
+                                            disabled={downloading === udId}
+                                            className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-xl font-bold text-xs
+                                                     hover:bg-blue-100 transition-all active:scale-95 disabled:opacity-50"
+                                        >
+                                            {downloading === udId ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <FileText className="w-4 h-4" />
+                                            )}
+                                            PDF
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Items Table */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-600 uppercase">No</th>
-                                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Nama Barang</th>
-                                    <th className="text-center px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Satuan</th>
-                                    <th className="text-center px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Qty</th>
-                                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Hrg Modal</th>
-                                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Hrg Jual</th>
-                                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-600 uppercase">Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {udData.items.map((item, index) => (
-                                    <tr key={item._id} className="border-t border-gray-100">
-                                        <td className="px-6 py-3 text-gray-600">{index + 1}</td>
-                                        <td className="px-6 py-3 font-medium text-gray-900">
-                                            {item.nama_barang || item.barang_id?.nama_barang || '-'}
-                                        </td>
-                                        <td className="px-6 py-3 text-center">
-                                            <span className="px-2 py-1 text-xs bg-gray-100 rounded">
-                                                {item.satuan || item.barang_id?.satuan || '-'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-3 text-center font-medium">{item.qty}</td>
-                                        <td className="px-6 py-3 text-right text-gray-600">
-                                            {formatCurrency(item.harga_modal)}
-                                        </td>
-                                        <td className="px-6 py-3 text-right text-gray-600">
-                                            {formatCurrency(item.harga_jual)}
-                                        </td>
-                                        <td className="px-6 py-3 text-right font-medium text-gray-900">
-                                            {formatCurrency(item.subtotal_jual)}
-                                        </td>
+                        {/* Items - Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50/50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">No</th>
+                                        <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Nama Barang</th>
+                                        <th className="text-center px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Satuan</th>
+                                        <th className="text-center px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Qty</th>
+                                        <th className="text-right px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Hrg Modal</th>
+                                        <th className="text-right px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Hrg Jual</th>
+                                        <th className="text-right px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Subtotal</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {udData.items.map((item, index) => (
+                                        <tr key={item._id} className="hover:bg-blue-50/30 transition-colors">
+                                            <td className="px-6 py-4 text-xs font-bold text-gray-400">{index + 1}</td>
+                                            <td className="px-6 py-4 font-bold text-gray-900">
+                                                {item.nama_barang || item.barang_id?.nama_barang || '-'}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="px-2 py-1 text-[10px] font-bold bg-gray-100 text-gray-600 rounded-md uppercase">
+                                                    {item.satuan || item.barang_id?.satuan || '-'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center font-bold text-gray-700">{item.qty}</td>
+                                            <td className="px-6 py-4 text-right text-sm text-gray-500 font-medium">
+                                                {formatCurrency(item.harga_modal)}
+                                            </td>
+                                            <td className="px-6 py-4 text-right text-sm text-gray-600 font-bold">
+                                                {formatCurrency(item.harga_jual)}
+                                            </td>
+                                            <td className="px-6 py-4 text-right font-black text-blue-600 tracking-tight">
+                                                {formatCurrency(item.subtotal_jual)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Items - Mobile Card View */}
+                        <div className="md:hidden divide-y divide-gray-100">
+                            {udData.items.map((item, index) => (
+                                <div key={item._id} className="p-4 space-y-3">
+                                    <div className="flex justify-between items-start gap-4">
+                                        <div className="space-y-1">
+                                            <h4 className="font-bold text-gray-900 leading-tight">
+                                                {item.nama_barang || item.barang_id?.nama_barang || '-'}
+                                            </h4>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                {item.satuan || item.barang_id?.satuan || '-'} • Qty: <span className="text-gray-900">{item.qty}</span>
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Subtotal</p>
+                                            <p className="font-black text-blue-600 tracking-tight">{formatCurrency(item.subtotal_jual)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 pt-1">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Harga Modal</p>
+                                            <p className="text-xs font-semibold text-gray-600">{formatCurrency(item.harga_modal)}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Harga Jual</p>
+                                            <p className="text-xs font-bold text-gray-900">{formatCurrency(item.harga_jual)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            ))}
+                ))}
+            </div>
 
             {/* Created By Info */}
-            <div className="text-center text-sm text-gray-500">
-                Dibuat oleh: {data.created_by?.username || '-'} • {formatDate(data.createdAt)}
+            <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-200/50">
+                <p className="text-xs text-gray-500 font-medium">
+                    Dibuat oleh: <span className="text-gray-900 font-bold">{data.created_by?.username || '-'}</span>
+                    <span className="mx-2">•</span>
+                    {formatDate(data.createdAt)}
+                </p>
             </div>
 
             {/* Hidden Print Area */}

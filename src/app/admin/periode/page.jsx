@@ -220,139 +220,210 @@ export default function PeriodeManagementPage() {
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Management Periode</h1>
-                    <p className="text-gray-500 mt-1">Kelola data periode operasional</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">Management Periode</h1>
+                    <p className="text-sm sm:text-base text-gray-500 mt-0.5 sm:mt-1">Kelola data periode operasional</p>
                 </div>
                 <button
                     onClick={openCreateModal}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
-                   hover:bg-blue-700 transition-colors font-medium"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl
+                   hover:bg-blue-700 active:bg-blue-800 transition-all font-medium shadow-sm shadow-blue-200 w-full sm:w-auto"
                 >
                     <Plus className="w-5 h-5" />
                     Tambah Periode
                 </button>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {/* Content Container */}
+            <div className="space-y-4">
                 {loading ? (
-                    <div className="flex items-center justify-center py-12">
+                    <div className="bg-white rounded-2xl border border-gray-100 py-12 flex items-center justify-center">
                         <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                     </div>
                 ) : data.length === 0 ? (
-                    <EmptyState
-                        icon={Calendar}
-                        title="Belum ada data periode"
-                        description="Tambahkan data periode baru untuk memulai"
-                        action={
-                            <button
-                                onClick={openCreateModal}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                            >
-                                <Plus className="w-4 h-4" />
-                                Tambah Periode
-                            </button>
-                        }
-                    />
+                    <div className="bg-white rounded-2xl border border-gray-100">
+                        <EmptyState
+                            icon={Calendar}
+                            title="Belum ada data periode"
+                            description="Tambahkan data periode baru untuk memulai"
+                            action={
+                                <button
+                                    onClick={openCreateModal}
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Tambah Periode
+                                </button>
+                            }
+                        />
+                    </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50 border-b border-gray-200">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                            Nama Periode
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                            Tanggal Mulai
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                            Tanggal Selesai
-                                        </th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                            Aksi
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {data.map((item) => (
-                                        <tr key={item._id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <p className="font-medium text-gray-900">{item.nama_periode}</p>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <p className="text-sm text-gray-700">{formatDate(item.tanggal_mulai)}</p>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <p className="text-sm text-gray-700">{formatDate(item.tanggal_selesai)}</p>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full
-                            ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-                          `}>
+                        {/* Mobile View (Cards) */}
+                        <div className="grid grid-cols-1 gap-4 md:hidden">
+                            {data.map((item) => (
+                                <div key={item._id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-bold text-gray-900 text-lg">{item.nama_periode}</h3>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full uppercase tracking-wider
+                                    ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
+                                  `}>
                                                         {item.isActive ? 'Aktif' : 'Nonaktif'}
                                                     </span>
                                                     {item.isClosed && (
-                                                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-purple-100 text-purple-700 uppercase tracking-wider">
                                                             <Lock className="w-3 h-3" />
                                                             Closed
                                                         </span>
                                                     )}
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    {!item.isClosed && (
-                                                        <>
-                                                            <button
-                                                                onClick={() => openEditModal(item)}
-                                                                className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                                                                title="Edit"
-                                                            >
-                                                                <Edit className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => openCloseDialog(item)}
-                                                                className="p-2 hover:bg-purple-50 rounded-lg text-purple-600 transition-colors"
-                                                                title="Tutup Periode"
-                                                            >
-                                                                <Lock className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => openDeleteDialog(item)}
-                                                                className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-                                                                title="Hapus"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                    {item.isClosed && (
-                                                        <span className="text-sm text-gray-400 italic">Terkunci</span>
-                                                    )}
+                                            </div>
+                                            <div className="flex flex-col gap-1 mt-2 text-sm text-gray-600">
+                                                <div className="flex items-center gap-2">
+                                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                                    <span>{formatDate(item.tanggal_mulai)} - {formatDate(item.tanggal_selesai)}</span>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 pt-4 border-t border-gray-50">
+                                        {!item.isClosed ? (
+                                            <>
+                                                <button
+                                                    onClick={() => openEditModal(item)}
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-100 transition-colors"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    onClick={() => openCloseDialog(item)}
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-purple-50 text-purple-600 rounded-lg text-sm font-semibold hover:bg-purple-100 transition-colors"
+                                                >
+                                                    <Lock className="w-4 h-4" />
+                                                    Tutup
+                                                </button>
+                                                <button
+                                                    onClick={() => openDeleteDialog(item)}
+                                                    className="p-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <div className="w-full text-center py-2 text-sm text-gray-400 italic bg-gray-50 rounded-lg">
+                                                Periode Terkunci
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
 
-                        {/* Pagination */}
-                        <div className="p-4 border-t border-gray-100">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm text-gray-500">
-                                    Menampilkan {data.length} dari {pagination.totalDocuments} data
+                        {/* Desktop View (Table) */}
+                        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                Nama Periode
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                Tanggal Mulai
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                Tanggal Selesai
+                                            </th>
+                                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                Status
+                                            </th>
+                                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                Aksi
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {data.map((item) => (
+                                            <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <p className="font-semibold text-gray-900">{item.nama_periode}</p>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <p className="text-sm text-gray-700">{formatDate(item.tanggal_mulai)}</p>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <p className="text-sm text-gray-700">{formatDate(item.tanggal_selesai)}</p>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider
+                                  ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
+                                `}>
+                                                            {item.isActive ? 'Aktif' : 'Nonaktif'}
+                                                        </span>
+                                                        {item.isClosed && (
+                                                            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-purple-100 text-purple-700 uppercase tracking-wider">
+                                                                <Lock className="w-3 h-3" />
+                                                                Closed
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        {!item.isClosed ? (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => openEditModal(item)}
+                                                                    className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
+                                                                    title="Edit"
+                                                                >
+                                                                    <Edit className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => openCloseDialog(item)}
+                                                                    className="p-2 hover:bg-purple-50 rounded-lg text-purple-600 transition-all hover:scale-110"
+                                                                    title="Tutup Periode"
+                                                                >
+                                                                    <Lock className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => openDeleteDialog(item)}
+                                                                    className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
+                                                                    title="Hapus"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-sm text-gray-400 italic">Terkunci</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Pagination Container */}
+                        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p className="text-sm text-gray-500 font-medium">
+                                    Menampilkan <span className="text-gray-900">{data.length}</span> dari <span className="text-gray-900">{pagination.totalDocuments}</span> data
                                 </p>
-                                <Pagination
-                                    currentPage={pagination.page}
-                                    totalPages={pagination.totalPages}
-                                    onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-                                />
+                                <div className="w-full sm:w-auto overflow-x-auto flex justify-center">
+                                    <Pagination
+                                        currentPage={pagination.page}
+                                        totalPages={pagination.totalPages}
+                                        onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </>
@@ -364,10 +435,9 @@ export default function PeriodeManagementPage() {
                 isOpen={modalOpen}
                 onClose={closeModal}
                 title={editingItem ? 'Edit Periode' : 'Tambah Periode Baru'}
-                size="xl"
-                className="min-h-[400px]"
+                size="md"
             >
-                <form onSubmit={handleSubmit} className="space-y-4 p-10 pt-15">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Nama Periode */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">

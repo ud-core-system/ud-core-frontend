@@ -17,11 +17,14 @@ export default function Modal({
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            document.body.classList.add('modal-open');
         } else {
             document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
         }
         return () => {
             document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
         };
     }, [isOpen]);
 
@@ -48,7 +51,7 @@ export default function Modal({
             {/* Modal */}
             <div className={cn(
                 'relative w-full bg-white rounded-2xl shadow-xl animate-fade-in',
-                'max-h-[90vh] overflow-hidden flex flex-col',
+                'max-h-[70vh] sm:max-h-[90vh] overflow-hidden flex flex-col',
                 sizeClasses[size],
                 className
             )}>
