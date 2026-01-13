@@ -58,7 +58,7 @@ export function ToastProvider({ children }) {
         <ToastContext.Provider value={{ toast }}>
             {children}
             {/* Toast Container */}
-            <div className="toast-container">
+            <div className="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
                 {toasts.map((t) => {
                     const Icon = toastIcons[t.type];
                     return (
@@ -66,7 +66,7 @@ export function ToastProvider({ children }) {
                             key={t.id}
                             className={`
                 flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg
-                animate-slide-in min-w-[300px] max-w-[400px]
+                animate-slide-in min-w-[300px] max-w-[400px] pointer-events-auto
                 ${toastStyles[t.type]}
               `}
                         >
