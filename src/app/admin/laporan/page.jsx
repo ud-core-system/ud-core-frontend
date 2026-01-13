@@ -706,32 +706,31 @@ export default function LaporanPage() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Filter Data</h3>
-                {/* Periode */}
-                <div className="col-span-full">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Periode</label>
-                    <select
-                        value={filterPeriode}
-                        onChange={(e) => setFilterPeriode(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
-                    >
-                        <option value="">Semua Periode</option>
-                        {periodeList.map((p) => (
-                            <option key={p._id} value={p._id}>
-                                {p.nama_periode} ({formatDateShort(p.tanggal_mulai)} - {formatDateShort(p.tanggal_selesai)})
-                            </option>
-                        ))}
-                    </select>
-                </div>
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 p-4 md:p-6 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-end gap-4">
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                            Pilih Periode
+                        </label>
+                        <select
+                            value={filterPeriode}
+                            onChange={(e) => setFilterPeriode(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm"
+                        >
+                            <option value="">Semua Periode</option>
+                            {periodeList.map((p) => (
+                                <option key={p._id} value={p._id}>
+                                    {p.nama_periode} ({formatDateShort(p.tanggal_mulai)} - {formatDateShort(p.tanggal_selesai)})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
-                <div className="flex justify-end mt-4">
                     <button
                         onClick={fetchTransactions}
                         disabled={loading}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
-                     hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        className="w-full md:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
                     >
                         {loading ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
@@ -745,94 +744,129 @@ export default function LaporanPage() {
 
             {/* Summary */}
             {transactions.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-xl border border-gray-200 p-6">
-                        <p className="text-sm text-gray-500 mb-1">Total Transaksi</p>
-                        <p className="text-2xl font-bold text-gray-900">{transactions.length}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+                        <p className="text-[10px] md:text-sm font-medium text-gray-500 uppercase tracking-widest">Total Transaksi</p>
+                        <p className="text-xl md:text-2xl font-black text-gray-900 mt-1">{transactions.length}</p>
                     </div>
-                    <div className="bg-white rounded-xl border border-gray-200 p-6">
-                        <p className="text-sm text-gray-500 mb-1">Total Penjualan</p>
-                        <p className="text-2xl font-bold text-blue-600">{formatCurrency(totalJual)}</p>
+                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+                        <p className="text-[10px] md:text-sm font-medium text-gray-500 uppercase tracking-widest">Total Penjualan</p>
+                        <p className="text-xl md:text-2xl font-black text-blue-600 mt-1">{formatCurrency(totalJual)}</p>
                     </div>
-                    <div className="bg-white rounded-xl border border-gray-200 p-6">
-                        <p className="text-sm text-gray-500 mb-1">Total Keuntungan</p>
-                        <p className="text-2xl font-bold text-green-600">{formatCurrency(totalKeuntungan)}</p>
+                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+                        <p className="text-[10px] md:text-sm font-medium text-gray-500 uppercase tracking-widest">Total Keuntungan</p>
+                        <p className="text-xl md:text-2xl font-black text-green-600 mt-1">{formatCurrency(totalKeuntungan)}</p>
                     </div>
                 </div>
             )}
 
             {/* Data per UD */}
             {itemsByUD.length > 0 && (
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <div className="p-4 border-b border-gray-100">
-                        <h3 className="font-semibold text-gray-900">Data per UD</h3>
+                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                    <div className="p-4 md:p-5 border-b border-gray-100 flex items-center justify-between">
+                        <h3 className="font-bold text-gray-900">Data per UD</h3>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{itemsByUD.length} Unit</span>
                     </div>
-                    <div className="overflow-x-auto">
+
+                    {/* Desktop Table View */}
+                    <div className="hidden lg:block overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-gray-50/50">
                                 <tr>
-                                    <th className="text-left px-4 py-3">UD</th>
-                                    <th className="text-right px-4 py-3">Jumlah Item</th>
-                                    <th className="text-right px-4 py-3">Total Jual</th>
-                                    <th className="text-right px-4 py-3">Total Modal</th>
-                                    <th className="text-right px-4 py-3">Total Untung</th>
+                                    <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">UD</th>
+                                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Jumlah Item</th>
+                                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total Jual</th>
+                                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total Modal</th>
+                                    <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total Untung</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-gray-100">
                                 {itemsByUD.map((ud) => (
-                                    <tr key={ud._id} className="border-t border-gray-100">
-                                        <td className="px-4 py-3">
-                                            <p className="font-medium text-gray-900">{ud.nama_ud}</p>
-                                            <p className="text-sm text-gray-500">{ud.kode_ud}</p>
+                                    <tr key={ud._id} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <p className="font-bold text-gray-900">{ud.nama_ud}</p>
+                                            <p className="text-xs text-gray-500 font-medium">{ud.kode_ud}</p>
                                         </td>
-                                        <td className="px-4 py-3 text-right">{ud.items.length}</td>
-                                        <td className="px-4 py-3 text-right font-medium">{formatCurrency(ud.totalJual)}</td>
-                                        <td className="px-4 py-3 text-right font-medium">{formatCurrency(ud.totalModal)}</td>
-                                        <td className="px-4 py-3 text-right font-medium text-green-600">{formatCurrency(ud.totalKeuntungan)}</td>
+                                        <td className="px-6 py-4 text-right font-medium text-gray-600">{ud.items.length}</td>
+                                        <td className="px-6 py-4 text-right font-bold text-gray-900">{formatCurrency(ud.totalJual)}</td>
+                                        <td className="px-6 py-4 text-right font-bold text-gray-900">{formatCurrency(ud.totalModal)}</td>
+                                        <td className="px-6 py-4 text-right font-bold text-green-600">{formatCurrency(ud.totalKeuntungan)}</td>
                                     </tr>
                                 ))}
                             </tbody>
-                            <tfoot className="bg-gray-50 font-bold">
+                            <tfoot className="bg-gray-50/80 font-black">
                                 <tr>
-                                    <td className="px-4 py-3 text-right" colSpan={4}>TOTAL KEUNTUNGAN PERIODE INI</td>
-                                    <td className="px-4 py-3 text-right text-green-700">{formatCurrency(totalKeuntungan)}</td>
+                                    <td className="px-6 py-4 text-right uppercase text-sm" colSpan={4}>TOTAL KEUNTUNGAN PERIODE INI</td>
+                                    <td className="px-6 py-4 text-right text-lg text-green-700">{formatCurrency(totalKeuntungan)}</td>
                                 </tr>
                             </tfoot>
                         </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="lg:hidden p-4 space-y-4 divide-y divide-gray-100 print:hidden">
+                        {itemsByUD.map((ud) => (
+                            <div key={`mobile-ud-${ud._id}`} className="pt-4 first:pt-0 space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h4 className="font-black text-gray-900 uppercase tracking-tight">{ud.nama_ud}</h4>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{ud.kode_ud}</p>
+                                    </div>
+                                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-lg">{ud.items.length} Item</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Jual</p>
+                                        <p className="text-sm font-black text-gray-900">{formatCurrency(ud.totalJual)}</p>
+                                    </div>
+                                    <div className="bg-green-50 rounded-xl p-3 border border-green-100">
+                                        <p className="text-[10px] font-bold text-green-600/60 uppercase tracking-widest mb-1">Untung</p>
+                                        <p className="text-sm font-black text-green-700">{formatCurrency(ud.totalKeuntungan)}</p>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center text-[10px] px-2">
+                                    <span className="font-bold text-gray-400 uppercase">Total Modal</span>
+                                    <span className="font-bold text-gray-600">{formatCurrency(ud.totalModal)}</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
 
             {/* Generate Actions */}
             {transactions.length > 0 && (
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h3 className="font-semibold text-gray-900 mb-4">Generate Laporan</h3>
-                    <div className="flex flex-wrap gap-4">
+                <div className="bg-white rounded-2xl border border-gray-200 p-5 md:p-6 shadow-sm">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <Download className="w-4 h-4 text-gray-400" />
+                        Generate Laporan
+                    </h3>
+                    <div className="flex flex-col sm:flex-row gap-4">
                         <button
                             onClick={generateExcel}
                             disabled={generating}
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg
-                       hover:bg-green-700 transition-colors disabled:opacity-50"
+                            className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-medium shadow-lg shadow-green-500/20
+                       hover:bg-green-700 transition-all disabled:opacity-50 text-sm"
                         >
                             {generating ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
                                 <FileSpreadsheet className="w-5 h-5" />
                             )}
-                            Generate Laporan Excel
+                            Excel Report
                         </button>
                         <button
                             onClick={generateRekapPDF}
                             disabled={generating}
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-slate-700 text-white rounded-lg
-                       hover:bg-slate-800 transition-colors disabled:opacity-50"
+                            className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-700 text-white rounded-xl font-medium shadow-lg shadow-slate-500/20
+                       hover:bg-slate-800 transition-all disabled:opacity-50 text-sm"
                         >
                             {generating ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
                                 <FileText className="w-5 h-5" />
                             )}
-                            Generate Rekap PDF
+                            Rekap PDF
                         </button>
                     </div>
                 </div>
