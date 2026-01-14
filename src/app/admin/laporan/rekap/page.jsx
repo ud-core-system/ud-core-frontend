@@ -87,12 +87,6 @@ export default function LaporanRekapPage() {
                 periode_id: filterPeriode || undefined,
             };
 
-            // If a period is selected, we can also pass start/end dates to the API for optimization
-            if (selectedPeriode) {
-                params.tanggal_mulai = selectedPeriode.tanggal_mulai;
-                params.tanggal_selesai = selectedPeriode.tanggal_selesai;
-            }
-
             const response = await transaksiAPI.getAll(params);
             if (response.data.success) {
                 // Fetch full details for each transaction to get items and UD info
