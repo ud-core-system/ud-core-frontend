@@ -512,7 +512,7 @@ export default function EditTransaksiPage() {
                                                         onFocus={(e) => e.target.select()}
                                                         min="0.01"
                                                         step="any"
-                                                        className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                                        className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                                                     />
                                                 </td>
                                                 <td className="px-4 py-4">
@@ -522,7 +522,7 @@ export default function EditTransaksiPage() {
                                                         onChange={(e) => handleHargaModalChange(index, e.target.value)}
                                                         onFocus={(e) => e.target.select()}
                                                         min="0"
-                                                        className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                                        className="w-32 px-2 py-1.5 border border-gray-200 rounded-md text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                                                     />
                                                 </td>
                                                 <td className="px-4 py-4">
@@ -532,7 +532,7 @@ export default function EditTransaksiPage() {
                                                         onChange={(e) => handleHargaJualChange(index, e.target.value)}
                                                         onFocus={(e) => e.target.select()}
                                                         min="0"
-                                                        className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                                        className="w-32 px-2 py-1.5 border border-gray-200 rounded-md text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                                                     />
                                                 </td>
                                                 <td className="px-4 py-4 text-right font-semibold text-gray-900">
