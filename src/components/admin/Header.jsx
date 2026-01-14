@@ -4,12 +4,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { Bell, LogOut, User, ChevronDown, Settings } from 'lucide-react';
+import { Bell, LogOut, User, ChevronDown, Settings, Users } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 
 export default function Header() {
     const router = useRouter();
-    const { user, logout } = useAuth();
+    const { user, logout, isAdmin } = useAuth();
     const { toast } = useToast();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
@@ -82,11 +82,35 @@ export default function Header() {
 
                             {/* Menu Items */}
                             <div className="py-1">
-                                <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <button
+                                    onClick={() => {
+                                        setDropdownOpen(false);
+                                        router.push('/admin/profile');
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
                                     <User className="w-4 h-4" />
                                     Profil Saya
                                 </button>
-                                <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                {isAdmin?.() && (
+                                    <button
+                                        onClick={() => {
+                                            setDropdownOpen(false);
+                                            router.push('/admin/users');
+                                        }}
+                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <Users className="w-4 h-4" />
+                                        Manajemen User
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => {
+                                        setDropdownOpen(false);
+                                        router.push('/admin/settings');
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
                                     <Settings className="w-4 h-4" />
                                     Pengaturan
                                 </button>

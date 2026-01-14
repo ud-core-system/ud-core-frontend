@@ -14,13 +14,14 @@ import {
     LogOut,
     User,
     Settings,
+    Users,
 } from 'lucide-react';
 
 const AppHeader = () => {
     const [isUserMenuOpen, setUserMenuOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
     const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
-    const { user, logout, isSuperUser } = useAuth();
+    const { user, logout, isAdmin, isSuperUser } = useAuth();
     const [currentTime, setCurrentTime] = useState(new Date());
     const userMenuRef = useRef(null);
 
