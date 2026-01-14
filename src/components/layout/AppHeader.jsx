@@ -21,7 +21,15 @@ const AppHeader = () => {
     const [isDarkMode, setIsDarkMode] = useState(false);
     const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
     const { user, logout, isSuperUser } = useAuth();
+    const [currentTime, setCurrentTime] = useState(new Date());
     const userMenuRef = useRef(null);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         // Check if dark mode is enabled
@@ -79,7 +87,7 @@ const AppHeader = () => {
                     </button>
 
                     {/* Search Bar - Desktop Only */}
-                    <div className="hidden lg:block flex-1 max-w-md">
+                    {/* <div className="hidden lg:block flex-1 max-w-md">
                         <div className="relative">
                             <span className="absolute -translate-y-1/2 left-4 top-1/2 pointer-events-none">
                                 <Search className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -94,12 +102,34 @@ const AppHeader = () => {
                                 <span>K</span>
                             </button>
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Mobile Title */}
                     <h1 className="lg:hidden text-lg font-semibold text-gray-900 dark:text-white">
                         UD System
                     </h1>
+
+                    {/* Clock - Desktop Only */}
+                    <div className="hidden lg:flex flex-1 justify-center">
+                        <div className="flex flex-col items-center">
+                            <span className="text-sm font-semibold text-gray-800 dark:text-white capitalize">
+                                {currentTime.toLocaleDateString('id-ID', {
+                                    weekday: 'long',
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric',
+                                })}
+                            </span>
+                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 font-mono">
+                                {currentTime.toLocaleTimeString('id-ID', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    hour12: false,
+                                })} WIB
+                            </span>
+                        </div>
+                    </div>
 
                     {/* Right Actions - Mobile Toggle */}
                     <div className="lg:hidden">
@@ -115,7 +145,7 @@ const AppHeader = () => {
                 {/* Right Actions - Desktop */}
                 <div className="hidden lg:flex items-center gap-3">
                     {/* Dark Mode Toggle */}
-                    <button
+                    {/* <button
                         onClick={toggleDarkMode}
                         className="flex items-center justify-center w-10 h-10 text-gray-500 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
                         aria-label="Toggle Dark Mode"
@@ -125,7 +155,7 @@ const AppHeader = () => {
                         ) : (
                             <Moon className="w-5 h-5" />
                         )}
-                    </button>
+                    </button> */}
 
                     {/* Notifications */}
                     <button className="relative flex items-center justify-center w-10 h-10 text-gray-500 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
