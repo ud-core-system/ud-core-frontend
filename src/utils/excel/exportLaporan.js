@@ -163,24 +163,47 @@ export const exportLaporanExcel = async ({
 
     // Final Recap Block for Sheet 1
     ws1.addRow([]);
-    const grandTotalRow = ws1.addRow(['GRAND TOTAL KESELURUHAN']);
-    ws1.mergeCells(`A${grandTotalRow.number}:I${grandTotalRow.number}`);
-    grandTotalRow.font = { bold: true, size: 12 };
-    grandTotalRow.alignment = { horizontal: 'center' };
+    ws1.addRow([]);
 
-    ws1.addRow(['Rekapitulasi seluruh periode yang dipilih']);
+    const recapHeader = ws1.addRow(['GRAND TOTAL KESELURUHAN']);
+    ws1.mergeCells(`A${recapHeader.number}:I${recapHeader.number}`);
+    applyRowStyle(recapHeader, STYLES.title);
+    recapHeader.height = 25;
 
-    const rowFinalJual = ws1.addRow(['Total Penjualan', '', '', '', '', totalJualAll]);
+    const recapSubHeader = ws1.addRow(['Rekapitulasi seluruh periode yang dipilih']);
+    ws1.mergeCells(`A${recapSubHeader.number}:I${recapSubHeader.number}`);
+    recapSubHeader.font = { italic: true };
+    recapSubHeader.alignment = { horizontal: 'center' };
+
+    ws1.addRow([]);
+
+    // Table Header for Recap
+    const recapTableHeader = ws1.addRow(['Keterangan', '', '', '', '', 'Total Nilai (Rp)']);
+    ws1.mergeCells(`A${recapTableHeader.number}:E${recapTableHeader.number}`);
+    ws1.mergeCells(`F${recapTableHeader.number}:I${recapTableHeader.number}`);
+    applyRowStyle(recapTableHeader, STYLES.header);
+    recapTableHeader.height = 20;
+
+    // Table Rows
+    const rowFinalJual = ws1.addRow(['Total Penjualan Keseluruhan', '', '', '', '', totalJualAll]);
+    ws1.mergeCells(`A${rowFinalJual.number}:E${rowFinalJual.number}`);
+    ws1.mergeCells(`F${rowFinalJual.number}:I${rowFinalJual.number}`);
+    applyRowStyle(rowFinalJual, STYLES.totalRow);
     setCurrency(rowFinalJual.getCell(6));
-    rowFinalJual.font = { bold: true };
 
-    const rowFinalModal = ws1.addRow(['Total Modal', '', '', '', '', totalModalAll]);
+    const rowFinalModal = ws1.addRow(['Total Modal Keseluruhan', '', '', '', '', totalModalAll]);
+    ws1.mergeCells(`A${rowFinalModal.number}:E${rowFinalModal.number}`);
+    ws1.mergeCells(`F${rowFinalModal.number}:I${rowFinalModal.number}`);
+    applyRowStyle(rowFinalModal, STYLES.totalRow);
     setCurrency(rowFinalModal.getCell(6));
-    rowFinalModal.font = { bold: true };
 
-    const rowFinalUntung = ws1.addRow(['Total Keuntungan', '', '', '', '', totalUntungAll]);
+    const rowFinalUntung = ws1.addRow(['Total Keuntungan Keseluruhan', '', '', '', '', totalUntungAll]);
+    ws1.mergeCells(`A${rowFinalUntung.number}:E${rowFinalUntung.number}`);
+    ws1.mergeCells(`F${rowFinalUntung.number}:I${rowFinalUntung.number}`);
+    applyRowStyle(rowFinalUntung, STYLES.totalRow);
+    rowFinalUntung.getCell(1).font = { bold: true, color: { argb: 'FF0070C0' } };
+    rowFinalUntung.getCell(6).font = { bold: true, color: { argb: 'FF00B050' } }; // Green for profit
     setCurrency(rowFinalUntung.getCell(6));
-    rowFinalUntung.font = { bold: true, color: { argb: 'FF00B050' } }; // Green for profit
 
     // --- Sheets per UD ---
     itemsByUD.forEach((ud) => {
