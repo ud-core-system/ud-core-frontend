@@ -33,6 +33,8 @@ export default function EditTransaksiPage() {
     // Options state
     const [periodeList, setPeriodeList] = useState([]);
     const [dapurList, setDapurList] = useState([]);
+    const [udList, setUdList] = useState([]);
+    const [selectedUdId, setSelectedUdId] = useState('');
 
     // Search state
     const [searchQuery, setSearchQuery] = useState('');
@@ -65,6 +67,10 @@ export default function EditTransaksiPage() {
             }
             if (dapurRes.data.success) {
                 setDapurList(dapurRes.data.data);
+            }
+            const udRes = await udAPI.getAll({ limit: 100 });
+            if (udRes.data.success) {
+                setUdList(udRes.data.data);
             }
         } catch (error) {
             console.error('Failed to fetch options:', error);
@@ -139,7 +145,7 @@ export default function EditTransaksiPage() {
 
     // Debounced search function
     const searchBarang = useCallback(
-        debounce(async (query) => {
+        debounce(async (query, udId) => {
             if (!query || query.length < 2) {
                 setSearchResults([]);
                 setShowDropdown(false);
@@ -148,7 +154,11 @@ export default function EditTransaksiPage() {
 
             try {
                 setSearchLoading(true);
-                const response = await barangAPI.search({ q: query, limit: 10 });
+                const params = { q: query, limit: 10 };
+                if (udId) {
+                    params.ud_id = udId;
+                }
+                const response = await barangAPI.search(params);
                 if (response.data.success) {
                     setSearchResults(response.data.data);
                     setShowDropdown(true);
@@ -165,7 +175,7 @@ export default function EditTransaksiPage() {
     const handleSearchChange = (e) => {
         const value = e.target.value;
         setSearchQuery(value);
-        searchBarang(value);
+        searchBarang(value, selectedUdId);
     };
 
     const handleSelectBarang = (barang) => {
@@ -378,6 +388,32 @@ export default function EditTransaksiPage() {
                             placeholder="Pilih tanggal"
                         />
                     </div>
+                </div>
+
+                {/* Filter UD */}
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Filter Unit Dagang (UD)
+                    </label>
+                    <select
+                        value={selectedUdId}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setSelectedUdId(val);
+                            if (searchQuery.length >= 2) {
+                                searchBarang(searchQuery, val);
+                            }
+                        }}
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
+                    >
+                        <option value="">Semua UD (Tanpa Filter)</option>
+                        {udList.map((ud) => (
+                            <option key={ud._id} value={ud._id}>
+                                {ud.nama_ud} ({ud.kode_ud})
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 {/* Search Barang */}
