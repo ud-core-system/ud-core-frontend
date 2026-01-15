@@ -221,11 +221,14 @@ export default function DapurManagementPage() {
                     <>
                         {/* Mobile View (Cards) */}
                         <div className="grid grid-cols-1 gap-4 md:hidden">
-                            {data.map((item) => (
+                            {data.map((item, index) => (
                                 <div key={item._id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                                     <div className="flex items-start justify-between">
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-2">
+                                                <span className="bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded text-[10px]">
+                                                    #{(pagination.page - 1) * pagination.limit + index + 1}
+                                                </span>
                                                 <span className="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md border border-gray-200">
                                                     {item.kode_dapur}
                                                 </span>
@@ -268,6 +271,9 @@ export default function DapurManagementPage() {
                                 <table className="w-full">
                                     <thead className="bg-gray-50 border-b border-gray-200">
                                         <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">
+                                                No
+                                            </th>
                                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Kode Dapur
                                             </th>
@@ -286,8 +292,11 @@ export default function DapurManagementPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                        {data.map((item) => (
+                                        {data.map((item, index) => (
                                             <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {(pagination.page - 1) * pagination.limit + index + 1}
+                                                </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className="font-mono text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">
                                                         {item.kode_dapur}
@@ -303,8 +312,8 @@ export default function DapurManagementPage() {
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
                                                     <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider
-                              ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
-                            `}>
+                               ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
+                             `}>
                                                         {item.isActive ? 'Aktif' : 'Nonaktif'}
                                                     </span>
                                                 </td>
@@ -349,11 +358,12 @@ export default function DapurManagementPage() {
                             </div>
                         </div>
                     </>
-                )}
-            </div>
+                )
+                }
+            </div >
 
             {/* Create/Edit Modal */}
-            <Modal
+            < Modal
                 isOpen={modalOpen}
                 onClose={closeModal}
                 title={editingItem ? 'Edit Dapur' : 'Tambah Dapur Baru'}
@@ -430,10 +440,10 @@ export default function DapurManagementPage() {
                         </button>
                     </div>
                 </form>
-            </Modal>
+            </Modal >
 
             {/* Delete Confirm Dialog */}
-            <ConfirmDialog
+            < ConfirmDialog
                 isOpen={deleteDialogOpen}
                 onClose={() => {
                     setDeleteDialogOpen(false);
@@ -445,6 +455,6 @@ export default function DapurManagementPage() {
                 confirmText="Ya, Hapus"
                 loading={deleteLoading}
             />
-        </div>
+        </div >
     );
 }

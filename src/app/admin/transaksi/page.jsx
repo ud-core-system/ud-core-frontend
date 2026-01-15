@@ -255,6 +255,9 @@ export default function TransaksiListPage() {
                             <table className="w-full">
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-12">
+                                            No
+                                        </th>
                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Kode
                                         </th>
@@ -282,8 +285,11 @@ export default function TransaksiListPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {data.map((item) => (
+                                    {data.map((item, index) => (
                                         <tr key={item._id} className="hover:bg-blue-50/30 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {(pagination.page - 1) * pagination.limit + index + 1}
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <span className="font-mono text-xs font-bold bg-gray-100 px-2 py-1 rounded text-gray-700 border border-gray-200">
                                                     {item.kode_transaksi}
@@ -349,13 +355,18 @@ export default function TransaksiListPage() {
 
                         {/* Mobile Card View */}
                         <div className="md:hidden divide-y divide-gray-100">
-                            {data.map((item) => (
+                            {data.map((item, index) => (
                                 <div key={item._id} className="p-4 space-y-3 active:bg-gray-50 transition-colors">
                                     <div className="flex justify-between items-start">
                                         <div className="space-y-1">
-                                            <span className="font-mono text-[10px] font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-600 border border-gray-200">
-                                                {item.kode_transaksi}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded text-[10px]">
+                                                    #{(pagination.page - 1) * pagination.limit + index + 1}
+                                                </span>
+                                                <span className="font-mono text-[10px] font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-600 border border-gray-200">
+                                                    {item.kode_transaksi}
+                                                </span>
+                                            </div>
                                             <h3 className="font-bold text-gray-900 leading-tight">
                                                 {item.dapur_id?.nama_dapur || 'Unknown Dapur'}
                                             </h3>

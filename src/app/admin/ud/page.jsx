@@ -297,6 +297,9 @@ export default function UDManagementPage() {
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                            No
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                             Kode UD
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -317,8 +320,11 @@ export default function UDManagementPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                    {data.map((item) => (
+                                    {data.map((item, index) => (
                                         <tr key={item._id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {(pagination.page - 1) * pagination.limit + index + 1}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="font-mono text-sm bg-gray-100 px-2.5 py-1 rounded font-medium text-gray-900">
                                                     {item.kode_ud}
@@ -381,11 +387,14 @@ export default function UDManagementPage() {
 
                         {/* Card View (Mobile) */}
                         <div className="md:hidden divide-y divide-gray-100">
-                            {data.map((item) => (
+                            {data.map((item, index) => (
                                 <div key={item._id} className="p-4 space-y-4 text-[10px] sm:text-xs">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
+                                                <span className="bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded">
+                                                    #{(pagination.page - 1) * pagination.limit + index + 1}
+                                                </span>
                                                 <span className="font-mono bg-gray-100 px-2 py-0.5 rounded font-medium text-gray-600">
                                                     {item.kode_ud}
                                                 </span>

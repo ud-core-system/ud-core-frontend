@@ -260,11 +260,14 @@ export default function PeriodeManagementPage() {
                     <>
                         {/* Mobile View (Cards) */}
                         <div className="grid grid-cols-1 gap-4 md:hidden">
-                            {data.map((item) => (
+                            {data.map((item, index) => (
                                 <div key={item._id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                                     <div className="flex items-start justify-between">
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-2">
+                                                <span className="bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded text-[10px]">
+                                                    #{(pagination.page - 1) * pagination.limit + index + 1}
+                                                </span>
                                                 <h3 className="font-bold text-gray-900 text-lg">{item.nama_periode}</h3>
                                                 <div className="flex items-center gap-1.5">
                                                     <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full uppercase tracking-wider
@@ -329,6 +332,9 @@ export default function PeriodeManagementPage() {
                                 <table className="w-full">
                                     <thead className="bg-gray-50 border-b border-gray-200">
                                         <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">
+                                                No
+                                            </th>
                                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                                 Nama Periode
                                             </th>
@@ -347,8 +353,11 @@ export default function PeriodeManagementPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                        {data.map((item) => (
+                                        {data.map((item, index) => (
                                             <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {(pagination.page - 1) * pagination.limit + index + 1}
+                                                </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <p className="font-semibold text-gray-900">{item.nama_periode}</p>
                                                 </td>
