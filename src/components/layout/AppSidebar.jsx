@@ -59,6 +59,11 @@ const transactionItems = [
         path: '/admin/transaksi',
     },
     {
+        icon: ChefHat,
+        name: 'Laporan Dapur',
+        path: '/admin/laporan/dapur',
+    },
+    {
         icon: ClipboardList,
         name: 'Laporan Rekap',
         path: '/admin/laporan/rekap',
@@ -68,6 +73,7 @@ const transactionItems = [
         name: 'Cetak Laporan',
         path: '/admin/laporan',
     },
+    
 ];
 
 const othersItems = [

@@ -6,7 +6,10 @@ import { applyRowStyle, setCurrency, formatIndoDate, formatDateShort, toLocalDat
 export const exportLaporanExcel = async ({
     transactions,
     itemsByUD,
-    periodeLabel,
+    dapurName,
+    periodName,
+    periodRange,
+    selectedDate,
     totalJualAll,
     totalModalAll,
     totalUntungAll,
@@ -32,12 +35,21 @@ export const exportLaporanExcel = async ({
         { width: 15 }  // Keuntungan
     ];
 
-    // Title
+    // --- Title & Narrative ---
     ws1.mergeCells('A1:I1');
     const titleCell = ws1.getCell('A1');
-    titleCell.value = `DATA PENJUALAN ${periodeLabel}`;
+    titleCell.value = 'LAPORAN PENJUALAN DAPUR';
     applyRowStyle(ws1.getRow(1), STYLES.title);
     ws1.getRow(1).height = 30;
+
+    ws1.addRow([`DITUJUKAN UNTUK DAPUR: ${dapurName?.toUpperCase() || '-'}`]).font = { bold: true };
+    ws1.addRow([`PERIODE: ${periodName?.toUpperCase() || '-'} ${periodRange || ''}`]).font = { bold: true };
+
+    if (selectedDate) {
+        ws1.addRow([`TANGGAL: ${selectedDate}`]).font = { bold: true };
+    } else {
+        ws1.addRow([]); // Placeholder if no specific date
+    }
 
     ws1.addRow([]); // Blank row
 
@@ -192,81 +204,6 @@ export const exportLaporanExcel = async ({
     rowFinalUntung.getCell(1).font = { bold: true, color: { argb: 'FF0070C0' } };
     rowFinalUntung.getCell(6).font = { bold: true, color: { argb: 'FF00B050' } }; // Green for profit
     setCurrency(rowFinalUntung.getCell(6));
-
-    // --- Sheets per UD ---
-    itemsByUD.forEach((ud) => {
-        const sheetName = `LAP. UD. ${ud.nama_ud}`.substring(0, 31).replace(/[\[\]\*\?\/\\]/g, '');
-        const wsUD = wb.addWorksheet(sheetName);
-
-        wsUD.columns = [
-            { width: 6 }, { width: 35 }, { width: 8 }, { width: 10 },
-            { width: 16 }, { width: 18 }, { width: 16 }, { width: 18 }, { width: 15 }
-        ];
-
-        // UD Header Info
-        wsUD.addRow([`NOTE : ${ud.nama_ud.toUpperCase()}`]).font = { bold: true };
-        wsUD.addRow([`AN. ${ud.items[0]?.ud_id?.nama_pemilik || '-'}`]);
-        wsUD.addRow([`NO REK ${ud.items[0]?.ud_id?.bank || ''} : ${ud.items[0]?.ud_id?.no_rekening || '-'}`]);
-        wsUD.addRow([]);
-        wsUD.addRow([`KBLI MELIPUTI : ${(ud.items[0]?.ud_id?.kbli || []).join(', ')}`]);
-        wsUD.addRow([]);
-
-        // Table Header
-        const headerRow = wsUD.addRow(['No.', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Harga Jual Suplier', 'Harga Modal Suplier', 'Jumlah Modal Suplier', 'Keuntungan']);
-        applyRowStyle(headerRow, STYLES.header);
-
-        const udGroupedByDate = {};
-        ud.items.forEach(item => {
-            const dateKey = toLocalDate(item.tanggal);
-            if (!udGroupedByDate[dateKey]) udGroupedByDate[dateKey] = [];
-            udGroupedByDate[dateKey].push(item);
-        });
-
-        const sortedUdDates = Object.keys(udGroupedByDate).sort((a, b) => new Date(b) - new Date(a));
-
-        sortedUdDates.forEach(dateKey => {
-            // Date Header Row within UD Sheet
-            const dateRow = wsUD.addRow([formatIndoDate(dateKey).toUpperCase()]);
-            wsUD.mergeCells(`A${dateRow.number}:I${dateRow.number}`);
-            applyRowStyle(dateRow, STYLES.dateTitle);
-
-            let dailyJual = 0;
-            let dailyModal = 0;
-            let dailyProfit = 0;
-
-            udGroupedByDate[dateKey].forEach((item, idx) => {
-                const row = wsUD.addRow([
-                    idx + 1,
-                    item.nama_barang || item.barang_id?.nama_barang || '-',
-                    item.qty,
-                    item.satuan || item.barang_id?.satuan || '-',
-                    item.harga_jual,
-                    item.subtotal_jual,
-                    item.harga_modal,
-                    item.subtotal_modal,
-                    item.keuntungan
-                ]);
-                applyRowStyle(row, STYLES.yellowRow);
-                [5, 6, 7, 8, 9].forEach(col => setCurrency(row.getCell(col)));
-
-                dailyJual += item.subtotal_jual;
-                dailyModal += item.subtotal_modal;
-                dailyProfit += item.keuntungan;
-            });
-
-            // Daily Subtotal for this UD
-            const subtotalRow = wsUD.addRow([`Subtotal ${formatDateShort(dateKey)}`, '', '', '', '', dailyJual, '', dailyModal, dailyProfit]);
-            applyRowStyle(subtotalRow, STYLES.subtotalRow);
-            [6, 8, 9].forEach(col => setCurrency(subtotalRow.getCell(col)));
-
-            wsUD.addRow([]); // Small gap after each date group
-        });
-
-        // Final Total for UD
-        const totalRow = wsUD.addRow(['', 'GRAND TOTAL UD', '', '', '', ud.totalJual, '', ud.totalModal, ud.totalKeuntungan]);
-        applyRowStyle(totalRow, STYLES.totalRow);
-        [6, 8, 9].forEach(col => setCurrency(totalRow.getCell(col)));
-    });
 
     // Write and save
     const buffer = await wb.xlsx.writeBuffer();

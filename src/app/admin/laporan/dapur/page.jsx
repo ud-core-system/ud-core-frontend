@@ -9,15 +9,17 @@ import {
     Loader2,
     Filter,
     Calendar,
+    ChefHat,
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, udAPI, barangAPI } from '@/lib/api';
+import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, toLocalDate } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { exportLaporanExcel } from '@/utils/excel/exportLaporan';
+import { exportLaporanExcel } from '@/utils/dapurexcelpdf/exportLaporan';
 
-export default function LaporanPage() {
+export default function LaporanDapurPage() {
     const { toast } = useToast();
 
     // Options
@@ -28,6 +30,8 @@ export default function LaporanPage() {
 
     // Filters
     const [filterPeriode, setFilterPeriode] = useState('');
+    const [filterDapur, setFilterDapur] = useState('');
+    const [filterTanggal, setFilterTanggal] = useState(null);
 
     // Data
     const [transactions, setTransactions] = useState([]);
@@ -37,6 +41,10 @@ export default function LaporanPage() {
     useEffect(() => {
         fetchOptions();
     }, []);
+
+    useEffect(() => {
+        setFilterTanggal(null);
+    }, [filterPeriode]);
 
     const fetchOptions = async () => {
         try {
@@ -48,6 +56,7 @@ export default function LaporanPage() {
             ]);
 
             if (periodeRes.data.success) setPeriodeList(periodeRes.data.data);
+            if (dapurRes.data.success) setDapurList(dapurRes.data.data);
             if (udRes.data.success) setUdList(udRes.data.data);
             if (barangRes.data.success) setBarangList(barangRes.data.data);
         } catch (error) {
@@ -55,13 +64,20 @@ export default function LaporanPage() {
         }
     };
 
+
     const fetchTransactions = async () => {
+        if (!filterDapur) {
+            toast.warning('Silakan pilih dapur terlebih dahulu');
+            return;
+        }
+
         try {
             setLoading(true);
             const params = {
                 limit: 1000,
                 status: 'completed',
                 periode_id: filterPeriode || undefined,
+                dapur_id: filterDapur || undefined,
             };
             const response = await transaksiAPI.getAll(params);
             if (response.data.success) {
@@ -82,7 +98,9 @@ export default function LaporanPage() {
                     const endDate = toLocalDate(selectedPeriode.tanggal_selesai);
 
                     const isInRange = trxDate >= startDate && trxDate <= endDate;
-                    return isCompleted && isInRange;
+                    const matchesDate = filterTanggal ? trxDate === toLocalDate(filterTanggal) : true;
+
+                    return isCompleted && isInRange && matchesDate;
                 });
                 setTransactions(detailedTransactions);
                 toast.success(`Ditemukan ${detailedTransactions.length} transaksi`);
@@ -96,7 +114,7 @@ export default function LaporanPage() {
 
     const getItemsByUD = () => {
         const barangMap = new Map(barangList.map(b => [b._id, b]));
-        const udMap = {}; // We need a fresh map for grouping results, the udList map is for lookup
+        const udMap = {};
 
         const udLookupMap = new Map(udList.map(u => [u._id, u]));
 
@@ -145,7 +163,6 @@ export default function LaporanPage() {
         return Object.values(udMap);
     };
 
-    // Helper to format date in Indonesian
     const formatIndoDate = (date) => {
         return new Intl.DateTimeFormat('id-ID', {
             weekday: 'long',
@@ -155,7 +172,6 @@ export default function LaporanPage() {
         }).format(new Date(date));
     };
 
-    // Generate Excel Report
     const generateExcel = async () => {
         if (transactions.length === 0) {
             toast.warning('Tidak ada data untuk dibuat laporan');
@@ -166,9 +182,11 @@ export default function LaporanPage() {
         const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
         const periodName = period ? period.nama_periode : 'Semua Periode';
         const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
-        const periodeLabel = `${periodName.toUpperCase()} ${periodRange}`;
+        const selectedDapur = dapurList.find(d => d._id === filterDapur);
+        const dapurLabel = selectedDapur ? `DAPUR: ${selectedDapur.nama_dapur.toUpperCase()}` : '';
+        const tanggalLabel = filterTanggal ? `TANGGAL: ${formatDateShort(filterTanggal)}` : '';
+        const periodeLabel = `${periodName.toUpperCase()} ${periodRange} ${dapurLabel} ${tanggalLabel}`;
 
-        // Calculate global totals
         const totalJualAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_jual, 0) || 0), 0);
         const totalModalAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_modal, 0) || 0), 0);
         const totalUntungAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.keuntungan, 0) || 0), 0);
@@ -176,12 +194,16 @@ export default function LaporanPage() {
         setGenerating(true);
         try {
             const timestamp = new Date().toISOString().split('T')[0];
-            const fileName = `Laporan_Penjualan_${periodName.replace(/\s+/g, '_')}_${timestamp}.xlsx`;
+            const datePart = filterTanggal ? `_${toLocalDate(filterTanggal)}` : '';
+            const fileName = `Laporan_Dapur_${selectedDapur?.nama_dapur.replace(/\s+/g, '_')}_${periodName.replace(/\s+/g, '_')}${datePart}_${timestamp}.xlsx`;
 
             await exportLaporanExcel({
                 transactions,
                 itemsByUD,
-                periodeLabel,
+                dapurName: selectedDapur?.nama_dapur,
+                periodName: periodName,
+                periodRange: periodRange,
+                selectedDate: filterTanggal ? formatDateShort(filterTanggal) : null,
                 totalJualAll,
                 totalModalAll,
                 totalUntungAll,
@@ -199,7 +221,6 @@ export default function LaporanPage() {
         }
     };
 
-    // Generate PDF Rekap (All UDs)
     const generateRekapPDF = () => {
         if (transactions.length === 0) {
             toast.warning('Tidak ada data untuk dibuat laporan');
@@ -208,35 +229,35 @@ export default function LaporanPage() {
 
         setGenerating(true);
         try {
-            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
+            const doc = new jsPDF('l', 'mm', 'a4');
             const pageWidth = doc.internal.pageSize.getWidth();
 
-            // Find selected period info
             const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
             const periodName = period ? period.nama_periode : 'Semua Periode';
             const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
+            const selectedDapur = dapurList.find(d => d._id === filterDapur);
+            const dateLabel = filterTanggal ? `TANGGAL: ${formatDateShort(filterTanggal).toUpperCase()}` : '';
             const periodeLabel = `${periodName.toUpperCase()} ${periodRange}`;
+            const dapurLabel = `DAPUR: ${selectedDapur?.nama_dapur.toUpperCase()} ${dateLabel}`;
             const printTimestamp = `Dicetak pada: ${new Date().toLocaleString('id-ID')}`;
 
-            // Header
             doc.setFontSize(18);
             doc.setFont('helvetica', 'bold');
-            doc.text(`LAPORAN REKAP PENJUALAN`, pageWidth / 2, 15, { align: 'center' });
+            doc.text(`LAPORAN REKAP DAPUR`, pageWidth / 2, 15, { align: 'center' });
             doc.setFontSize(12);
-            doc.text(periodeLabel, pageWidth / 2, 22, { align: 'center' });
+            doc.text(dapurLabel, pageWidth / 2, 22, { align: 'center' });
+            doc.text(periodeLabel, pageWidth / 2, 28, { align: 'center' });
 
             doc.setFontSize(8);
             doc.setFont('helvetica', 'normal');
             doc.text(printTimestamp, pageWidth - 14, 10, { align: 'right' });
 
-            // Calculate global totals
             const totalJualAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_jual, 0) || 0), 0);
             const totalModalAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_modal, 0) || 0), 0);
             const totalUntungAll = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.keuntungan, 0) || 0), 0);
 
-            // Summary Table
             autoTable(doc, {
-                startY: 30,
+                startY: 35,
                 head: [['Ringkasan Periode', 'Total Penjualan', 'Total Modal', 'Total Keuntungan']],
                 body: [[
                     '',
@@ -249,11 +270,9 @@ export default function LaporanPage() {
                 headStyles: { fillColor: [71, 85, 105] },
             });
 
-            // Create lookup maps for enrichment
             const barangMap = new Map(barangList.map(b => [b._id, b]));
             const udLookupMap = new Map(udList.map(u => [u._id, u]));
 
-            // Group by date THEN by UD
             const groupedData = {};
             transactions.forEach(trx => {
                 const dateKey = toLocalDate(trx.tanggal);
@@ -290,7 +309,6 @@ export default function LaporanPage() {
                 const dayData = groupedData[dateKey];
                 const udGroups = dayData.uds;
 
-                // Date Sub-header
                 doc.setFontSize(11);
                 doc.setFont('helvetica', 'bold');
                 if (currentY > 180) {
@@ -309,7 +327,6 @@ export default function LaporanPage() {
 
                 sortedUdIds.forEach(udId => {
                     const group = udGroups[udId];
-                    // UD Row (Styled as header)
                     tableRows.push([
                         { content: group.nama_ud.toUpperCase(), colSpan: 9, styles: { fillColor: [241, 245, 249], fontStyle: 'bold' } }
                     ]);
@@ -335,7 +352,6 @@ export default function LaporanPage() {
                         udProfit += item.keuntungan;
                     });
 
-                    // UD Subtotal
                     tableRows.push([
                         { content: `Subtotal ${group.nama_ud}`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
                         { content: formatCurrency(udJual), styles: { fontStyle: 'bold' } },
@@ -349,7 +365,6 @@ export default function LaporanPage() {
                     dateProfit += udProfit;
                 });
 
-                // Date Total Row
                 tableRows.push([
                     { content: `TOTAL ${formatDateShort(dateKey)}`, colSpan: 5, styles: { halign: 'right', fillColor: [226, 232, 240], fontStyle: 'bold' } },
                     { content: formatCurrency(dateJual), styles: { fillColor: [226, 232, 240], fontStyle: 'bold' } },
@@ -377,7 +392,6 @@ export default function LaporanPage() {
                     },
                     margin: { top: 20 },
                     didDrawPage: (data) => {
-                        // Footer on each page
                         doc.setFontSize(8);
                         doc.setFont('helvetica', 'normal');
                         doc.text(`Halaman ${doc.internal.getNumberOfPages()}`, pageWidth - 14, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
@@ -388,7 +402,6 @@ export default function LaporanPage() {
                 currentY = doc.lastAutoTable.finalY + 10;
             });
 
-            // Final Recap Block
             if (currentY > 200) {
                 doc.addPage();
                 currentY = 20;
@@ -412,109 +425,8 @@ export default function LaporanPage() {
                 }
             });
 
-            // --- Individual UD Pages ---
-            itemsByUD.forEach((ud) => {
-                doc.addPage();
-
-                // Header UD
-                doc.setFontSize(16);
-                doc.setFont('helvetica', 'bold');
-                doc.text(`LAPORAN DETAIL UD: ${ud.nama_ud.toUpperCase()}`, 14, 20);
-
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'normal');
-
-                // Get full UD details from udList
-                const fullUdInfo = udList.find(u => u._id === ud._id);
-
-                doc.text(`Pemilik: ${fullUdInfo?.nama_pemilik || '-'}`, 14, 28);
-                doc.text(`Rekening: ${fullUdInfo?.bank || ''} - ${fullUdInfo?.no_rekening || '-'}`, 14, 33);
-                doc.text(`KBLI: ${(fullUdInfo?.kbli || []).join(', ')}`, 14, 38);
-                doc.text(`Periode: ${periodeLabel}`, 14, 43);
-
-                doc.setFontSize(8);
-                doc.text(printTimestamp, pageWidth - 14, 15, { align: 'right' });
-
-                // Group items by date for this UD
-                const udGroupedByDate = {};
-                ud.items.forEach(item => {
-                    const dateKey = item.tanggal.split('T')[0];
-                    if (!udGroupedByDate[dateKey]) udGroupedByDate[dateKey] = [];
-                    udGroupedByDate[dateKey].push(item);
-                });
-
-                const sortedUdDates = Object.keys(udGroupedByDate).sort((a, b) => new Date(b) - new Date(a));
-                const udTableRows = [];
-
-                sortedUdDates.forEach(dateKey => {
-                    // Date Header Row
-                    udTableRows.push([
-                        { content: formatDateShort(dateKey).toUpperCase(), colSpan: 10, styles: { fillColor: [241, 245, 249], fontStyle: 'bold' } }
-                    ]);
-
-                    let dailyJual = 0;
-                    let dailyModal = 0;
-                    let dailyProfit = 0;
-
-                    udGroupedByDate[dateKey].forEach((item, idx) => {
-                        udTableRows.push([
-                            idx + 1,
-                            formatDateShort(item.tanggal),
-                            item.nama_barang || item.barang_id?.nama_barang || '-',
-                            item.qty,
-                            item.satuan || item.barang_id?.satuan || '-',
-                            formatCurrency(item.harga_jual),
-                            formatCurrency(item.subtotal_jual),
-                            formatCurrency(item.harga_modal),
-                            formatCurrency(item.subtotal_modal),
-                            formatCurrency(item.keuntungan)
-                        ]);
-                        dailyJual += item.subtotal_jual;
-                        dailyModal += item.subtotal_modal;
-                        dailyProfit += item.keuntungan;
-                    });
-
-                    // Daily Subtotal Row
-                    udTableRows.push([
-                        { content: `Subtotal ${formatDateShort(dateKey)}`, colSpan: 6, styles: { halign: 'right', fontStyle: 'bold', fillColor: [248, 250, 252] } },
-                        { content: formatCurrency(dailyJual), styles: { fontStyle: 'bold', fillColor: [248, 250, 252] } },
-                        '',
-                        { content: formatCurrency(dailyModal), styles: { fontStyle: 'bold', fillColor: [248, 250, 252] } },
-                        { content: formatCurrency(dailyProfit), styles: { fontStyle: 'bold', fillColor: [248, 250, 252] } }
-                    ]);
-                });
-
-                autoTable(doc, {
-                    startY: 50,
-                    head: [['No', 'Tanggal', 'Nama Barang', 'Qty', 'Sat', 'Hrg Jual', 'Tot Jual', 'Hrg Modal', 'Tot Modal', 'Untung']],
-                    body: udTableRows,
-                    theme: 'grid',
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [30, 41, 59] },
-                    columnStyles: {
-                        0: { cellWidth: 10, halign: 'center' },
-                        1: { cellWidth: 20 },
-                        3: { cellWidth: 12, halign: 'center' },
-                        4: { cellWidth: 12, halign: 'center' },
-                        5: { halign: 'right' },
-                        6: { halign: 'right' },
-                        7: { halign: 'right' },
-                        8: { halign: 'right' },
-                        9: { halign: 'right' },
-                    },
-                    foot: [[
-                        { content: 'GRAND TOTAL UD', colSpan: 6, styles: { halign: 'right', fontStyle: 'bold' } },
-                        { content: formatCurrency(ud.totalJual), styles: { fontStyle: 'bold' } },
-                        '',
-                        { content: formatCurrency(ud.totalModal), styles: { fontStyle: 'bold' } },
-                        { content: formatCurrency(ud.totalKeuntungan), styles: { fontStyle: 'bold' } }
-                    ]],
-                    footStyles: { fillColor: [226, 232, 240], textColor: [0, 0, 0] }
-                });
-            });
-
             const timestamp = new Date().toISOString().split('T')[0];
-            doc.save(`Laporan_Rekap_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`);
+            doc.save(`Laporan_Dapur_${selectedDapur?.nama_dapur.replace(/\s+/g, '_')}_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`);
             toast.success('Laporan PDF Rekap berhasil dibuat');
         } catch (error) {
             toast.error('Gagal membuat laporan PDF');
@@ -525,22 +437,38 @@ export default function LaporanPage() {
     };
 
     const itemsByUD = getItemsByUD();
-
-    const totalJual = itemsByUD.reduce((sum, ud) => sum + ud.totalJual, 0);
-    const totalKeuntungan = itemsByUD.reduce((sum, ud) => sum + ud.totalKeuntungan, 0);
+    const totalJual = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.subtotal_jual, 0) || 0), 0);
+    const totalKeuntungan = transactions.reduce((sum, trx) => sum + (trx.items?.reduce((s, i) => s + i.keuntungan, 0) || 0), 0);
 
     return (
         <div className="space-y-6">
-            {/* Page Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Laporan</h1>
-                <p className="text-gray-500 mt-1">Generate nota PDF dan laporan Excel</p>
+                <h1 className="text-2xl font-bold text-gray-900">Laporan Dapur</h1>
+                <p className="text-gray-500 mt-1">Generate laporan berdasarkan dapur dan periode</p>
             </div>
 
-            {/* Filters */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 p-4 md:p-6 shadow-sm">
-                <div className="flex flex-col md:flex-row md:items-end gap-4">
-                    <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-end">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <ChefHat className="w-4 h-4 text-gray-400" />
+                            Pilih Dapur
+                        </label>
+                        <select
+                            value={filterDapur}
+                            onChange={(e) => setFilterDapur(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm"
+                        >
+                            <option value="">Pilih Dapur</option>
+                            {dapurList.map((d) => (
+                                <option key={d._id} value={d._id}>
+                                    {d.nama_dapur}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-gray-400" />
                             Pilih Periode
@@ -559,10 +487,28 @@ export default function LaporanPage() {
                         </select>
                     </div>
 
+                    {filterPeriode && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-gray-400" />
+                                Pilih Tanggal (Opsional)
+                            </label>
+                            <DatePicker
+                                selected={filterTanggal}
+                                onChange={(date) => setFilterTanggal(date)}
+                                placeholder="Pilih tanggal & waktu"
+                                showTimeSelect
+                                dateFormat="Pp"
+                                minDate={filterPeriode ? new Date(periodeList.find(p => p._id === filterPeriode)?.tanggal_mulai) : null}
+                                maxDate={filterPeriode ? new Date(periodeList.find(p => p._id === filterPeriode)?.tanggal_selesai) : null}
+                            />
+                        </div>
+                    )}
+
                     <button
                         onClick={fetchTransactions}
                         disabled={loading}
-                        className="w-full md:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                        className="w-full px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
                     >
                         {loading ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
@@ -574,7 +520,6 @@ export default function LaporanPage() {
                 </div>
             </div>
 
-            {/* Summary */}
             {transactions.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
@@ -592,7 +537,6 @@ export default function LaporanPage() {
                 </div>
             )}
 
-            {/* Data per UD */}
             {itemsByUD.length > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
                     <div className="p-4 md:p-5 border-b border-gray-100 flex items-center justify-between">
@@ -600,7 +544,6 @@ export default function LaporanPage() {
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{itemsByUD.length} Unit</span>
                     </div>
 
-                    {/* Desktop Table View */}
                     <div className="hidden lg:block overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gray-50/50">
@@ -628,14 +571,13 @@ export default function LaporanPage() {
                             </tbody>
                             <tfoot className="bg-gray-50/80 font-black">
                                 <tr>
-                                    <td className="px-6 py-4 text-right uppercase text-sm" colSpan={4}>TOTAL KEUNTUNGAN PERIODE INI</td>
+                                    <td className="px-6 py-4 text-right uppercase text-sm" colSpan={4}>TOTAL KEUNTUNGAN DAPUR</td>
                                     <td className="px-6 py-4 text-right text-lg text-green-700">{formatCurrency(totalKeuntungan)}</td>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
 
-                    {/* Mobile Card View */}
                     <div className="lg:hidden p-4 space-y-4 divide-y divide-gray-100 print:hidden">
                         {itemsByUD.map((ud) => (
                             <div key={`mobile-ud-${ud._id}`} className="pt-4 first:pt-0 space-y-4">
@@ -666,7 +608,6 @@ export default function LaporanPage() {
                 </div>
             )}
 
-            {/* Generate Actions */}
             {transactions.length > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-200 p-5 md:p-6 shadow-sm">
                     <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -704,12 +645,11 @@ export default function LaporanPage() {
                 </div>
             )}
 
-            {/* Empty State */}
             {!loading && transactions.length === 0 && (
                 <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
                     <FileBarChart2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">Tidak Ada Data</h3>
-                    <p className="text-gray-500">Pilih filter dan klik "Cari Data" untuk memuat transaksi</p>
+                    <p className="text-gray-500">Pilih dapur and filter periode, kemudian klik "Cari Data"</p>
                 </div>
             )}
         </div>

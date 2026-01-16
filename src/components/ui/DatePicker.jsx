@@ -12,6 +12,7 @@ export default function DatePicker({
     minDate,
     maxDate,
     className = '',
+    showTimeSelect = false,
     ...props
 }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -24,17 +25,33 @@ export default function DatePicker({
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
+        let dateStr = `${day}/${month}/${year}`;
+
+        if (showTimeSelect) {
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            dateStr += ` ${hours}:${minutes}`;
+        }
+        return dateStr;
     };
 
     // Parse dd/mm/yyyy to Date object
     const parseDate = (str) => {
-        const parts = str.split('/');
-        if (parts.length === 3) {
-            const day = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10) - 1;
-            const year = parseInt(parts[2], 10);
-            const date = new Date(year, month, day);
+        const parts = str.split(' ');
+        const datePart = parts[0];
+        const timePart = parts[1] || '00:00';
+
+        const dParts = datePart.split('/');
+        const tParts = timePart.split(':');
+
+        if (dParts.length === 3) {
+            const day = parseInt(dParts[0], 10);
+            const month = parseInt(dParts[1], 10) - 1;
+            const year = parseInt(dParts[2], 10);
+            const hours = tParts.length >= 1 ? parseInt(tParts[0], 10) : 0;
+            const minutes = tParts.length >= 2 ? parseInt(tParts[1], 10) : 0;
+
+            const date = new Date(year, month, day, hours, minutes);
             if (!isNaN(date.getTime())) {
                 return date;
             }
@@ -120,6 +137,7 @@ export default function DatePicker({
                             minDate={minDate}
                             maxDate={maxDate}
                             inline
+                            showTimeSelect={showTimeSelect}
                             calendarClassName="compact-calendar"
                             {...props}
                         />
