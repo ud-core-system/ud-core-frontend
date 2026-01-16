@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, udAPI, barangAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
-import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, toLocalDate } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { exportLaporanExcel } from '@/utils/excel/exportLaporan';
@@ -76,12 +76,6 @@ export default function LaporanPage() {
                 )).filter(trx => {
                     const isCompleted = trx.status === 'completed';
                     if (!selectedPeriode) return isCompleted;
-
-                    // Unified local date string helper
-                    const toLocalDate = (dateStr) => {
-                        const d = new Date(dateStr);
-                        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                    };
 
                     const trxDate = toLocalDate(trx.tanggal);
                     const startDate = toLocalDate(selectedPeriode.tanggal_mulai);
@@ -262,7 +256,7 @@ export default function LaporanPage() {
             // Group by date THEN by UD
             const groupedData = {};
             transactions.forEach(trx => {
-                const dateKey = trx.tanggal.split('T')[0];
+                const dateKey = toLocalDate(trx.tanggal);
                 if (!groupedData[dateKey]) groupedData[dateKey] = { tanggal: dateKey, uds: {} };
 
                 trx.items?.forEach(item => {

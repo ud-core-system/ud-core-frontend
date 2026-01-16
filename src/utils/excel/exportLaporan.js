@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { STYLES } from './styles';
-import { applyRowStyle, setCurrency, formatIndoDate, formatDateShort } from './helpers';
+import { applyRowStyle, setCurrency, formatIndoDate, formatDateShort, toLocalDate } from './helpers';
 
 export const exportLaporanExcel = async ({
     transactions,
@@ -41,18 +41,6 @@ export const exportLaporanExcel = async ({
 
     ws1.addRow([]); // Blank row
 
-    // Quick Summary
-    const summaryHeaderRow = ws1.addRow(['RINGKASAN PERIODE']);
-    ws1.mergeCells(`A${summaryHeaderRow.number}:I${summaryHeaderRow.number}`);
-    summaryHeaderRow.font = { bold: true };
-
-    const rowJual = ws1.addRow(['Total Penjualan', '', '', '', '', totalJualAll]);
-    setCurrency(rowJual.getCell(6));
-    const rowModal = ws1.addRow(['Total Modal', '', '', '', '', totalModalAll]);
-    setCurrency(rowModal.getCell(6));
-    const rowUntung = ws1.addRow(['Total Keuntungan', '', '', '', '', totalUntungAll]);
-    setCurrency(rowUntung.getCell(6));
-
     ws1.addRow([]);
 
     // Grouping logic (re-implemented from page.jsx for decoupling)
@@ -61,7 +49,7 @@ export const exportLaporanExcel = async ({
     const udLookupMap = new Map(udList.map(u => [u._id, u]));
 
     transactions.forEach(trx => {
-        const dateKey = trx.tanggal.split('T')[0];
+        const dateKey = toLocalDate(trx.tanggal);
         if (!groupedData[dateKey]) groupedData[dateKey] = { tanggal: dateKey, uds: {} };
 
         trx.items?.forEach(item => {
@@ -227,10 +215,9 @@ export const exportLaporanExcel = async ({
         const headerRow = wsUD.addRow(['No.', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Harga Jual Suplier', 'Harga Modal Suplier', 'Jumlah Modal Suplier', 'Keuntungan']);
         applyRowStyle(headerRow, STYLES.header);
 
-        // Group items by date for this UD
         const udGroupedByDate = {};
         ud.items.forEach(item => {
-            const dateKey = item.tanggal.split('T')[0];
+            const dateKey = toLocalDate(item.tanggal);
             if (!udGroupedByDate[dateKey]) udGroupedByDate[dateKey] = [];
             udGroupedByDate[dateKey].push(item);
         });

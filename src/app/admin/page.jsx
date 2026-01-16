@@ -121,25 +121,60 @@ export default function DashboardPage() {
             ]);
 
             if (summaryRes.data.success) {
-                setStats(summaryRes.data.data);
+                let statsData = summaryRes.data.data;
+
+                // For UD filtering, we need to calculate totals from transactions if the backend doesn't provide it
+                if (filterUD && trxRes.data.success) {
+                    // Fetch details for filtering items by UD if they're not in the main list
+                    // Using a limit to avoid overloading, but enough for a dashboard view
+                    const detailedTransactions = await Promise.all(
+                        trxRes.data.data.slice(0, 100).map(async (trx) => {
+                            if (trx.items) return trx; // Already has items
+                            try {
+                                const detailRes = await transaksiAPI.getById(trx._id);
+                                return detailRes.data.success ? detailRes.data.data : trx;
+                            } catch (e) {
+                                return trx;
+                            }
+                        })
+                    );
+
+                    let totalPenjualan = 0;
+                    let totalModal = 0;
+                    let totalKeuntungan = 0;
+
+                    detailedTransactions.forEach(trx => {
+                        trx.items?.forEach(item => {
+                            const uId = item.ud_id?._id || item.ud_id;
+                            if (uId === filterUD) {
+                                totalPenjualan += (item.subtotal_jual || 0);
+                                totalModal += (item.subtotal_modal || 0);
+                                totalKeuntungan += (item.keuntungan || 0);
+                            }
+                        });
+                    });
+
+                    statsData = {
+                        ...statsData,
+                        totalPenjualan,
+                        totalModal,
+                        totalKeuntungan
+                    };
+
+                    // Also process chart data with these detailed transactions
+                    processChartData(detailedTransactions, barangRes.data.data, udList);
+                } else if (trxRes.data.success && barangRes.data.success) {
+                    // Standard processing (may be limited to what's available in trxRes)
+                    processChartData(trxRes.data.data, barangRes.data.data, udList);
+                }
+
+                setStats(statsData);
             }
             if (recentRes.data.success) {
                 setRecentTransactions(recentRes.data.data);
             }
             if (salesRes.data.success) {
                 setSalesByUD(salesRes.data.data);
-            }
-
-            if (trxRes.data.success && barangRes.data.success) {
-                // To get items, we need to fetch details for each transaction if the broad list doesn't have them
-                // For efficiency in dashboard, we'll try to use what's available or fetch if needed
-                const detailedTransactions = await Promise.all(
-                    trxRes.data.data.slice(0, 50).map(async (trx) => {
-                        const detailRes = await transaksiAPI.getById(trx._id);
-                        return detailRes.data.success ? detailRes.data.data : trx;
-                    })
-                );
-                processChartData(detailedTransactions, barangRes.data.data, udList);
             }
         } catch (error) {
             toast.error(getErrorMessage(error));

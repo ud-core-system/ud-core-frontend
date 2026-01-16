@@ -165,6 +165,15 @@ export function toDateInputValue(date) {
 }
 
 /**
+ * Format date to YYYY-MM-DD in local time
+ */
+export function toLocalDate(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/**
  * Status badge colors
  */
 export const statusColors = {
