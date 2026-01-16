@@ -41,18 +41,6 @@ export const exportLaporanExcel = async ({
 
     ws1.addRow([]); // Blank row
 
-    // Quick Summary
-    const summaryHeaderRow = ws1.addRow(['RINGKASAN PERIODE']);
-    ws1.mergeCells(`A${summaryHeaderRow.number}:I${summaryHeaderRow.number}`);
-    summaryHeaderRow.font = { bold: true };
-
-    const rowJual = ws1.addRow(['Total Penjualan', '', '', '', '', totalJualAll]);
-    setCurrency(rowJual.getCell(6));
-    const rowModal = ws1.addRow(['Total Modal', '', '', '', '', totalModalAll]);
-    setCurrency(rowModal.getCell(6));
-    const rowUntung = ws1.addRow(['Total Keuntungan', '', '', '', '', totalUntungAll]);
-    setCurrency(rowUntung.getCell(6));
-
     ws1.addRow([]);
 
     // Grouping logic (re-implemented from page.jsx for decoupling)
