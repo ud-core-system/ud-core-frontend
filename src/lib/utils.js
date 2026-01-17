@@ -38,6 +38,7 @@ export function formatDate(date, options = {}) {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
+        timeZone: 'Asia/Makassar',
     };
     return new Date(date).toLocaleDateString('id-ID', { ...defaultOptions, ...options });
 }
@@ -51,6 +52,7 @@ export function formatDateShort(date) {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
+        timeZone: 'Asia/Makassar',
     });
 }
 
@@ -65,6 +67,7 @@ export function formatDateTime(date) {
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
+        timeZone: 'Asia/Makassar',
     });
 }
 

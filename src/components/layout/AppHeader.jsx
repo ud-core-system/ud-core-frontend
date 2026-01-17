@@ -24,6 +24,7 @@ const AppHeader = () => {
     const { user, logout, isAdmin, isSuperUser } = useAuth();
     const [currentTime, setCurrentTime] = useState(new Date());
     const userMenuRef = useRef(null);
+    const mobileUserMenuRef = useRef(null);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -42,7 +43,10 @@ const AppHeader = () => {
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+            const isClickInsideDesktop = userMenuRef.current && userMenuRef.current.contains(event.target);
+            const isClickInsideMobile = mobileUserMenuRef.current && mobileUserMenuRef.current.contains(event.target);
+
+            if (!isClickInsideDesktop && !isClickInsideMobile) {
                 setUserMenuOpen(false);
             }
         };
@@ -119,6 +123,7 @@ const AppHeader = () => {
                                     day: 'numeric',
                                     month: 'long',
                                     year: 'numeric',
+                                    timeZone: 'Asia/Makassar',
                                 })}
                             </span>
                             <span className="text-xs font-medium text-gray-500 dark:text-gray-400 font-mono">
@@ -127,37 +132,62 @@ const AppHeader = () => {
                                     minute: '2-digit',
                                     second: '2-digit',
                                     hour12: false,
-                                })} WIB
+                                    timeZone: 'Asia/Makassar',
+                                })} WITA
                             </span>
                         </div>
                     </div>
 
                     {/* Right Actions - Mobile Toggle */}
-                    <div className="lg:hidden">
+                    {/* Right Actions - Mobile Toggle */}
+                    <div className="lg:hidden relative" ref={mobileUserMenuRef}>
                         <button
                             onClick={() => setUserMenuOpen(!isUserMenuOpen)}
                             className="flex items-center justify-center w-10 h-10 text-gray-700 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                            aria-label="User Menu"
                         >
                             <User className="w-5 h-5" />
                         </button>
+
+                        {/* Mobile User Dropdown Menu */}
+                        {isUserMenuOpen && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-lg shadow-theme-lg border border-gray-200 dark:border-gray-800 py-2 z-50">
+                                <Link
+                                    href="/admin/profile"
+                                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    onClick={() => setUserMenuOpen(false)}
+                                >
+                                    <User className="w-4 h-4" />
+                                    Profile
+                                </Link>
+                                {isSuperUser() && (
+                                    <Link
+                                        href="/admin/settings"
+                                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                        onClick={() => setUserMenuOpen(false)}
+                                    >
+                                        <Settings className="w-4 h-4" />
+                                        Settings
+                                    </Link>
+                                )}
+                                <hr className="my-2 border-gray-200 dark:border-gray-800" />
+                                <button
+                                    onClick={() => {
+                                        handleLogout();
+                                        setUserMenuOpen(false);
+                                    }}
+                                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-error-600 dark:text-error-400 hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    Logout
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Right Actions - Desktop */}
                 <div className="hidden lg:flex items-center gap-3">
-                    {/* Dark Mode Toggle */}
-                    {/* <button
-                        onClick={toggleDarkMode}
-                        className="flex items-center justify-center w-10 h-10 text-gray-500 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                        aria-label="Toggle Dark Mode"
-                    >
-                        {isDarkMode ? (
-                            <Sun className="w-5 h-5" />
-                        ) : (
-                            <Moon className="w-5 h-5" />
-                        )}
-                    </button> */}
-
                     {/* Notifications */}
                     <button className="relative flex items-center justify-center w-10 h-10 text-gray-500 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
                         <Bell className="w-5 h-5" />
@@ -207,8 +237,11 @@ const AppHeader = () => {
                                 )}
                                 <hr className="my-2 border-gray-200 dark:border-gray-800" />
                                 <button
-                                    onClick={handleLogout}
-                                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-error-600 dark:text-error-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    onClick={() => {
+                                        handleLogout();
+                                        setUserMenuOpen(false);
+                                    }}
+                                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-error-600 dark:text-error-400 hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
                                 >
                                     <LogOut className="w-4 h-4" />
                                     Logout
