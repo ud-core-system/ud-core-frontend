@@ -226,9 +226,8 @@ export default function LaporanRekapPage() {
             });
         });
 
-        // Sort dates descending
         const sortedGrouped = Object.fromEntries(
-            Object.entries(grouped).sort((a, b) => new Date(b[1].date) - new Date(a[1].date))
+            Object.entries(grouped).sort((a, b) => new Date(a[1].date) - new Date(b[1].date))
         );
 
         setGroupedData(sortedGrouped);

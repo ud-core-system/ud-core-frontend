@@ -139,7 +139,7 @@ export default function LaporanDapurPage() {
             });
         });
 
-        return Object.values(grouped).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+        return Object.values(grouped).sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
     };
 
     const formatIndoDate = (date) => {

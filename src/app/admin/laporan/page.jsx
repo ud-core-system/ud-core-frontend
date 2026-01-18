@@ -283,7 +283,7 @@ export default function LaporanPage() {
                 });
             });
 
-            const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a));
+            const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(a) - new Date(b));
             let currentY = doc.lastAutoTable.finalY + 10;
 
             sortedDates.forEach((dateKey, dateIdx) => {
@@ -443,7 +443,7 @@ export default function LaporanPage() {
                     udGroupedByDate[dateKey].push(item);
                 });
 
-                const sortedUdDates = Object.keys(udGroupedByDate).sort((a, b) => new Date(b) - new Date(a));
+                const sortedUdDates = Object.keys(udGroupedByDate).sort((a, b) => new Date(a) - new Date(b));
                 const udTableRows = [];
 
                 sortedUdDates.forEach(dateKey => {
@@ -516,6 +516,154 @@ export default function LaporanPage() {
             const timestamp = new Date().toISOString().split('T')[0];
             doc.save(`Laporan_Rekap_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`);
             toast.success('Laporan PDF Rekap berhasil dibuat');
+        } catch (error) {
+            toast.error('Gagal membuat laporan PDF');
+            console.error(error);
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+    const generateRekapHarianPDF = () => {
+        if (transactions.length === 0) {
+            toast.warning('Tidak ada data untuk dibuat laporan');
+            return;
+        }
+
+        setGenerating(true);
+        try {
+            const doc = new jsPDF('p', 'mm', 'a4'); // Change to Portrait orientation
+            const pageWidth = doc.internal.pageSize.getWidth();
+
+            // Find selected period info
+            const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
+            const periodName = period ? period.nama_periode : 'Semua Periode';
+
+            // Create lookup maps for enrichment
+            const barangMap = new Map(barangList.map(b => [b._id, b]));
+            const udLookupMap = new Map(udList.map(u => [u._id, u]));
+
+            // Group by date
+            const groupedByDate = {};
+            transactions.forEach(trx => {
+                const dateKey = toLocalDate(trx.tanggal);
+                if (!groupedByDate[dateKey]) groupedByDate[dateKey] = [];
+
+                trx.items?.forEach(item => {
+                    const bId = item.barang_id?._id || item.barang_id;
+                    const uId = item.ud_id?._id || item.ud_id;
+                    const barang = barangMap.get(bId);
+                    const ud = udLookupMap.get(uId);
+
+                    groupedByDate[dateKey].push({
+                        ...item,
+                        nama_barang: item.nama_barang || barang?.nama_barang || item.barang_id?.nama_barang,
+                        satuan: item.satuan || barang?.satuan || item.barang_id?.satuan,
+                        ud_id_key: uId || 'unknown'
+                    });
+                });
+            });
+
+            const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(a) - new Date(b));
+
+            let grandTotalJual = 0;
+            let grandTotalModal = 0;
+            let grandTotalUntung = 0;
+
+            const allTableRows = [];
+
+            sortedDates.forEach((dateKey) => {
+                const dayItems = groupedByDate[dateKey];
+
+                // Sort dayItems by UD to group them for numbering reset
+                dayItems.sort((a, b) => a.ud_id_key.localeCompare(b.ud_id_key));
+
+                // Date Header Row
+                allTableRows.push([
+                    { content: formatIndoDate(dateKey), colSpan: 9, styles: { fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } }
+                ]);
+
+                let lastUdId = null;
+                let currentNo = 0;
+                let dailyJual = 0;
+                let dailyModal = 0;
+                let dailyUntung = 0;
+
+                dayItems.forEach((item) => {
+                    if (item.ud_id_key !== lastUdId) {
+                        currentNo = 1;
+                        lastUdId = item.ud_id_key;
+                    } else {
+                        currentNo++;
+                    }
+
+                    allTableRows.push([
+                        currentNo,
+                        item.nama_barang,
+                        item.qty,
+                        item.satuan,
+                        formatCurrency(item.harga_jual),
+                        formatCurrency(item.subtotal_jual),
+                        formatCurrency(item.harga_modal),
+                        formatCurrency(item.subtotal_modal),
+                        formatCurrency(item.keuntungan)
+                    ]);
+
+                    dailyJual += (item.subtotal_jual || 0);
+                    dailyModal += (item.subtotal_modal || 0);
+                    dailyUntung += (item.keuntungan || 0);
+                });
+
+                grandTotalJual += dailyJual;
+                grandTotalModal += dailyModal;
+                grandTotalUntung += dailyUntung;
+
+                // Daily Total Row
+                allTableRows.push([
+                    { content: 'TOTAL HARGA', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } },
+                    { content: formatCurrency(dailyJual), styles: { fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } },
+                    { content: '', styles: { lineWidth: 0.1, lineColor: [0, 0, 0] } },
+                    { content: formatCurrency(dailyModal), styles: { fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } },
+                    { content: formatCurrency(dailyUntung), styles: { fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } }
+                ]);
+            });
+
+            // Grand Total Row
+            allTableRows.push([
+                { content: 'TOTAL KESELURUHAN', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } },
+                { content: formatCurrency(grandTotalJual), styles: { fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } },
+                { content: '', styles: { lineWidth: 0.1, lineColor: [0, 0, 0] } },
+                { content: formatCurrency(grandTotalModal), styles: { fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } },
+                { content: formatCurrency(grandTotalUntung), styles: { fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } }
+            ]);
+
+            autoTable(doc, {
+                startY: 15,
+                head: [
+                    ['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Harga Jual Suplier', 'Harga Modal Suplier', 'Jumlah Modal Suplier', 'Keuntungan']
+                ],
+                body: allTableRows,
+                theme: 'grid',
+                styles: { fontSize: 7, cellPadding: 1, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
+                headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], lineWidth: 0.1, lineColor: [0, 0, 0], fontStyle: 'bold' },
+                columnStyles: {
+                    0: { cellWidth: 7, halign: 'center' },
+                    2: { cellWidth: 10, halign: 'center' },
+                    3: { cellWidth: 12, halign: 'center' },
+                    4: { cellWidth: 20, halign: 'right' },
+                    5: { cellWidth: 25, halign: 'right' },
+                    6: { cellWidth: 20, halign: 'right' },
+                    7: { cellWidth: 25, halign: 'right' },
+                    8: { cellWidth: 20, halign: 'right' },
+                },
+                margin: { top: 15, bottom: 15 },
+                tableLineColor: [0, 0, 0],
+                tableLineWidth: 0.1,
+            });
+
+            const timestamp = new Date().toISOString().split('T')[0];
+            doc.save(`Rekap_Data_Penjualan_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`);
+            toast.success('Laporan PDF Periode berhasil dibuat');
         } catch (error) {
             toast.error('Gagal membuat laporan PDF');
             console.error(error);
@@ -699,6 +847,19 @@ export default function LaporanPage() {
                                 <FileText className="w-5 h-5" />
                             )}
                             Rekap PDF
+                        </button>
+                        <button
+                            onClick={generateRekapHarianPDF}
+                            disabled={generating}
+                            className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/20
+                       hover:bg-blue-700 transition-all disabled:opacity-50 text-sm"
+                        >
+                            {generating ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <Download className="w-5 h-5" />
+                            )}
+                            Rekap Data Penjualan
                         </button>
                     </div>
                 </div>
