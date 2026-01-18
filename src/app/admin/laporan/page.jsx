@@ -283,7 +283,7 @@ export default function LaporanPage() {
                 });
             });
 
-            const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a));
+            const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(a) - new Date(b));
             let currentY = doc.lastAutoTable.finalY + 10;
 
             sortedDates.forEach((dateKey, dateIdx) => {
@@ -443,7 +443,7 @@ export default function LaporanPage() {
                     udGroupedByDate[dateKey].push(item);
                 });
 
-                const sortedUdDates = Object.keys(udGroupedByDate).sort((a, b) => new Date(b) - new Date(a));
+                const sortedUdDates = Object.keys(udGroupedByDate).sort((a, b) => new Date(a) - new Date(b));
                 const udTableRows = [];
 
                 sortedUdDates.forEach(dateKey => {

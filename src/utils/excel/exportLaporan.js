@@ -78,7 +78,7 @@ export const exportLaporanExcel = async ({
         });
     });
 
-    const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a));
+    const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(a) - new Date(b));
 
     sortedDates.forEach(dateKey => {
         const dayData = groupedData[dateKey];
@@ -222,7 +222,7 @@ export const exportLaporanExcel = async ({
             udGroupedByDate[dateKey].push(item);
         });
 
-        const sortedUdDates = Object.keys(udGroupedByDate).sort((a, b) => new Date(b) - new Date(a));
+        const sortedUdDates = Object.keys(udGroupedByDate).sort((a, b) => new Date(a) - new Date(b));
 
         sortedUdDates.forEach(dateKey => {
             // Date Header Row within UD Sheet
