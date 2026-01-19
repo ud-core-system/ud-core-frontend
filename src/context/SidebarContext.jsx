@@ -21,10 +21,19 @@ export const SidebarProvider = ({ children }) => {
 
     useEffect(() => {
         const handleResize = () => {
-            const mobile = window.innerWidth < 1024;
+            const width = window.innerWidth;
+            const mobile = width < 1024;
+            const medium = width >= 1024 && width < 1280;
+
             setIsMobile(mobile);
-            if (!mobile) {
+
+            if (mobile) {
                 setIsMobileOpen(false);
+                setIsExpanded(false);
+            } else if (medium) {
+                setIsExpanded(false);
+            } else {
+                setIsExpanded(true);
             }
         };
 
