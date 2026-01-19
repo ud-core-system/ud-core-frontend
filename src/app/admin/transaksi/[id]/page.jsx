@@ -13,6 +13,7 @@ import { getErrorMessage, formatCurrency, formatDate, getStatusClass } from '@/l
 import { transaksiAPI, barangAPI, udAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import NotaDapur from '@/components/print/NotaDapur';
+import NotaDapurPDF from '@/components/print/NotaDapurPDF';
 
 import { downloadPDF } from '@/lib/pdfGenerator';
 
@@ -26,6 +27,7 @@ export default function TransaksiDetailPage() {
     const [completing, setCompleting] = useState(false);
     const [selectedUDForPrint, setSelectedUDForPrint] = useState(null);
     const [downloading, setDownloading] = useState(null);
+    const [downloadingAll, setDownloadingAll] = useState(false);
 
     useEffect(() => {
         if (params.id) {
@@ -127,12 +129,41 @@ export default function TransaksiDetailPage() {
             setDownloading(udId);
             const dateStr = data.tanggal ? new Date(data.tanggal).toISOString().split('T')[0] : 'date';
             const fileName = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}.pdf`;
-            await downloadPDF(`nota-${udId}`, fileName);
+            await downloadPDF(`pdf-nota-${udId}`, fileName);
             toast.success('PDF berhasil diunduh');
         } catch (error) {
             toast.error('Gagal mengunduh PDF');
         } finally {
             setDownloading(null);
+        }
+    };
+
+    const handleDownloadAll = async () => {
+        const itemsByUD = getItemsByUD();
+        const udEntries = Object.entries(itemsByUD);
+
+        if (udEntries.length === 0) {
+            toast.error('Tidak ada data untuk diunduh');
+            return;
+        }
+
+        try {
+            setDownloadingAll(true);
+            const dateStr = data.tanggal ? new Date(data.tanggal).toISOString().split('T')[0] : 'date';
+
+            for (const [udId, udData] of udEntries) {
+                const fileName = `Nota_${udData.nama_ud.replace(/\s+/g, '_')}_${dateStr}.pdf`;
+                await downloadPDF(`pdf-nota-${udId}`, fileName);
+                // Small delay to prevent browser blocking multiple downloads
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            toast.success('Semua PDF berhasil diunduh');
+        } catch (error) {
+            toast.error('Gagal mengunduh PDF massal');
+            console.error(error);
+        } finally {
+            setDownloadingAll(false);
         }
     };
 
@@ -196,6 +227,19 @@ export default function TransaksiDetailPage() {
                     >
                         <Printer className="w-4 h-4" />
                         Cetak Nota
+                    </button>
+                    <button
+                        onClick={handleDownloadAll}
+                        disabled={downloadingAll}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl
+                                 hover:bg-indigo-700 transition-all font-semibold shadow-lg shadow-indigo-500/20 active:scale-95 disabled:opacity-50 text-sm"
+                    >
+                        {downloadingAll ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <FileText className="w-4 h-4" />
+                        )}
+                        Download Semua PDF
                     </button>
                     <button
                         onClick={() => window.print()}
@@ -387,12 +431,20 @@ export default function TransaksiDetailPage() {
                 </p>
             </div>
 
-            {/* Hidden Print Area */}
+            {/* AREA CETAK (Hanya untuk window.print) */}
             <NotaDapur
                 data={data}
                 itemsByUD={itemsByUD}
                 udIdFilter={selectedUDForPrint}
             />
+
+            {/* AREA PDF (Hanya untuk download PDF) */}
+            {(downloading || downloadingAll) && (
+                <NotaDapurPDF
+                    data={data}
+                    itemsByUD={itemsByUD}
+                />
+            )}
         </div>
     );
 }
