@@ -538,6 +538,21 @@ export default function LaporanPage() {
             // Find selected period info
             const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
             const periodName = period ? period.nama_periode : 'Semua Periode';
+            const periodRange = period ? `${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)}` : '';
+            const printTimestamp = new Date().toLocaleString('id-ID');
+
+            // Header Section
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('LAPORAN DATA PENJUALAN', pageWidth / 2, 12, { align: 'center' });
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Laporan Periode: ${periodName}`, 14, 22);
+            if (periodRange) {
+                doc.text(`Rentang Waktu: ${periodRange}`, 14, 27);
+            }
+            doc.text(`Dicetak pada: ${printTimestamp}`, 14, periodRange ? 32 : 27);
 
             // Create lookup maps for enrichment
             const barangMap = new Map(barangList.map(b => [b._id, b]));
@@ -638,7 +653,7 @@ export default function LaporanPage() {
             ]);
 
             autoTable(doc, {
-                startY: 15,
+                startY: periodRange ? 40 : 35,
                 head: [
                     ['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Harga Jual Suplier', 'Harga Modal Suplier', 'Jumlah Modal Suplier', 'Keuntungan']
                 ],
