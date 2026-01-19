@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import {
     FileBarChart2,
     Download,
@@ -114,6 +114,7 @@ export default function LaporanDapurPage() {
 
     const getItemsByDate = () => {
         const barangMap = new Map(barangList.map(b => [b._id, b]));
+        const udMap = new Map(udList.map(u => [u._id, u]));
         const grouped = {};
 
         transactions.forEach((trx) => {
@@ -128,6 +129,7 @@ export default function LaporanDapurPage() {
             trx.items?.forEach((item) => {
                 const bId = item.barang_id?._id || item.barang_id;
                 const barang = barangMap.get(bId);
+                const ud = barang?.ud_id?._id ? udMap.get(barang.ud_id._id) : (barang?.ud_id ? udMap.get(barang.ud_id) : null);
 
                 grouped[dateKey].items.push({
                     ...item,
@@ -135,11 +137,21 @@ export default function LaporanDapurPage() {
                     nama_barang: item.nama_barang || barang?.nama_barang || item.barang_id?.nama_barang || '-',
                     satuan: item.satuan || barang?.satuan || item.barang_id?.satuan || '-',
                     transaksi: trx.kode_transaksi,
+                    ud_id: ud?._id || 'other',
+                    nama_ud: ud?.nama_ud || 'Lainnya',
                 });
             });
         });
 
-        return Object.values(grouped).sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+        return Object.values(grouped).map(group => {
+            // Sort items by UD Name then Barang Name
+            group.items.sort((a, b) => {
+                const udCompare = a.nama_ud.localeCompare(b.nama_ud);
+                if (udCompare !== 0) return udCompare;
+                return a.nama_barang.localeCompare(b.nama_barang);
+            });
+            return group;
+        }).sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
     };
 
     const formatIndoDate = (date) => {
@@ -221,9 +233,18 @@ export default function LaporanDapurPage() {
                     { content: formatIndoDate(group.tanggal).toUpperCase(), colSpan: 6, styles: { fillColor: [71, 85, 105], textColor: [255, 255, 255], fontStyle: 'bold' } }
                 ]);
 
-                group.items.forEach((item, idx) => {
+                let currentUd = null;
+                let udCounter = 0;
+
+                group.items.forEach((item) => {
+                    if (item.nama_ud !== currentUd) {
+                        currentUd = item.nama_ud;
+                        udCounter = 0;
+                    }
+                    udCounter++;
+
                     tableData.push([
-                        idx + 1,
+                        udCounter,
                         item.nama_barang,
                         item.qty,
                         item.satuan,
@@ -233,8 +254,8 @@ export default function LaporanDapurPage() {
                 });
                 const dailyTotal = group.items.reduce((sum, i) => sum + i.subtotal_jual, 0);
                 tableData.push([
-                    { content: `TOTAL ${formatDateShort(group.tanggal).toUpperCase()}`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fillColor: [241, 245, 249] } },
-                    { content: formatCurrency(dailyTotal), styles: { fontStyle: 'bold', fillColor: [241, 245, 249] } }
+                    { content: `TOTAL ${formatDateShort(group.tanggal).toUpperCase()}`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fillColor: [226, 232, 240] } },
+                    { content: formatCurrency(dailyTotal), styles: { fontStyle: 'bold', fillColor: [226, 232, 240] } }
                 ]);
             });
 
@@ -382,33 +403,49 @@ export default function LaporanDapurPage() {
 
                             {/* Mobile Item Cards (Hidden on md and above) */}
                             <div className="grid grid-cols-1 divide-y divide-gray-100 md:hidden">
-                                {group.items.map((item, idx) => (
-                                    <div key={idx} className="p-4 space-y-3">
-                                        <div className="flex justify-between items-start gap-3">
-                                            <div className="flex gap-3">
-                                                <span className="text-xs font-bold text-gray-400 mt-1">#{(idx + 1).toString().padStart(2, '0')}</span>
-                                                <div>
-                                                    <p className="font-black text-gray-900 leading-tight mb-1">{item.nama_barang}</p>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] uppercase font-bold tracking-widest">
-                                                            {item.satuan}
+                                {(() => {
+                                    let currentUd = null;
+                                    let udCounter = 0;
+                                    return group.items.map((item, idx) => {
+                                        const showUdHeader = item.nama_ud !== currentUd;
+                                        if (showUdHeader) {
+                                            currentUd = item.nama_ud;
+                                            udCounter = 1;
+                                        } else {
+                                            udCounter++;
+                                        }
+
+                                        return (
+                                            <div key={idx}>
+                                                <div className="p-4 space-y-3">
+                                                    <div className="flex justify-between items-start gap-3">
+                                                        <div className="flex gap-3">
+                                                            <span className="text-xs font-bold text-gray-400 mt-1">#{(udCounter).toString().padStart(2, '0')}</span>
+                                                            <div>
+                                                                <p className="font-black text-gray-900 leading-tight mb-1">{item.nama_barang}</p>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] uppercase font-bold tracking-widest">
+                                                                        {item.satuan}
+                                                                    </span>
+                                                                    <span className="text-xs text-gray-400 font-medium">@ {formatCurrency(item.harga_jual)}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-0.5">Subtotal</p>
+                                                            <p className="font-black text-blue-600 text-sm">{formatCurrency(item.subtotal_jual)}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center justify-between pt-1">
+                                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest italic opacity-60">
+                                                            Qty: {item.qty}
                                                         </span>
-                                                        <span className="text-xs text-gray-400 font-medium">@ {formatCurrency(item.harga_jual)}</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-0.5">Subtotal</p>
-                                                <p className="font-black text-blue-600 text-sm">{formatCurrency(item.subtotal_jual)}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between pt-1">
-                                            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest italic opacity-60">
-                                                Qty: {item.qty}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
+                                        );
+                                    });
+                                })()}
                                 <div className="p-4 bg-blue-50/30 flex justify-between items-center">
                                     <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total Harian</span>
                                     <span className="font-black text-blue-700 text-base">
@@ -431,18 +468,34 @@ export default function LaporanDapurPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
-                                        {group.items.map((item, idx) => (
-                                            <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                                                <td className="px-4 lg:px-6 py-4 text-gray-400 font-bold">{idx + 1}</td>
-                                                <td className="px-4 lg:px-6 py-4 font-black text-gray-900">
-                                                    <p className="line-clamp-2 md:line-clamp-1">{item.nama_barang}</p>
-                                                </td>
-                                                <td className="px-4 lg:px-6 py-4 text-center font-bold text-gray-700">{item.qty}</td>
-                                                <td className="hidden lg:table-cell px-6 py-4 text-center font-bold text-gray-500 uppercase text-[10px] tracking-widest">{item.satuan}</td>
-                                                <td className="hidden xl:table-cell px-6 py-4 text-right font-medium text-gray-600">{formatCurrency(item.harga_jual)}</td>
-                                                <td className="px-4 lg:px-6 py-4 text-right font-black text-blue-600">{formatCurrency(item.subtotal_jual)}</td>
-                                            </tr>
-                                        ))}
+                                        {(() => {
+                                            let currentUd = null;
+                                            let udCounter = 0;
+                                            return group.items.map((item, idx) => {
+                                                const showUdHeader = item.nama_ud !== currentUd;
+                                                if (showUdHeader) {
+                                                    currentUd = item.nama_ud;
+                                                    udCounter = 1;
+                                                } else {
+                                                    udCounter++;
+                                                }
+
+                                                return (
+                                                    <Fragment key={idx}>
+                                                        <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                                                            <td className="px-4 lg:px-6 py-4 text-gray-400 font-bold">{udCounter}</td>
+                                                            <td className="px-4 lg:px-6 py-4 font-black text-gray-900">
+                                                                <p className="line-clamp-2 md:line-clamp-1">{item.nama_barang}</p>
+                                                            </td>
+                                                            <td className="px-4 lg:px-6 py-4 text-center font-bold text-gray-700">{item.qty}</td>
+                                                            <td className="hidden lg:table-cell px-6 py-4 text-center font-bold text-gray-500 uppercase text-[10px] tracking-widest">{item.satuan}</td>
+                                                            <td className="hidden xl:table-cell px-6 py-4 text-right font-medium text-gray-600">{formatCurrency(item.harga_jual)}</td>
+                                                            <td className="px-4 lg:px-6 py-4 text-right font-black text-blue-600">{formatCurrency(item.subtotal_jual)}</td>
+                                                        </tr>
+                                                    </Fragment>
+                                                );
+                                            });
+                                        })()}
                                     </tbody>
                                     <tfoot className="bg-blue-50/30 border-t border-blue-100">
                                         <tr>

@@ -53,13 +53,22 @@ export const exportLaporanExcel = async ({
         applyRowStyle(dateRow, STYLES.dateTitle);
         dateRow.height = 20;
 
+        let currentUd = null;
+        let udCounter = 0;
+
         // Table Header
         const headerRow = ws1.addRow(['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual', 'Total Harga']);
         applyRowStyle(headerRow, STYLES.header);
 
-        group.items.forEach((item, idx) => {
+        group.items.forEach((item) => {
+            if (item.nama_ud !== currentUd) {
+                currentUd = item.nama_ud;
+                udCounter = 0;
+            }
+            udCounter++;
+
             const row = ws1.addRow([
-                idx + 1,
+                udCounter,
                 item.nama_barang,
                 item.qty,
                 item.satuan,
@@ -74,6 +83,7 @@ export const exportLaporanExcel = async ({
         // Date Total
         const dailyTotal = group.items.reduce((sum, i) => sum + i.subtotal_jual, 0);
         const totalDateRow = ws1.addRow([`TOTAL ${formatDateShort(group.tanggal).toUpperCase()}`, '', '', '', '', dailyTotal]);
+        ws1.mergeCells(`A${totalDateRow.number}:E${totalDateRow.number}`);
         applyRowStyle(totalDateRow, STYLES.totalRow);
         setCurrency(totalDateRow.getCell(6));
 

@@ -133,6 +133,7 @@ export const exportLaporanExcel = async ({
 
             // UD Subtotal
             const subtotalRow = ws1.addRow([`Subtotal ${group.nama_ud}`, '', '', '', '', udJual, '', udModal, udProfit]);
+            ws1.mergeCells(`A${subtotalRow.number}:E${subtotalRow.number}`);
             applyRowStyle(subtotalRow, STYLES.subtotalRow);
             [6, 8, 9].forEach(col => setCurrency(subtotalRow.getCell(col)));
 
@@ -143,6 +144,7 @@ export const exportLaporanExcel = async ({
 
         // Date Total
         const totalDateRow = ws1.addRow([`TOTAL ${formatDateShort(dateKey)}`, '', '', '', '', dateJual, '', dateModal, dateProfit]);
+        ws1.mergeCells(`A${totalDateRow.number}:E${totalDateRow.number}`);
         applyRowStyle(totalDateRow, STYLES.totalRow);
         [6, 8, 9].forEach(col => setCurrency(totalDateRow.getCell(col)));
 
@@ -256,6 +258,7 @@ export const exportLaporanExcel = async ({
 
             // Daily Subtotal for this UD
             const subtotalRow = wsUD.addRow([`Subtotal ${formatDateShort(dateKey)}`, '', '', '', '', dailyJual, '', dailyModal, dailyProfit]);
+            wsUD.mergeCells(`A${subtotalRow.number}:E${subtotalRow.number}`);
             applyRowStyle(subtotalRow, STYLES.subtotalRow);
             [6, 8, 9].forEach(col => setCurrency(subtotalRow.getCell(col)));
 
@@ -263,7 +266,8 @@ export const exportLaporanExcel = async ({
         });
 
         // Final Total for UD
-        const totalRow = wsUD.addRow(['', 'GRAND TOTAL UD', '', '', '', ud.totalJual, '', ud.totalModal, ud.totalKeuntungan]);
+        const totalRow = wsUD.addRow(['GRAND TOTAL UD', '', '', '', '', ud.totalJual, '', ud.totalModal, ud.totalKeuntungan]);
+        wsUD.mergeCells(`A${totalRow.number}:E${totalRow.number}`);
         applyRowStyle(totalRow, STYLES.totalRow);
         [6, 8, 9].forEach(col => setCurrency(totalRow.getCell(col)));
     });
