@@ -636,19 +636,19 @@ export default function LaporanRekapPage() {
                                     <tr>
                                         <th rowSpan={2} className="px-3 md:px-4 py-4 border-b border-gray-200 font-bold text-gray-900 border-r print:border-black">Nama Barang</th>
                                         <th rowSpan={2} className="px-2 md:px-3 py-4 border-b border-gray-200 font-bold text-gray-900 border-r print:border-black">Qty</th>
-                                        <th rowSpan={2} className="hidden lg:table-cell px-3 py-4 border-b border-gray-200 font-bold text-gray-900 border-r print:border-black">Satuan</th>
-                                        <th colSpan={2} className="px-3 md:px-4 py-2 border-b border-gray-200 font-bold text-center text-blue-700 border-r print:border-black print:text-black">Budget Dapur</th>
-                                        <th colSpan={2} className="px-3 md:px-4 py-2 border-b border-gray-200 font-bold text-center text-orange-700 border-r print:border-black print:text-black">Jual Suplier</th>
-                                        <th colSpan={2} className="px-3 md:px-4 py-2 border-b border-gray-200 font-bold text-center text-purple-700 border-r print:border-black print:text-black hover:hidden">Modal Suplier</th>
+                                        <th rowSpan={2} className="hidden lg:table-cell px-2 md:px-3 py-4 border-b border-gray-200 font-bold text-gray-900 border-r print:border-black">Satuan</th>
+                                        <th colSpan={2} className="px-2 md:px-3 py-2 border-b border-gray-200 font-bold text-center text-blue-700 border-r print:border-black print:text-black">Budget Dapur</th>
+                                        <th colSpan={2} className="px-2 md:px-3 py-2 border-b border-gray-200 font-bold text-center text-orange-700 border-r print:border-black print:text-black">Jual Suplier</th>
+                                        <th colSpan={2} className="px-2 md:px-3 py-2 border-b border-gray-200 font-bold text-center text-purple-700 border-r print:border-black print:text-black hover:hidden">Modal Suplier</th>
                                         <th rowSpan={2} className="px-3 md:px-4 py-4 border-b border-gray-200 font-bold text-right text-green-700 print:border-black print:text-black">Keuntungan</th>
                                     </tr>
                                     <tr className="bg-gray-50/50 print:bg-gray-100">
-                                        <th className="hidden xl:table-cell px-4 py-2 border-b border-gray-200 font-bold text-right text-xs print:border-black">Harga</th>
-                                        <th className="px-3 md:px-4 py-2 border-b border-gray-200 font-bold text-right text-xs border-r print:border-black">Total</th>
-                                        <th className="hidden xl:table-cell px-4 py-2 border-b border-gray-200 font-bold text-right text-xs print:border-black">Harga</th>
-                                        <th className="px-3 md:px-4 py-2 border-b border-gray-200 font-bold text-right text-xs border-r print:border-black">Total</th>
-                                        <th className="hidden xl:table-cell px-4 py-2 border-b border-gray-200 font-bold text-right text-xs print:border-black">Harga</th>
-                                        <th className="px-3 md:px-4 py-2 border-b border-gray-200 font-bold text-right text-xs border-r print:border-black">Total</th>
+                                        <th className="hidden xl:table-cell px-3 py-2 border-b border-gray-200 font-bold text-right text-xs print:border-black">Harga</th>
+                                        <th className="px-2 md:px-3 py-2 border-b border-gray-200 font-bold text-right text-xs border-r print:border-black">Total</th>
+                                        <th className="hidden xl:table-cell px-3 py-2 border-b border-gray-200 font-bold text-right text-xs print:border-black">Harga</th>
+                                        <th className="px-2 md:px-3 py-2 border-b border-gray-200 font-bold text-right text-xs border-r print:border-black">Total</th>
+                                        <th className="hidden xl:table-cell px-3 py-2 border-b border-gray-200 font-bold text-right text-xs print:border-black">Harga</th>
+                                        <th className="px-2 md:px-3 py-2 border-b border-gray-200 font-bold text-right text-xs border-r print:border-black">Total</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -668,42 +668,58 @@ export default function LaporanRekapPage() {
                                                 {udData.items.map((item, idx) => (
                                                     <tr key={idx} className="hover:bg-gray-50/50 print:hover:bg-transparent transition-colors border-b last:border-b-0 print:border-black">
                                                         <td className="px-3 md:px-4 py-2.5 font-medium text-gray-900 border-r print:border-black">
-                                                            <p className="line-clamp-2 md:line-clamp-1">{item.nama_barang || item.barang_id?.nama_barang || '-'}</p>
+                                                            <p className="line-clamp-2">{item.nama_barang || item.barang_id?.nama_barang || '-'}</p>
                                                         </td>
                                                         <td className="px-2 md:px-3 py-2.5 text-center text-gray-700 border-r print:border-black">{item.qty}</td>
-                                                        <td className="hidden lg:table-cell px-3 py-2.5 text-center text-gray-500 border-r print:border-black">{item.satuan || item.barang_id?.satuan || '-'}</td>
+                                                        <td className="hidden lg:table-cell px-2 md:px-3 py-2.5 text-center text-gray-500 border-r print:border-black">{item.satuan || item.barang_id?.satuan || '-'}</td>
                                                         {/* Budget */}
-                                                        <td className="hidden xl:table-cell px-4 py-2.5 text-right text-gray-600">{formatCurrency(item.masterPrice)}</td>
-                                                        <td className="px-3 md:px-4 py-2.5 text-right font-medium text-blue-800 border-r print:border-black print:text-black">{formatCurrency(item.itemBudgetTotal)}</td>
+                                                        <td className="hidden xl:table-cell px-3 py-2.5 text-right text-gray-600">{formatCurrency(item.masterPrice)}</td>
+                                                        <td className="px-2 md:px-3 py-2.5 text-right font-medium text-blue-800 border-r print:border-black print:text-black">{formatCurrency(item.itemBudgetTotal)}</td>
                                                         {/* Jual */}
-                                                        <td className="hidden xl:table-cell px-4 py-2.5 text-right text-gray-600">{formatCurrency(item.harga_jual)}</td>
-                                                        <td className="px-3 md:px-4 py-2.5 text-right font-medium text-orange-800 border-r print:border-black print:text-black">{formatCurrency(item.subtotal_jual)}</td>
+                                                        <td className="hidden xl:table-cell px-3 py-2.5 text-right text-gray-600">{formatCurrency(item.harga_jual)}</td>
+                                                        <td className="px-2 md:px-3 py-2.5 text-right font-medium text-orange-800 border-r print:border-black print:text-black">{formatCurrency(item.subtotal_jual)}</td>
                                                         {/* Modal */}
-                                                        <td className="hidden xl:table-cell px-4 py-2.5 text-right text-gray-600">{formatCurrency(item.harga_modal)}</td>
-                                                        <td className="px-3 md:px-4 py-2.5 text-right font-medium text-purple-800 border-r print:border-black print:text-black">{formatCurrency(item.subtotal_modal)}</td>
+                                                        <td className="hidden xl:table-cell px-3 py-2.5 text-right text-gray-600">{formatCurrency(item.harga_modal)}</td>
+                                                        <td className="px-2 md:px-3 py-2.5 text-right font-medium text-purple-800 border-r print:border-black print:text-black">{formatCurrency(item.subtotal_modal)}</td>
                                                         {/* Profit */}
-                                                        <td className="px-3 md:px-4 py-2.5 text-right font-bold text-green-700">{formatCurrency(item.keuntungan)}</td>
+                                                        <td className="px-2 md:px-3 py-2.5 text-right font-bold text-green-700">{formatCurrency(item.keuntungan)}</td>
                                                     </tr>
                                                 ))}
                                                 {/* Daily Subtotal for this UD */}
                                                 <tr className="bg-gray-50/50 font-bold print:bg-transparent">
-                                                    <td colSpan={3} className="px-4 py-3 text-right uppercase text-xs text-gray-500 border-r print:border-black print:text-black">Subtotal {dateStr}</td>
-                                                    <td colSpan={2} className="px-4 py-3 text-right text-blue-800 border-r print:border-black print:text-black">{formatCurrency(udData.totalBudget)}</td>
-                                                    <td colSpan={2} className="px-4 py-3 text-right text-orange-800 border-r print:border-black print:text-black">{formatCurrency(udData.totalJual)}</td>
-                                                    <td colSpan={2} className="px-4 py-3 text-right text-purple-800 border-r print:border-black print:text-black">{formatCurrency(udData.totalModal)}</td>
-                                                    <td className="px-4 py-3 text-right text-green-800">{formatCurrency(udData.totalKeuntungan)}</td>
+                                                    <td colSpan={2} className="px-3 md:px-4 py-3 text-right uppercase text-[10px] md:text-xs text-gray-500 border-r print:border-black print:text-black whitespace-pre-line">Subtotal {dateStr}</td>
+                                                    <td className="hidden lg:table-cell px-2 md:px-3 py-3 border-r print:border-black"></td>
+                                                    {/* Budget */}
+                                                    <td className="hidden xl:table-cell px-3 py-3"></td>
+                                                    <td className="px-2 md:px-3 py-3 text-right text-blue-800 border-r print:border-black print:text-black">{formatCurrency(udData.totalBudget)}</td>
+                                                    {/* Jual */}
+                                                    <td className="hidden xl:table-cell px-3 py-3"></td>
+                                                    <td className="px-2 md:px-3 py-3 text-right text-orange-800 border-r print:border-black print:text-black">{formatCurrency(udData.totalJual)}</td>
+                                                    {/* Modal */}
+                                                    <td className="hidden xl:table-cell px-3 py-3"></td>
+                                                    <td className="px-2 md:px-3 py-3 text-right text-purple-800 border-r print:border-black print:text-black">{formatCurrency(udData.totalModal)}</td>
+                                                    {/* Profit */}
+                                                    <td className="px-2 md:px-3 py-3 text-right text-green-800">{formatCurrency(udData.totalKeuntungan)}</td>
                                                 </tr>
                                             </Fragment>
                                         );
                                     })}
                                 </tbody>
                                 <tfoot className="bg-gray-900 text-white font-bold print:bg-black print:text-white">
-                                    <tr className="text-lg">
-                                        <td colSpan={3} className="px-4 py-6 text-right uppercase tracking-widest text-sm text-gray-400 print:text-white">GRAND TOTAL</td>
-                                        <td colSpan={2} className="px-4 py-6 text-right whitespace-nowrap">{formatCurrency(grandTotalBudget)}</td>
-                                        <td colSpan={2} className="px-4 py-6 text-right whitespace-nowrap text-orange-400 print:text-white">{formatCurrency(grandTotalJual)}</td>
-                                        <td colSpan={2} className="px-4 py-6 text-right whitespace-nowrap text-purple-400 print:text-white">{formatCurrency(grandTotalModal)}</td>
-                                        <td className="px-4 py-6 text-right whitespace-nowrap text-green-400 print:text-white">{formatCurrency(grandTotalKeuntungan)}</td>
+                                    <tr className="text-sm md:text-lg">
+                                        <td colSpan={2} className="px-3 md:px-4 py-4 md:py-6 text-right uppercase tracking-wider text-[10px] md:text-sm text-gray-400 print:text-white">GRAND TOTAL</td>
+                                        <td className="hidden lg:table-cell px-2 md:px-3 py-4 md:py-6"></td>
+                                        {/* Budget */}
+                                        <td className="hidden xl:table-cell px-3 py-4 md:py-6"></td>
+                                        <td className="px-2 md:px-3 py-4 md:py-6 text-right whitespace-nowrap">{formatCurrency(grandTotalBudget)}</td>
+                                        {/* Jual */}
+                                        <td className="hidden xl:table-cell px-3 py-4 md:py-6"></td>
+                                        <td className="px-2 md:px-3 py-4 md:py-6 text-right whitespace-nowrap text-orange-400 print:text-white">{formatCurrency(grandTotalJual)}</td>
+                                        {/* Modal */}
+                                        <td className="hidden xl:table-cell px-3 py-4 md:py-6"></td>
+                                        <td className="px-2 md:px-3 py-4 md:py-6 text-right whitespace-nowrap text-purple-400 print:text-white">{formatCurrency(grandTotalModal)}</td>
+                                        {/* Profit */}
+                                        <td className="px-2 md:px-3 py-4 md:py-6 text-right whitespace-nowrap text-green-400 print:text-white">{formatCurrency(grandTotalKeuntungan)}</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -795,15 +811,15 @@ export default function LaporanRekapPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 print:hidden">
                             <div className="bg-white rounded-2xl p-5 md:p-6 border border-gray-100 shadow-sm">
                                 <p className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Penjualan</p>
-                                <p className="text-xl md:text-2xl lg:text-3xl font-black text-gray-900">{formatCurrency(grandTotalJual)}</p>
+                                <p className="text-xl md:text-2xl font-black text-gray-900 break-words">{formatCurrency(grandTotalJual)}</p>
                             </div>
                             <div className="bg-white rounded-2xl p-5 md:p-6 border border-gray-100 shadow-sm">
                                 <p className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Modal</p>
-                                <p className="text-xl md:text-2xl lg:text-3xl font-black text-gray-900">{formatCurrency(grandTotalModal)}</p>
+                                <p className="text-xl md:text-2xl font-black text-gray-900 break-words">{formatCurrency(grandTotalModal)}</p>
                             </div>
                             <div className="bg-white rounded-2xl p-5 md:p-6 border border-gray-100 shadow-sm group md:col-span-2 lg:col-span-1">
                                 <p className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Keuntungan</p>
-                                <p className="text-xl md:text-2xl lg:text-3xl font-black text-green-600">{formatCurrency(grandTotalKeuntungan)}</p>
+                                <p className="text-xl md:text-2xl font-black text-green-600 break-words">{formatCurrency(grandTotalKeuntungan)}</p>
                             </div>
                         </div>
                     )}
@@ -862,21 +878,27 @@ export default function LaporanRekapPage() {
                                                     ))}
                                                     {/* UD Totals */}
                                                     <tr className="bg-gray-50/20 print:bg-transparent">
-                                                        <td colSpan={5} className="px-6 py-3 text-xs font-bold text-gray-400 text-right uppercase tracking-wider print:text-black">Subtotal {ud.name}</td>
-                                                        <td className="px-6 py-3 text-sm text-right font-bold text-gray-900 border-t border-gray-200 print:border-black">{formatCurrency(ud.totalJual)}</td>
-                                                        <td className="px-6 py-3 border-t border-gray-200 print:border-transparent"></td>
-                                                        <td className="px-6 py-3 text-sm text-right font-bold text-gray-900 border-t border-gray-200 print:border-black">{formatCurrency(ud.totalModal)}</td>
-                                                        <td className="px-6 py-3 text-sm text-right font-bold text-green-700 border-t border-gray-200 print:border-black">{formatCurrency(ud.totalKeuntungan)}</td>
+                                                        <td colSpan={2} className="px-3 md:px-4 lg:px-6 py-3 text-xs font-bold text-gray-400 text-right uppercase tracking-wider print:text-black whitespace-pre-line">Subtotal {ud.name}</td>
+                                                        <td className="px-3 md:px-4 lg:px-6 py-3 border-t border-gray-200 print:border-black"></td>
+                                                        <td className="hidden lg:table-cell px-6 py-3 border-t border-gray-200 print:border-black"></td>
+                                                        <td className="hidden xl:table-cell px-6 py-3 border-t border-gray-200 print:border-black"></td>
+                                                        <td className="px-3 md:px-4 lg:px-6 py-3 text-sm text-right font-bold text-gray-900 border-t border-gray-200 print:border-black">{formatCurrency(ud.totalJual)}</td>
+                                                        <td className="hidden xl:table-cell px-6 py-3 border-t border-gray-200 print:border-black"></td>
+                                                        <td className="px-3 md:px-4 lg:px-6 py-3 text-sm text-right font-bold text-gray-900 border-t border-gray-200 print:border-black">{formatCurrency(ud.totalModal)}</td>
+                                                        <td className="px-3 md:px-4 lg:px-6 py-3 text-sm text-right font-bold text-green-700 border-t border-gray-200 print:border-black">{formatCurrency(ud.totalKeuntungan)}</td>
                                                     </tr>
                                                 </Fragment>
                                             ))}
                                             {/* Day Totals */}
                                             <tr className="bg-gray-100/50 print:bg-gray-200">
-                                                <td colSpan={5} className="px-6 py-4 text-sm font-extrabold text-gray-900 text-right uppercase">Total {dateStr}</td>
-                                                <td className="px-6 py-4 text-sm text-right font-extrabold text-gray-900">{formatCurrency(dayData.subtotalJual)}</td>
-                                                <td className="px-6 py-4"></td>
-                                                <td className="px-6 py-4 text-sm text-right font-extrabold text-gray-900">{formatCurrency(dayData.subtotalModal)}</td>
-                                                <td className="px-6 py-4 text-sm text-right font-extrabold text-green-700">{formatCurrency(dayData.subtotalKeuntungan)}</td>
+                                                <td colSpan={2} className="px-3 md:px-4 lg:px-6 py-4 text-sm font-extrabold text-gray-900 text-right uppercase whitespace-pre-line">Total {dateStr}</td>
+                                                <td className="px-3 md:px-4 lg:px-6 py-4"></td>
+                                                <td className="hidden lg:table-cell px-6 py-4"></td>
+                                                <td className="hidden xl:table-cell px-6 py-4"></td>
+                                                <td className="px-3 md:px-4 lg:px-6 py-4 text-sm text-right font-extrabold text-gray-900">{formatCurrency(dayData.subtotalJual)}</td>
+                                                <td className="hidden xl:table-cell px-6 py-4"></td>
+                                                <td className="px-3 md:px-4 lg:px-6 py-4 text-sm text-right font-extrabold text-gray-900">{formatCurrency(dayData.subtotalModal)}</td>
+                                                <td className="px-3 md:px-4 lg:px-6 py-4 text-sm text-right font-extrabold text-green-700">{formatCurrency(dayData.subtotalKeuntungan)}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -937,23 +959,23 @@ export default function LaporanRekapPage() {
 
                     {/* Grand Total Row */}
                     {Object.keys(groupedData).length > 0 && (
-                        <div className="bg-blue-600 rounded-2xl p-5 md:p-8 text-white shadow-xl shadow-blue-500/20 flex flex-col lg:flex-row justify-between items-center gap-6 print:bg-black print:text-white print:shadow-none">
-                            <div className="text-center lg:text-left">
-                                <h3 className="text-xl md:text-2xl font-black tracking-tight">TOTAL KESELURUHAN</h3>
+                        <div className="bg-blue-600 rounded-2xl p-5 md:p-8 text-white shadow-xl shadow-blue-500/20 flex flex-col xl:flex-row justify-between items-center gap-6 print:bg-black print:text-white print:shadow-none">
+                            <div className="text-center xl:text-left">
+                                <h3 className="text-xl md:text-2xl font-black tracking-tight uppercase">Total Keseluruhan</h3>
                                 <p className="text-blue-100 text-xs md:text-sm font-medium opacity-80 mt-1 print:hidden">Rekapitulasi seluruh periode yang dipilih</p>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-10 lg:gap-12 text-center w-full lg:w-auto">
-                                <div className="bg-white/5 lg:bg-transparent p-4 lg:p-0 rounded-2xl flex flex-col items-center lg:items-end">
-                                    <p className="text-[10px] md:text-xs font-bold text-blue-200 uppercase tracking-widest mb-1.5 print:text-white leading-none">Total Jual</p>
-                                    <p className="text-xl md:text-2xl lg:text-3xl font-black leading-none">{formatCurrency(grandTotalJual)}</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 xl:gap-8 text-center w-full xl:w-auto">
+                                <div className="bg-white/5 xl:bg-transparent p-4 xl:p-0 rounded-2xl flex flex-col items-center xl:items-end">
+                                    <p className="text-[10px] md:text-xs font-bold text-blue-200 uppercase tracking-widest mb-1 md:mb-1.5 print:text-white leading-none">Total Jual</p>
+                                    <p className="text-lg md:text-xl xl:text-2xl font-black leading-none">{formatCurrency(grandTotalJual)}</p>
                                 </div>
-                                <div className="bg-white/5 lg:bg-transparent p-4 lg:p-0 rounded-2xl flex flex-col items-center lg:items-end">
-                                    <p className="text-[10px] md:text-xs font-bold text-blue-200 uppercase tracking-widest mb-1.5 print:text-white leading-none">Total Modal</p>
-                                    <p className="text-xl md:text-2xl lg:text-3xl font-black leading-none">{formatCurrency(grandTotalModal)}</p>
+                                <div className="bg-white/5 xl:bg-transparent p-4 xl:p-0 rounded-2xl flex flex-col items-center xl:items-end">
+                                    <p className="text-[10px] md:text-xs font-bold text-blue-200 uppercase tracking-widest mb-1 md:mb-1.5 print:text-white leading-none">Total Modal</p>
+                                    <p className="text-lg md:text-xl xl:text-2xl font-black leading-none">{formatCurrency(grandTotalModal)}</p>
                                 </div>
-                                <div className="bg-white/10 px-6 py-4 rounded-2xl backdrop-blur-md border border-white/20 print:bg-transparent flex flex-col items-center lg:items-end">
-                                    <p className="text-[10px] md:text-xs font-bold text-green-300 uppercase tracking-widest mb-1.5 print:text-white leading-none">Total Untung</p>
-                                    <p className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 print:text-white leading-none">{formatCurrency(grandTotalKeuntungan)}</p>
+                                <div className="bg-white/10 px-4 md:px-6 py-3 md:py-4 rounded-2xl backdrop-blur-md border border-white/20 print:bg-transparent flex flex-col items-center xl:items-end">
+                                    <p className="text-[10px] md:text-xs font-bold text-green-300 uppercase tracking-widest mb-1 md:mb-1.5 print:text-white leading-none">Total Untung</p>
+                                    <p className="text-lg md:text-xl xl:text-2xl font-black text-green-400 print:text-white leading-none">{formatCurrency(grandTotalKeuntungan)}</p>
                                 </div>
                             </div>
                         </div>
