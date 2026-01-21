@@ -76,7 +76,7 @@ export const exportLaporanExcel = async ({
                 item.subtotal_jual,
             ]);
 
-            applyRowStyle(row, STYLES.yellowRow);
+            applyRowStyle(row, STYLES.normalRow);
             [5, 6].forEach(col => setCurrency(row.getCell(col)));
         });
 
@@ -94,10 +94,22 @@ export const exportLaporanExcel = async ({
 
     // Final Recap
     ws1.addRow([]);
-    const rowFinalJual = ws1.addRow(['GRAND TOTAL', '', '', '', '', totalJualAll]);
-    ws1.mergeCells(`A${rowFinalJual.number}:E${rowFinalJual.number}`);
-    applyRowStyle(rowFinalJual, STYLES.title);
-    setCurrency(rowFinalJual.getCell(6));
+    const rowFinalJual = ws1.addRow(['', '', '', '', 'GRAND TOTAL', totalJualAll]);
+
+    // Apply styles to the last two cells only as a "table"
+    const celllabel = rowFinalJual.getCell(5);
+    const cellValue = rowFinalJual.getCell(6);
+
+    [celllabel, cellValue].forEach(cell => {
+        cell.font = { bold: true };
+        cell.border = STYLES.header.border;
+    });
+
+    celllabel.fill = STYLES.header.fill;
+    celllabel.alignment = { horizontal: 'center' };
+
+    setCurrency(cellValue);
+    cellValue.alignment = { horizontal: 'right' };
 
     // Write and save
     const buffer = await wb.xlsx.writeBuffer();

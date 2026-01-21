@@ -36,6 +36,10 @@ export const STYLES = {
         border: BORDER
     },
 
+    normalRow: {
+        border: BORDER
+    },
+
     orangeRow: {
         fill: {
             type: 'pattern',
