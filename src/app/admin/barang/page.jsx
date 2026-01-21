@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, Fragment } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
     Plus,
     Search,
@@ -40,6 +41,7 @@ const INITIAL_FORM = {
 };
 
 export default function BarangManagementPage() {
+    const searchParams = useSearchParams();
     const { toast } = useToast();
 
     // State
@@ -61,6 +63,10 @@ export default function BarangManagementPage() {
     const [formData, setFormData] = useState(INITIAL_FORM);
     const [formLoading, setFormLoading] = useState(false);
 
+    // Detail state
+    const [detailModalOpen, setDetailModalOpen] = useState(false);
+    const [viewingItem, setViewingItem] = useState(null);
+
     // Delete state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deletingItem, setDeletingItem] = useState(null);
@@ -73,6 +79,29 @@ export default function BarangManagementPage() {
     useEffect(() => {
         fetchData();
     }, [pagination.page, search, filterUD]);
+
+    useEffect(() => {
+        const viewId = searchParams.get('view');
+        if (viewId && data.length > 0) {
+            const item = data.find((d) => d._id === viewId);
+            if (item) {
+                openDetailModal(item);
+            } else {
+                fetchSingleItem(viewId);
+            }
+        }
+    }, [searchParams, data]);
+
+    const fetchSingleItem = async (id) => {
+        try {
+            const response = await barangAPI.getById(id);
+            if (response.data.success) {
+                openDetailModal(response.data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch barang for deep link:', error);
+        }
+    };
 
     const fetchUDList = async () => {
         try {
@@ -146,6 +175,16 @@ export default function BarangManagementPage() {
         setModalOpen(false);
         setEditingItem(null);
         setFormData(INITIAL_FORM);
+    };
+
+    const openDetailModal = (item) => {
+        setViewingItem(item);
+        setDetailModalOpen(true);
+    };
+
+    const closeDetailModal = () => {
+        setDetailModalOpen(false);
+        setViewingItem(null);
     };
 
     const handleFormChange = (e) => {
@@ -886,6 +925,61 @@ export default function BarangManagementPage() {
                 confirmText="Ya, Hapus"
                 loading={deleteLoading}
             />
+
+            {/* Detail Modal */}
+            <Modal
+                isOpen={detailModalOpen}
+                onClose={closeDetailModal}
+                title="Detail Barang"
+                size="md"
+            >
+                {viewingItem && (
+                    <div className="space-y-6 py-2">
+                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                                <Package className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">{viewingItem.nama_barang}</h3>
+                                <p className="text-sm text-gray-500 font-mono capitalize">{viewingItem.kode_barang}</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-white p-3 border border-gray-100 rounded-xl">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Kategori</p>
+                                <p className="text-sm font-semibold text-gray-700 capitalize">{viewingItem.kategori || '-'}</p>
+                            </div>
+                            <div className="bg-white p-3 border border-gray-100 rounded-xl">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Status</p>
+                                <span className={`inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full uppercase
+                                    ${viewingItem.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                    {viewingItem.isActive ? 'Aktif' : 'Nonaktif'}
+                                </span>
+                            </div>
+                            <div className="bg-white p-3 border border-gray-100 rounded-xl">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Harga Modal</p>
+                                <p className="text-sm font-bold text-gray-900">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(viewingItem.harga_modal)}</p>
+                            </div>
+                            <div className="bg-white p-3 border border-gray-100 rounded-xl">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Harga Jual</p>
+                                <p className="text-sm font-bold text-blue-600">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(viewingItem.harga_jual)}</p>
+                            </div>
+                            <div className="bg-white p-3 border border-gray-100 rounded-xl col-span-2">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">UD Referensi</p>
+                                <p className="text-sm font-semibold text-gray-700">{viewingItem.ud_id?.nama_ud || '-'}</p>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={closeDetailModal}
+                            className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors"
+                        >
+                            Tutup
+                        </button>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 }
