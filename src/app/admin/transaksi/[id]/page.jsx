@@ -249,14 +249,14 @@ export default function TransaksiDetailPage() {
                         <Printer className="w-4 h-4" />
                         Cetak Nota
                     </button>
-                    <button
+                    {/* <button
                         onClick={() => window.print()}
                         className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-xl
                                  hover:bg-gray-50 transition-all font-semibold active:scale-95 text-sm"
                     >
                         <FileText className="w-4 h-4" />
                         Print Detail
-                    </button>
+                    </button> */}
                 </div>
             </div>
 
