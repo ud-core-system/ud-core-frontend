@@ -25,7 +25,7 @@ export default function ProfilePage() {
                 <div className="h-32 bg-gradient-to-r from-brand-500 to-brand-700"></div>
 
                 <div className="px-6 pb-8">
-                    <div className="relative flex flex-col sm:flex-row sm:items-end gap-5 -mt-12 mb-8">
+                    <div className="relative flex flex-col sm:flex-row gap-5 -mt-12 mb-8">
                         {/* Avatar */}
                         <div className="w-24 h-24 rounded-2xl bg-white dark:bg-gray-900 p-1 shadow-theme-lg">
                             <div className="w-full h-full rounded-xl bg-brand-500 flex items-center justify-center text-white text-3xl font-bold">
@@ -33,7 +33,7 @@ export default function ProfilePage() {
                             </div>
                         </div>
 
-                        <div className="flex-1">
+                        <div className="flex-1 sm:pt-16">
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                                 {user?.username}
                             </h2>
