@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Activity,
     Search,
@@ -35,6 +36,7 @@ const MODULE_ICONS = {
 };
 
 export default function ActivityLogsPage() {
+    const router = useRouter();
     const { toast } = useToast();
     const { isAdmin } = useAuth();
 
@@ -107,6 +109,28 @@ export default function ActivityLogsPage() {
         setFilterModule('');
         setFilterUser('');
         setPagination((prev) => ({ ...prev, page: 1 }));
+    };
+
+    const handleRowClick = (item) => {
+        if (!item.target_id || !item.module) return;
+
+        const modulePaths = {
+            USER: '/admin/users',
+            UD: '/admin/ud',
+            BARANG: '/admin/barang',
+            DAPUR: '/admin/dapur',
+            PERIODE: '/admin/periode',
+            TRANSAKSI: '/admin/transaksi',
+        };
+
+        const path = modulePaths[item.module];
+        if (!path) return;
+
+        if (item.module === 'TRANSAKSI') {
+            router.push(`${path}/${item.target_id}`);
+        } else {
+            router.push(`${path}?view=${item.target_id}`);
+        }
     };
 
     return (
@@ -227,7 +251,11 @@ export default function ActivityLogsPage() {
                     <>
                         <div className="divide-y divide-gray-100">
                             {data.map((item) => (
-                                <div key={item._id} className="p-4 sm:px-6 hover:bg-gray-50 transition-colors">
+                                <div
+                                    key={item._id}
+                                    onClick={() => handleRowClick(item)}
+                                    className={`p-4 sm:px-6 hover:bg-gray-100 transition-colors ${item.target_id ? 'cursor-pointer' : ''}`}
+                                >
                                     <div className="flex items-start gap-3 sm:gap-4">
                                         {/* User Avatar */}
                                         <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm">

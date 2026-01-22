@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
     Plus,
     Search,
@@ -24,6 +25,7 @@ const INITIAL_FORM = {
 };
 
 export default function DapurManagementPage() {
+    const searchParams = useSearchParams();
     const { toast } = useToast();
 
     // State
@@ -43,6 +45,10 @@ export default function DapurManagementPage() {
     const [formData, setFormData] = useState(INITIAL_FORM);
     const [formLoading, setFormLoading] = useState(false);
 
+    // Detail state
+    const [detailModalOpen, setDetailModalOpen] = useState(false);
+    const [viewingItem, setViewingItem] = useState(null);
+
     // Delete state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deletingItem, setDeletingItem] = useState(null);
@@ -51,6 +57,29 @@ export default function DapurManagementPage() {
     useEffect(() => {
         fetchData();
     }, [pagination.page, search]);
+
+    useEffect(() => {
+        const viewId = searchParams.get('view');
+        if (viewId && data.length > 0) {
+            const item = data.find((d) => d._id === viewId);
+            if (item) {
+                openDetailModal(item);
+            } else {
+                fetchSingleItem(viewId);
+            }
+        }
+    }, [searchParams, data]);
+
+    const fetchSingleItem = async (id) => {
+        try {
+            const response = await dapurAPI.getById(id);
+            if (response.data.success) {
+                openDetailModal(response.data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch dapur for deep link:', error);
+        }
+    };
 
     const fetchData = async () => {
         try {
@@ -100,6 +129,16 @@ export default function DapurManagementPage() {
         setModalOpen(false);
         setEditingItem(null);
         setFormData(INITIAL_FORM);
+    };
+
+    const openDetailModal = (item) => {
+        setViewingItem(item);
+        setDetailModalOpen(true);
+    };
+
+    const closeDetailModal = () => {
+        setDetailModalOpen(false);
+        setViewingItem(null);
     };
 
     const handleFormChange = (e) => {
@@ -455,6 +494,52 @@ export default function DapurManagementPage() {
                 confirmText="Ya, Hapus"
                 loading={deleteLoading}
             />
+
+            {/* Detail Modal */}
+            <Modal
+                isOpen={detailModalOpen}
+                onClose={closeDetailModal}
+                title="Detail Dapur"
+                size="md"
+            >
+                {viewingItem && (
+                    <div className="space-y-6 py-2">
+                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shadow-sm">
+                                <ChefHat className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">{viewingItem.nama_dapur}</h3>
+                                <p className="text-sm text-gray-500 font-mono">{viewingItem.kode_dapur}</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4">
+                            <div className="bg-white p-4 border border-gray-100 rounded-2xl shadow-sm">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Alamat</p>
+                                <p className="text-sm font-medium text-gray-700 leading-relaxed">
+                                    {viewingItem.alamat || <span className="italic text-gray-400">Tidak ada alamat</span>}
+                                </p>
+                            </div>
+
+                            <div className="bg-white p-4 border border-gray-100 rounded-2xl shadow-sm">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Status Operasional</p>
+                                <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider
+                                    ${viewingItem.isActive ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
+                                    {viewingItem.isActive ? 'Aktif' : 'Nonaktif'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={closeDetailModal}
+                            className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl transition-all active:scale-[0.98]"
+                        >
+                            Tutup
+                        </button>
+                    </div>
+                )}
+            </Modal>
         </div >
     );
 }

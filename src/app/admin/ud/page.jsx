@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
     Plus,
     Search,
@@ -39,6 +40,7 @@ const INITIAL_FORM = {
 };
 
 export default function UDManagementPage() {
+    const searchParams = useSearchParams();
     const { toast } = useToast();
 
     // State
@@ -70,6 +72,30 @@ export default function UDManagementPage() {
     useEffect(() => {
         fetchData();
     }, [pagination.page, search]);
+
+    useEffect(() => {
+        const viewId = searchParams.get('view');
+        if (viewId && data.length > 0) {
+            const item = data.find((d) => d._id === viewId);
+            if (item) {
+                openViewModal(item);
+            } else {
+                // If not in current page, fetch it
+                fetchSingleItem(viewId);
+            }
+        }
+    }, [searchParams, data]);
+
+    const fetchSingleItem = async (id) => {
+        try {
+            const response = await udAPI.getById(id);
+            if (response.data.success) {
+                openViewModal(response.data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch UD for deep link:', error);
+        }
+    };
 
     const fetchData = async () => {
         try {

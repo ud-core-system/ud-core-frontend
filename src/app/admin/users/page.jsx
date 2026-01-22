@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
     Plus,
     Search,
@@ -30,6 +31,7 @@ const INITIAL_FORM = {
 };
 
 export default function UserManagementPage() {
+    const searchParams = useSearchParams();
     const { toast } = useToast();
     const { isAdmin, user: currentUser } = useAuth();
 
@@ -75,6 +77,29 @@ export default function UserManagementPage() {
             fetchData();
         }
     }, [pagination.page, search]);
+
+    useEffect(() => {
+        const viewId = searchParams.get('view');
+        if (viewId && data.length > 0) {
+            const item = data.find((d) => d._id === viewId);
+            if (item) {
+                openDetailModal(item);
+            } else {
+                fetchSingleItem(viewId);
+            }
+        }
+    }, [searchParams, data]);
+
+    const fetchSingleItem = async (id) => {
+        try {
+            const response = await userAPI.getById(id);
+            if (response.data.success) {
+                openDetailModal(response.data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch user for deep link:', error);
+        }
+    };
 
     const fetchUDList = async () => {
         try {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
     Plus,
     Edit,
@@ -27,6 +28,7 @@ const INITIAL_FORM = {
 };
 
 export default function PeriodeManagementPage() {
+    const searchParams = useSearchParams();
     const { toast } = useToast();
 
     // State
@@ -45,6 +47,10 @@ export default function PeriodeManagementPage() {
     const [formData, setFormData] = useState(INITIAL_FORM);
     const [formLoading, setFormLoading] = useState(false);
 
+    // Detail state
+    const [detailModalOpen, setDetailModalOpen] = useState(false);
+    const [viewingItem, setViewingItem] = useState(null);
+
     // Delete state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deletingItem, setDeletingItem] = useState(null);
@@ -59,6 +65,29 @@ export default function PeriodeManagementPage() {
     useEffect(() => {
         fetchData();
     }, [pagination.page]);
+
+    useEffect(() => {
+        const viewId = searchParams.get('view');
+        if (viewId && data.length > 0) {
+            const item = data.find((d) => d._id === viewId);
+            if (item) {
+                openDetailModal(item);
+            } else {
+                fetchSingleItem(viewId);
+            }
+        }
+    }, [searchParams, data]);
+
+    const fetchSingleItem = async (id) => {
+        try {
+            const response = await periodeAPI.getById(id);
+            if (response.data.success) {
+                openDetailModal(response.data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch periode for deep link:', error);
+        }
+    };
 
     const fetchData = async () => {
         try {
@@ -108,6 +137,16 @@ export default function PeriodeManagementPage() {
         setEditingItem(null);
         setFormData(INITIAL_FORM);
         setIsDatePickerOpen(false);
+    };
+
+    const openDetailModal = (item) => {
+        setViewingItem(item);
+        setDetailModalOpen(true);
+    };
+
+    const closeDetailModal = () => {
+        setDetailModalOpen(false);
+        setViewingItem(null);
     };
 
     const handleFormChange = (e) => {
@@ -583,6 +622,56 @@ export default function PeriodeManagementPage() {
                 variant="warning"
                 loading={closeLoading}
             />
+
+            {/* Detail Modal */}
+            <Modal
+                isOpen={detailModalOpen}
+                onClose={closeDetailModal}
+                title="Detail Periode"
+                size="md"
+            >
+                {viewingItem && (
+                    <div className="space-y-6 py-2">
+                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shadow-sm">
+                                <Calendar className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">{viewingItem.nama_periode}</h3>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase
+                                        ${viewingItem.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                        {viewingItem.isActive ? 'Aktif' : 'Nonaktif'}
+                                    </span>
+                                    {viewingItem.isClosed && (
+                                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 text-purple-700 uppercase">
+                                            Closed
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-white p-4 border border-gray-100 rounded-2xl shadow-sm">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Tanggal Mulai</p>
+                                <p className="text-sm font-bold text-gray-700">{formatDate(viewingItem.tanggal_mulai)}</p>
+                            </div>
+                            <div className="bg-white p-4 border border-gray-100 rounded-2xl shadow-sm">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Tanggal Selesai</p>
+                                <p className="text-sm font-bold text-gray-700">{formatDate(viewingItem.tanggal_selesai)}</p>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={closeDetailModal}
+                            className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl transition-all"
+                        >
+                            Tutup
+                        </button>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 }
