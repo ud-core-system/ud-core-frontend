@@ -368,7 +368,7 @@ export default function LaporanPage() {
                     columnStyles: {
                         0: { cellWidth: 10, halign: 'center' },
                         2: { cellWidth: 12, halign: 'center' },
-                        3: { cellWidth: 15, halign: 'center' },
+                        3: { cellWidth: 20, halign: 'center' },
                         4: { halign: 'right' },
                         5: { halign: 'right' },
                         6: { halign: 'right' },
@@ -495,7 +495,7 @@ export default function LaporanPage() {
                         0: { cellWidth: 10, halign: 'center' },
                         1: { cellWidth: 20 },
                         3: { cellWidth: 12, halign: 'center' },
-                        4: { cellWidth: 12, halign: 'center' },
+                        4: { cellWidth: 20, halign: 'center' },
                         5: { halign: 'right' },
                         6: { halign: 'right' },
                         7: { halign: 'right' },
@@ -664,7 +664,7 @@ export default function LaporanPage() {
                 columnStyles: {
                     0: { cellWidth: 7, halign: 'center' },
                     2: { cellWidth: 10, halign: 'center' },
-                    3: { cellWidth: 12, halign: 'center' },
+                    3: { cellWidth: 20, halign: 'center' },
                     4: { cellWidth: 20, halign: 'right' },
                     5: { cellWidth: 25, halign: 'right' },
                     6: { cellWidth: 20, halign: 'right' },

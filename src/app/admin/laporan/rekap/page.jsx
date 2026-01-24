@@ -443,7 +443,7 @@ export default function LaporanRekapPage() {
                     columnStyles: {
                         0: { cellWidth: 10, halign: 'center' },
                         2: { cellWidth: 12, halign: 'center' },
-                        3: { cellWidth: 15, halign: 'center' },
+                        3: { cellWidth: 20, halign: 'center' },
                         4: { halign: 'right' },
                         5: { halign: 'right' },
                         6: { halign: 'right' },
