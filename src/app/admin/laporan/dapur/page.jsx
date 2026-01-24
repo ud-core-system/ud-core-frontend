@@ -285,7 +285,7 @@ export default function LaporanDapurPage() {
 
             autoTable(doc, {
                 startY: filterTanggal ? 40 : 35,
-                head: [['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Jual Suplier']],
+                head: [['No', 'Nama Barang', 'Qty', 'Satuan', 'Harga Jual Suplier', 'Total Harga']],
                 body: tableData,
                 theme: 'grid',
                 styles: { fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
