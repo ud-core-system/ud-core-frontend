@@ -9,7 +9,7 @@ import {
     Printer,
     CheckCircle,
 } from 'lucide-react';
-import { getErrorMessage, formatCurrency, formatDate, getStatusClass } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDate, getStatusClass, toLocalDate } from '@/lib/utils';
 import { transaksiAPI, barangAPI, udAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import NotaDapur from '@/components/print/NotaDapur';
@@ -35,6 +35,14 @@ export default function TransaksiDetailPage() {
             fetchData();
         }
     }, [params.id]);
+
+    // Restore original title on unmount
+    useEffect(() => {
+        const originalTitle = document.title;
+        return () => {
+            document.title = originalTitle;
+        };
+    }, []);
 
     const fetchData = async () => {
         try {
@@ -111,44 +119,51 @@ export default function TransaksiDetailPage() {
 
     const handlePrintAll = () => {
         const originalTitle = document.title;
-        const dateStr = data.tanggal ? new Date(data.tanggal).toISOString().split('T')[0] : 'date';
-        document.title = `Semua_Nota_${dateStr}`;
+        const dateStr = data.tanggal ? toLocalDate(data.tanggal) : 'date';
+        const newTitle = `Semua_Nota_${dateStr}`;
+        document.title = newTitle;
 
         setPrinting('all');
         setSelectedUDForPrint(null);
         setTimeout(() => {
             window.print();
             setPrinting(null);
-            document.title = originalTitle;
-        }, 500);
+            // Longer delay for mobile capture
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 5000);
+        }, 1000);
     };
 
     const handlePrintIndividual = (udId) => {
         const itemsByUD = getItemsByUD();
         const udData = itemsByUD[udId];
         const originalTitle = document.title;
-        const dateStr = data.tanggal ? new Date(data.tanggal).toISOString().split('T')[0] : 'date';
+        const dateStr = data.tanggal ? toLocalDate(data.tanggal) : 'date';
         const udName = udData?.nama_ud || 'UD';
-        document.title = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}`;
+        const newTitle = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}`;
+        document.title = newTitle;
 
         setPrinting(udId);
         setSelectedUDForPrint(udId);
         setTimeout(() => {
             window.print();
-            // Reset after print dialog closes
             setPrinting(null);
             setTimeout(() => {
                 setSelectedUDForPrint(null);
                 document.title = originalTitle;
-            }, 1000);
-        }, 500);
+            }, 5000); // Shifting to 5s for mobile stability
+        }, 1000);
     };
 
     const handleDownloadIndividual = async (udId, udName) => {
         try {
             setDownloading(udId);
-            const dateStr = data.tanggal ? new Date(data.tanggal).toISOString().split('T')[0] : 'date';
+            const dateStr = data.tanggal ? toLocalDate(data.tanggal) : 'date';
             const fileName = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}.pdf`;
+
+            // Persistent title for mobile tab identification
+            document.title = fileName.replace('.pdf', '');
 
             // Beri waktu React untuk render komponen ke DOM
             await new Promise(resolve => setTimeout(resolve, 300));
@@ -159,6 +174,7 @@ export default function TransaksiDetailPage() {
             toast.error('Gagal mengunduh PDF');
         } finally {
             setDownloading(null);
+            // We leave the title so mobile browsers opening it in a tab see it
         }
     };
 
@@ -173,7 +189,9 @@ export default function TransaksiDetailPage() {
 
         try {
             setDownloadingAll(true);
-            const dateStr = data.tanggal ? new Date(data.tanggal).toISOString().split('T')[0] : 'date';
+            const dateStr = data.tanggal ? toLocalDate(data.tanggal) : 'date';
+
+            document.title = `Semua_Nota_${dateStr}`;
 
             // Beri waktu React untuk render komponen ke DOM
             await new Promise(resolve => setTimeout(resolve, 300));
@@ -191,6 +209,7 @@ export default function TransaksiDetailPage() {
             console.error(error);
         } finally {
             setDownloadingAll(false);
+            // Leave title for mobile
         }
     };
 
