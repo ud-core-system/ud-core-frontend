@@ -9,7 +9,7 @@ import {
     Printer,
     CheckCircle,
 } from 'lucide-react';
-import { getErrorMessage, formatCurrency, formatDate, getStatusClass, toLocalDate } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDate, getStatusClass, toLocalDate, formatDateFilename } from '@/lib/utils';
 import { transaksiAPI, barangAPI, udAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import NotaDapur from '@/components/print/NotaDapur';
@@ -119,7 +119,7 @@ export default function TransaksiDetailPage() {
 
     const handlePrintAll = () => {
         const originalTitle = document.title;
-        const dateStr = data.tanggal ? toLocalDate(data.tanggal) : 'date';
+        const dateStr = data.tanggal ? formatDateFilename(data.tanggal) : 'date';
         const newTitle = `Semua_Nota_${dateStr}`;
         document.title = newTitle;
 
@@ -139,7 +139,7 @@ export default function TransaksiDetailPage() {
         const itemsByUD = getItemsByUD();
         const udData = itemsByUD[udId];
         const originalTitle = document.title;
-        const dateStr = data.tanggal ? toLocalDate(data.tanggal) : 'date';
+        const dateStr = data.tanggal ? formatDateFilename(data.tanggal) : 'date';
         const udName = udData?.nama_ud || 'UD';
         const newTitle = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}`;
         document.title = newTitle;
@@ -159,7 +159,7 @@ export default function TransaksiDetailPage() {
     const handleDownloadIndividual = async (udId, udName) => {
         try {
             setDownloading(udId);
-            const dateStr = data.tanggal ? toLocalDate(data.tanggal) : 'date';
+            const dateStr = data.tanggal ? formatDateFilename(data.tanggal) : 'date';
             const fileName = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}.pdf`;
 
             // Persistent title for mobile tab identification
@@ -189,7 +189,7 @@ export default function TransaksiDetailPage() {
 
         try {
             setDownloadingAll(true);
-            const dateStr = data.tanggal ? toLocalDate(data.tanggal) : 'date';
+            const dateStr = data.tanggal ? formatDateFilename(data.tanggal) : 'date';
 
             document.title = `Semua_Nota_${dateStr}`;
 
@@ -267,7 +267,7 @@ export default function TransaksiDetailPage() {
                         </button>
                     )}
 
-                    <button
+                    {/* <button
                         onClick={handleDownloadAll}
                         disabled={downloadingAll}
                         className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl
@@ -279,7 +279,7 @@ export default function TransaksiDetailPage() {
                             <FileText className="w-4 h-4" />
                         )}
                         Download Semua PDF
-                    </button>
+                    </button> */}
                     <button
                         onClick={handlePrintAll}
                         disabled={printing === 'all'}
@@ -382,7 +382,7 @@ export default function TransaksiDetailPage() {
                                                 <Printer className="w-5 h-5" />
                                             )}
                                         </button>
-                                        <button
+                                        {/* <button
                                             onClick={() => handleDownloadIndividual(udId, udData.nama_ud)}
                                             disabled={downloading === udId}
                                             className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-xl font-bold text-xs
@@ -394,7 +394,7 @@ export default function TransaksiDetailPage() {
                                                 <FileText className="w-4 h-4" />
                                             )}
                                             PDF
-                                        </button>
+                                        </button> */}
                                     </div>
                                 </div>
                             </div>

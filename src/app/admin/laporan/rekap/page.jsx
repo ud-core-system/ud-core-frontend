@@ -13,15 +13,18 @@ import {
     MapPin,
     CreditCard,
     FileText,
+    FileSpreadsheet,
     ChevronDown,
     ChevronUp,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { periodeAPI, transaksiAPI, udAPI, barangAPI } from '@/lib/api';
+import { exportLaporanExcel } from '@/utils/excel/exportLaporan';
+import { periodeAPI, transaksiAPI, udAPI, barangAPI, dapurAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
-import { getErrorMessage, formatCurrency, formatDateShort } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDateShort, formatDateFilename } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 
 export default function LaporanRekapPage() {
     const { toast } = useToast();
@@ -29,11 +32,13 @@ export default function LaporanRekapPage() {
     // Options
     const [periodeList, setPeriodeList] = useState([]);
     const [udList, setUdList] = useState([]);
+    const [dapurList, setDapurList] = useState([]);
     const [barangList, setBarangList] = useState([]);
 
     // Filters
     const [filterPeriode, setFilterPeriode] = useState('');
     const [filterUD, setFilterUD] = useState('');
+    const [filterDapur, setFilterDapur] = useState('');
 
     // Data
     const [transactions, setTransactions] = useState([]);
@@ -52,13 +57,14 @@ export default function LaporanRekapPage() {
         setTransactions([]);
         setGroupedData({});
         setSelectedUDData(null);
-    }, [filterPeriode, filterUD]);
+    }, [filterPeriode, filterUD, filterDapur]);
 
     const fetchOptions = async () => {
         try {
-            const [periodeRes, udRes, barangRes] = await Promise.all([
+            const [periodeRes, udRes, dapurRes, barangRes] = await Promise.all([
                 periodeAPI.getAll({ limit: 50 }),
                 udAPI.getAll({ limit: 100, isActive: true }),
+                dapurAPI.getAll({ limit: 100 }),
                 barangAPI.getAll({ limit: 1000 })
             ]);
 
@@ -67,6 +73,9 @@ export default function LaporanRekapPage() {
             }
             if (udRes.data.success) {
                 setUdList(udRes.data.data);
+            }
+            if (dapurRes.data.success) {
+                setDapurList(dapurRes.data.data);
             }
             if (barangRes.data.success) {
                 setBarangList(barangRes.data.data);
@@ -85,6 +94,7 @@ export default function LaporanRekapPage() {
                 limit: 2000,
                 status: 'completed',
                 periode_id: filterPeriode || undefined,
+                dapur_id: filterDapur || undefined,
             };
 
             const response = await transaksiAPI.getAll(params);
@@ -144,12 +154,15 @@ export default function LaporanRekapPage() {
             const dateStr = formatDateShort(trx.tanggal);
 
             // Filter by UD if filter is active
-            const filteredItems = filterUD
-                ? trx.items?.filter(item => {
-                    const itemUdId = item.ud_id?._id || item.ud_id;
-                    return itemUdId === filterUD;
-                })
-                : trx.items;
+            const filteredItems = (trx.items || []).filter(item => {
+                const itemUdId = item.ud_id?._id || item.ud_id;
+                const matchesUd = filterUD ? itemUdId === filterUD : true;
+
+                const itemDapurId = trx.dapur_id?._id || trx.dapur_id;
+                const matchesDapur = filterDapur ? itemDapurId === filterDapur : true;
+
+                return matchesUd && matchesDapur;
+            });
 
             if (!filteredItems || filteredItems.length === 0) return;
 
@@ -257,7 +270,9 @@ export default function LaporanRekapPage() {
             const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
             const periodName = period ? period.nama_periode : 'Semua Periode';
             const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
-            const periodeLabel = `${periodName.toUpperCase()} ${periodRange}`;
+            const selectedDapur = filterDapur ? dapurList.find(d => d._id === filterDapur) : null;
+            const dapurLabel = selectedDapur ? ` - DAPUR: ${selectedDapur.nama_dapur.toUpperCase()}` : '';
+            const periodeLabel = `${periodName.toUpperCase()} ${periodRange}${dapurLabel}`;
             const printTimestamp = `Dicetak pada: ${new Date().toLocaleString('id-ID')}`;
 
             // Check if it's UD specific view
@@ -287,16 +302,15 @@ export default function LaporanRekapPage() {
 
                     // Date Row
                     tableRows.push([
-                        { content: dateStr, colSpan: 10, styles: { fillColor: [241, 245, 249], fontStyle: 'bold' } }
+                        { content: dateStr, colSpan: 9, styles: { fillColor: [241, 245, 249], fontStyle: 'bold' } }
                     ]);
 
-                    udData.items.forEach((item) => {
+                    udData.items.forEach((item, idx) => {
                         tableRows.push([
+                            idx + 1,
                             item.nama_barang || item.barang_id?.nama_barang || '-',
                             item.qty,
                             item.satuan || item.barang_id?.satuan || '-',
-                            formatCurrency(item.masterPrice),
-                            formatCurrency(item.itemBudgetTotal),
                             formatCurrency(item.harga_jual),
                             formatCurrency(item.subtotal_jual),
                             formatCurrency(item.harga_modal),
@@ -307,9 +321,7 @@ export default function LaporanRekapPage() {
 
                     // Subtotal Row
                     tableRows.push([
-                        { content: `Subtotal ${dateStr}`, colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } },
-                        '',
-                        { content: formatCurrency(udData.totalBudget), styles: { fontStyle: 'bold' } },
+                        { content: `Subtotal ${dateStr}`, colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
                         '',
                         { content: formatCurrency(udData.totalJual), styles: { fontStyle: 'bold' } },
                         '',
@@ -320,9 +332,7 @@ export default function LaporanRekapPage() {
 
                 // Grand Total Row
                 tableRows.push([
-                    { content: 'GRAND TOTAL', colSpan: 3, styles: { halign: 'right', fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' } },
-                    { content: '', styles: { fillColor: [30, 41, 59] } },
-                    { content: formatCurrency(grandTotalBudget), styles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' } },
+                    { content: 'GRAND TOTAL', colSpan: 4, styles: { halign: 'right', fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' } },
                     { content: '', styles: { fillColor: [30, 41, 59] } },
                     { content: formatCurrency(grandTotalJual), styles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' } },
                     { content: '', styles: { fillColor: [30, 41, 59] } },
@@ -333,28 +343,29 @@ export default function LaporanRekapPage() {
                 autoTable(doc, {
                     startY: 55,
                     head: [[
+                        { content: 'No', rowSpan: 2 },
                         { content: 'Nama Barang', rowSpan: 2 },
                         { content: 'Qty', rowSpan: 2 },
                         { content: 'Satuan', rowSpan: 2 },
-                        { content: 'Budget Dapur', colSpan: 2, styles: { halign: 'center' } },
                         { content: 'Jual Suplier', colSpan: 2, styles: { halign: 'center' } },
                         { content: 'Modal Suplier', colSpan: 2, styles: { halign: 'center' } },
                         { content: 'Keuntungan', rowSpan: 2 }
                     ], [
-                        'Harga', 'Total', 'Harga', 'Total', 'Harga', 'Total'
+                        'Harga', 'Total', 'Harga', 'Total'
                     ]],
                     body: tableRows,
                     theme: 'grid',
                     styles: { fontSize: 7, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
                     headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], halign: 'center', valign: 'middle' },
                     columnStyles: {
-                        3: { halign: 'right' },
+                        0: { cellWidth: 10, halign: 'center' },
+                        2: { cellWidth: 12, halign: 'center' },
+                        3: { cellWidth: 20, halign: 'center' },
                         4: { halign: 'right' },
                         5: { halign: 'right' },
                         6: { halign: 'right' },
                         7: { halign: 'right' },
                         8: { halign: 'right' },
-                        9: { halign: 'right' },
                     }
                 });
             } else {
@@ -474,16 +485,137 @@ export default function LaporanRekapPage() {
                 });
             }
 
-            const timestamp = new Date().toISOString().split('T')[0];
-            const fileName = isUDSpecific
-                ? `Rekap_${selectedUDData.nama_ud.replace(/\s+/g, '_')}_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`
-                : `Laporan_Rekap_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`;
+            // Check filters for filename
+            const udName = isUDSpecific ? selectedUDData.nama_ud.replace(/\s+/g, '_') : '';
+            const dapurName = selectedDapur ? selectedDapur.nama_dapur.replace(/\s+/g, '_') : '';
+            const periodClean = periodName.replace(/\s+/g, '_');
+            const timestamp = formatDateFilename();
+
+            let fileNamePrefix = 'Laporan_Rekap';
+            let fileNameSuffix = '';
+
+            if (udName || dapurName) {
+                fileNamePrefix = 'Rekap';
+                if (udName) fileNameSuffix += `_${udName}`;
+                if (dapurName) fileNameSuffix += `_Dapur_${dapurName}`;
+            }
+
+            const fileName = `${fileNamePrefix}${fileNameSuffix}_${periodClean}_${timestamp}.pdf`;
 
             doc.save(fileName);
             toast.success('Laporan PDF berhasil dibuat');
         } catch (error) {
             console.error('PDF Generation Error:', error);
             toast.error('Gagal membuat laporan PDF');
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+    const handleDownloadExcel = async () => {
+        if (Object.keys(groupedData).length === 0) {
+            toast.warning('Tidak ada data untuk dibuat laporan');
+            return;
+        }
+
+        setGenerating(true);
+        try {
+            const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
+            const periodName = period ? period.nama_periode : 'Semua Periode';
+            const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
+            const selectedDapur = filterDapur ? dapurList.find(d => d._id === filterDapur) : null;
+            const dapurLabel = selectedDapur ? ` - DAPUR: ${selectedDapur.nama_dapur.toUpperCase()}` : '';
+            const periodeLabel = `${periodName.toUpperCase()} ${periodRange}${dapurLabel}`;
+
+            // Helper to get items grouped by UD (for Excel utility)
+            const getItemsByUD = () => {
+                const udMap = {};
+                const udLookupMap = new Map(udList.map(u => [u._id, u]));
+                const barangMap = new Map(barangList.map(b => [b._id, b]));
+
+                transactions.forEach((trx) => {
+                    trx.items?.forEach((item) => {
+                        const bId = item.barang_id?._id || item.barang_id;
+                        const uId = item.ud_id?._id || item.ud_id;
+
+                        // Check if this item belongs to the filtered dapur if filter is active
+                        const trxDapurId = trx.dapur_id?._id || trx.dapur_id;
+                        if (filterDapur && trxDapurId !== filterDapur) return;
+
+                        const barang = barangMap.get(bId);
+                        const ud = udLookupMap.get(uId);
+
+                        const udIdKey = uId || 'unknown';
+                        const udName = ud?.nama_ud || item.ud_id?.nama_ud || 'Unknown UD';
+
+                        if (!udMap[udIdKey]) {
+                            udMap[udIdKey] = {
+                                _id: udIdKey,
+                                nama_ud: udName,
+                                items: [],
+                                totalJual: 0,
+                                totalModal: 0,
+                                totalKeuntungan: 0,
+                            };
+                        }
+
+                        const actualJual = item.harga_jual ?? barang?.harga_jual;
+                        const actualModal = item.harga_modal ?? barang?.harga_modal;
+
+                        udMap[udIdKey].items.push({
+                            ...item,
+                            barang_id: barang || item.barang_id,
+                            ud_id: ud || item.ud_id,
+                            harga_jual: actualJual,
+                            harga_modal: actualModal,
+                            tanggal: trx.tanggal,
+                        });
+                        udMap[udIdKey].totalJual += (item.subtotal_jual || 0);
+                        udMap[udIdKey].totalModal += (item.subtotal_modal || 0);
+                        udMap[udIdKey].totalKeuntungan += (item.keuntungan || 0);
+                    });
+                });
+                return Object.values(udMap);
+            };
+
+            const itemsByUD = getItemsByUD();
+
+            // Check filters for filename
+            const udName = (filterUD && selectedUDData) ? selectedUDData.nama_ud.replace(/\s+/g, '_') : '';
+            const dapurName = selectedDapur ? selectedDapur.nama_dapur.replace(/\s+/g, '_') : '';
+            const periodClean = periodName.replace(/\s+/g, '_');
+            const timestamp = formatDateFilename();
+
+            let fileNamePrefix = 'Laporan_Rekap';
+            let fileNameSuffix = '';
+
+            if (udName || dapurName) {
+                fileNamePrefix = 'Rekap';
+                if (udName) fileNameSuffix += `_${udName}`;
+                if (dapurName) fileNameSuffix += `_Dapur_${dapurName}`;
+            }
+
+            const fileName = `${fileNamePrefix}${fileNameSuffix}_${periodClean}_${timestamp}.xlsx`;
+
+            await exportLaporanExcel({
+                transactions: transactions.filter(trx => {
+                    const trxDapurId = trx.dapur_id?._id || trx.dapur_id;
+                    return filterDapur ? trxDapurId === filterDapur : true;
+                }),
+                itemsByUD,
+                periodeLabel,
+                totalJualAll: grandTotalJual,
+                totalModalAll: grandTotalModal,
+                totalUntungAll: grandTotalKeuntungan,
+                barangList,
+                udList,
+                fileName
+            });
+
+            toast.success('Laporan Excel berhasil dibuat');
+        } catch (error) {
+            console.error('Excel Generation Error:', error);
+            toast.error('Gagal membuat laporan Excel');
         } finally {
             setGenerating(false);
         }
@@ -499,42 +631,60 @@ export default function LaporanRekapPage() {
 
             {/* Filters */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 p-4 md:p-6 shadow-sm print:hidden">
-                <div className="flex flex-col md:grid md:grid-cols-3 items-end gap-4">
+                <div className="flex flex-col md:grid md:grid-cols-4 items-end gap-4">
                     <div className="w-full">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-gray-400" />
                             Pilih Periode
                         </label>
-                        <select
+                        <SearchableSelect
                             value={filterPeriode}
                             onChange={(e) => setFilterPeriode(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm"
-                        >
-                            <option value="">Semua Periode</option>
-                            {periodeList.map((p) => (
-                                <option key={p._id} value={p._id}>
-                                    {p.nama_periode} ({formatDateShort(p.tanggal_mulai)} - {formatDateShort(p.tanggal_selesai)})
-                                </option>
-                            ))}
-                        </select>
+                            options={periodeList.map(p => ({
+                                value: p._id,
+                                label: `${p.nama_periode} (${formatDateShort(p.tanggal_mulai)} - ${formatDateShort(p.tanggal_selesai)})`
+                            }))}
+                            placeholder="Semua Periode"
+                            searchPlaceholder="Cari periode..."
+                        />
                     </div>
                     <div className="w-full">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                             <Filter className="w-4 h-4 text-gray-400" />
                             Filter UD (Opsional)
                         </label>
-                        <select
+                        <SearchableSelect
                             value={filterUD}
                             onChange={(e) => setFilterUD(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer text-sm"
-                        >
-                            <option value="">Semua UD</option>
-                            {udList.map((u) => (
-                                <option key={u._id} value={u._id}>
-                                    {u.nama_ud}
-                                </option>
-                            ))}
-                        </select>
+                            options={[
+                                { value: '', label: 'Semua UD' },
+                                ...udList.map(u => ({
+                                    value: u._id,
+                                    label: u.nama_ud
+                                }))
+                            ]}
+                            placeholder="Semua UD"
+                            searchPlaceholder="Cari UD..."
+                        />
+                    </div>
+                    <div className="w-full">
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <Briefcase className="w-4 h-4 text-gray-400" />
+                            Filter Dapur (Opsional)
+                        </label>
+                        <SearchableSelect
+                            value={filterDapur}
+                            onChange={(e) => setFilterDapur(e.target.value)}
+                            options={[
+                                { value: '', label: 'Semua Dapur' },
+                                ...dapurList.map(d => ({
+                                    value: d._id,
+                                    label: d.nama_dapur
+                                }))
+                            ]}
+                            placeholder="Semua Dapur"
+                            searchPlaceholder="Cari dapur..."
+                        />
                     </div>
                     <div className="flex w-full gap-2">
                         <button
@@ -550,18 +700,20 @@ export default function LaporanRekapPage() {
                             Cari Data
                         </button>
                         {Object.keys(groupedData).length > 0 && (
-                            <button
-                                onClick={handleDownloadPDF}
-                                disabled={generating}
-                                className="p-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all border border-slate-200 disabled:opacity-50"
-                                title="Generate PDF"
-                            >
-                                {generating ? (
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                ) : (
-                                    <FileText className="w-5 h-5" />
-                                )}
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleDownloadPDF}
+                                    disabled={generating}
+                                    className="p-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all border border-slate-200 disabled:opacity-50"
+                                    title="Generate PDF"
+                                >
+                                    {generating ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <FileText className="w-5 h-5" />
+                                    )}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -634,17 +786,15 @@ export default function LaporanRekapPage() {
                             <table className="w-full text-sm">
                                 <thead className="bg-gray-50 print:bg-gray-200">
                                     <tr>
+                                        <th rowSpan={2} className="px-3 md:px-4 py-4 border-b border-gray-200 font-bold text-gray-900 border-r print:border-black">No</th>
                                         <th rowSpan={2} className="px-3 md:px-4 py-4 border-b border-gray-200 font-bold text-gray-900 border-r print:border-black">Nama Barang</th>
                                         <th rowSpan={2} className="px-2 md:px-3 py-4 border-b border-gray-200 font-bold text-gray-900 border-r print:border-black">Qty</th>
                                         <th rowSpan={2} className="hidden lg:table-cell px-2 md:px-3 py-4 border-b border-gray-200 font-bold text-gray-900 border-r print:border-black">Satuan</th>
-                                        <th colSpan={2} className="px-2 md:px-3 py-2 border-b border-gray-200 font-bold text-center text-blue-700 border-r print:border-black print:text-black">Budget Dapur</th>
                                         <th colSpan={2} className="px-2 md:px-3 py-2 border-b border-gray-200 font-bold text-center text-orange-700 border-r print:border-black print:text-black">Jual Suplier</th>
                                         <th colSpan={2} className="px-2 md:px-3 py-2 border-b border-gray-200 font-bold text-center text-purple-700 border-r print:border-black print:text-black hover:hidden">Modal Suplier</th>
                                         <th rowSpan={2} className="px-3 md:px-4 py-4 border-b border-gray-200 font-bold text-right text-green-700 print:border-black print:text-black">Keuntungan</th>
                                     </tr>
                                     <tr className="bg-gray-50/50 print:bg-gray-100">
-                                        <th className="hidden xl:table-cell px-3 py-2 border-b border-gray-200 font-bold text-right text-xs print:border-black">Harga</th>
-                                        <th className="px-2 md:px-3 py-2 border-b border-gray-200 font-bold text-right text-xs border-r print:border-black">Total</th>
                                         <th className="hidden xl:table-cell px-3 py-2 border-b border-gray-200 font-bold text-right text-xs print:border-black">Harga</th>
                                         <th className="px-2 md:px-3 py-2 border-b border-gray-200 font-bold text-right text-xs border-r print:border-black">Total</th>
                                         <th className="hidden xl:table-cell px-3 py-2 border-b border-gray-200 font-bold text-right text-xs print:border-black">Harga</th>
@@ -667,14 +817,12 @@ export default function LaporanRekapPage() {
                                                 </tr>
                                                 {udData.items.map((item, idx) => (
                                                     <tr key={idx} className="hover:bg-gray-50/50 print:hover:bg-transparent transition-colors border-b last:border-b-0 print:border-black">
+                                                        <td className="px-3 md:px-4 py-2.5 text-center text-gray-500 border-r print:border-black">{idx + 1}</td>
                                                         <td className="px-3 md:px-4 py-2.5 font-medium text-gray-900 border-r print:border-black">
                                                             <p className="line-clamp-2">{item.nama_barang || item.barang_id?.nama_barang || '-'}</p>
                                                         </td>
                                                         <td className="px-2 md:px-3 py-2.5 text-center text-gray-700 border-r print:border-black">{item.qty}</td>
                                                         <td className="hidden lg:table-cell px-2 md:px-3 py-2.5 text-center text-gray-500 border-r print:border-black">{item.satuan || item.barang_id?.satuan || '-'}</td>
-                                                        {/* Budget */}
-                                                        <td className="hidden xl:table-cell px-3 py-2.5 text-right text-gray-600">{formatCurrency(item.masterPrice)}</td>
-                                                        <td className="px-2 md:px-3 py-2.5 text-right font-medium text-blue-800 border-r print:border-black print:text-black">{formatCurrency(item.itemBudgetTotal)}</td>
                                                         {/* Jual */}
                                                         <td className="hidden xl:table-cell px-3 py-2.5 text-right text-gray-600">{formatCurrency(item.harga_jual)}</td>
                                                         <td className="px-2 md:px-3 py-2.5 text-right font-medium text-orange-800 border-r print:border-black print:text-black">{formatCurrency(item.subtotal_jual)}</td>
@@ -687,11 +835,8 @@ export default function LaporanRekapPage() {
                                                 ))}
                                                 {/* Daily Subtotal for this UD */}
                                                 <tr className="bg-gray-50/50 font-bold print:bg-transparent">
-                                                    <td colSpan={2} className="px-3 md:px-4 py-3 text-right uppercase text-[10px] md:text-xs text-gray-500 border-r print:border-black print:text-black whitespace-pre-line">Subtotal {dateStr}</td>
+                                                    <td colSpan={3} className="px-3 md:px-4 py-3 text-right uppercase text-[10px] md:text-xs text-gray-500 border-r print:border-black print:text-black whitespace-pre-line">Subtotal {dateStr}</td>
                                                     <td className="hidden lg:table-cell px-2 md:px-3 py-3 border-r print:border-black"></td>
-                                                    {/* Budget */}
-                                                    <td className="hidden xl:table-cell px-3 py-3"></td>
-                                                    <td className="px-2 md:px-3 py-3 text-right text-blue-800 border-r print:border-black print:text-black">{formatCurrency(udData.totalBudget)}</td>
                                                     {/* Jual */}
                                                     <td className="hidden xl:table-cell px-3 py-3"></td>
                                                     <td className="px-2 md:px-3 py-3 text-right text-orange-800 border-r print:border-black print:text-black">{formatCurrency(udData.totalJual)}</td>
@@ -707,11 +852,8 @@ export default function LaporanRekapPage() {
                                 </tbody>
                                 <tfoot className="bg-gray-900 text-white font-bold print:bg-black print:text-white">
                                     <tr className="text-sm md:text-lg">
-                                        <td colSpan={2} className="px-3 md:px-4 py-4 md:py-6 text-right uppercase tracking-wider text-[10px] md:text-sm text-gray-400 print:text-white">GRAND TOTAL</td>
+                                        <td colSpan={3} className="px-3 md:px-4 py-4 md:py-6 text-right uppercase tracking-wider text-[10px] md:text-sm text-gray-400 print:text-white">GRAND TOTAL</td>
                                         <td className="hidden lg:table-cell px-2 md:px-3 py-4 md:py-6"></td>
-                                        {/* Budget */}
-                                        <td className="hidden xl:table-cell px-3 py-4 md:py-6"></td>
-                                        <td className="px-2 md:px-3 py-4 md:py-6 text-right whitespace-nowrap">{formatCurrency(grandTotalBudget)}</td>
                                         {/* Jual */}
                                         <td className="hidden xl:table-cell px-3 py-4 md:py-6"></td>
                                         <td className="px-2 md:px-3 py-4 md:py-6 text-right whitespace-nowrap text-orange-400 print:text-white">{formatCurrency(grandTotalJual)}</td>
@@ -755,18 +897,13 @@ export default function LaporanRekapPage() {
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-50">
-                                                    <div>
-                                                        <p className="text-[10px] font-bold text-blue-600 uppercase">Budget</p>
-                                                        <p className="text-xs font-bold text-gray-900">{formatCurrency(item.itemBudgetTotal)}</p>
-                                                        <p className="text-[8px] text-gray-400">@{formatCurrency(item.masterPrice)}</p>
-                                                    </div>
+                                                <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-50">
                                                     <div>
                                                         <p className="text-[10px] font-bold text-orange-600 uppercase">Jual</p>
                                                         <p className="text-xs font-bold text-gray-900">{formatCurrency(item.subtotal_jual)}</p>
                                                         <p className="text-[8px] text-gray-400">@{formatCurrency(item.harga_jual)}</p>
                                                     </div>
-                                                    <div>
+                                                    <div className="text-right">
                                                         <p className="text-[10px] font-bold text-purple-600 uppercase">Modal</p>
                                                         <p className="text-xs font-bold text-gray-900">{formatCurrency(item.subtotal_modal)}</p>
                                                         <p className="text-[8px] text-gray-400">@{formatCurrency(item.harga_modal)}</p>
@@ -779,11 +916,7 @@ export default function LaporanRekapPage() {
                                     {/* Mobile Subtotal Card */}
                                     <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-2">
                                         <p className="text-[10px] font-bold text-gray-400 uppercase">Subtotal {dateStr}</p>
-                                        <div className="grid grid-cols-2 gap-y-3">
-                                            <div>
-                                                <p className="text-[10px] text-gray-500">Total Budget</p>
-                                                <p className="text-sm font-bold text-blue-700">{formatCurrency(udData.totalBudget)}</p>
-                                            </div>
+                                        <div className="grid grid-cols-3 gap-y-3">
                                             <div>
                                                 <p className="text-[10px] text-gray-500">Total Jual</p>
                                                 <p className="text-sm font-bold text-orange-700">{formatCurrency(udData.totalJual)}</p>
@@ -792,7 +925,7 @@ export default function LaporanRekapPage() {
                                                 <p className="text-[10px] text-gray-500">Total Modal</p>
                                                 <p className="text-sm font-bold text-purple-700">{formatCurrency(udData.totalModal)}</p>
                                             </div>
-                                            <div>
+                                            <div className="text-right">
                                                 <p className="text-[10px] text-gray-500">Keuntungan</p>
                                                 <p className="text-sm font-bold text-green-700">{formatCurrency(udData.totalKeuntungan)}</p>
                                             </div>
@@ -981,19 +1114,22 @@ export default function LaporanRekapPage() {
                         </div>
                     )}
                 </div>
-            )}
+            )
+            }
 
             {/* Empty State */}
-            {!loading && Object.keys(groupedData).length === 0 && (
-                <div className="bg-white rounded-2xl border border-gray-200 py-20 text-center shadow-sm print:hidden">
-                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
-                        <ClipboardList className="w-10 h-10 text-gray-300" />
+            {
+                !loading && Object.keys(groupedData).length === 0 && (
+                    <div className="bg-white rounded-2xl border border-gray-200 py-20 text-center shadow-sm print:hidden">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
+                            <ClipboardList className="w-10 h-10 text-gray-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Belum Ada Data</h3>
+                        <p className="text-gray-500 max-w-sm mx-auto">Pilih periode dan klik tombol cari untuk memuat laporan rekap penjualan.</p>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">Belum Ada Data</h3>
-                    <p className="text-gray-500 max-w-sm mx-auto">Pilih periode dan klik tombol cari untuk memuat laporan rekap penjualan.</p>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
 
