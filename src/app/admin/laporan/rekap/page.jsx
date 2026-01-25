@@ -13,12 +13,14 @@ import {
     MapPin,
     CreditCard,
     FileText,
+    FileSpreadsheet,
     ChevronDown,
     ChevronUp,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { periodeAPI, transaksiAPI, udAPI, barangAPI } from '@/lib/api';
+import { exportLaporanExcel } from '@/utils/excel/exportLaporan';
+import { periodeAPI, transaksiAPI, udAPI, barangAPI, dapurAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency, formatDateShort } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -30,11 +32,13 @@ export default function LaporanRekapPage() {
     // Options
     const [periodeList, setPeriodeList] = useState([]);
     const [udList, setUdList] = useState([]);
+    const [dapurList, setDapurList] = useState([]);
     const [barangList, setBarangList] = useState([]);
 
     // Filters
     const [filterPeriode, setFilterPeriode] = useState('');
     const [filterUD, setFilterUD] = useState('');
+    const [filterDapur, setFilterDapur] = useState('');
 
     // Data
     const [transactions, setTransactions] = useState([]);
@@ -53,13 +57,14 @@ export default function LaporanRekapPage() {
         setTransactions([]);
         setGroupedData({});
         setSelectedUDData(null);
-    }, [filterPeriode, filterUD]);
+    }, [filterPeriode, filterUD, filterDapur]);
 
     const fetchOptions = async () => {
         try {
-            const [periodeRes, udRes, barangRes] = await Promise.all([
+            const [periodeRes, udRes, dapurRes, barangRes] = await Promise.all([
                 periodeAPI.getAll({ limit: 50 }),
                 udAPI.getAll({ limit: 100, isActive: true }),
+                dapurAPI.getAll({ limit: 100 }),
                 barangAPI.getAll({ limit: 1000 })
             ]);
 
@@ -68,6 +73,9 @@ export default function LaporanRekapPage() {
             }
             if (udRes.data.success) {
                 setUdList(udRes.data.data);
+            }
+            if (dapurRes.data.success) {
+                setDapurList(dapurRes.data.data);
             }
             if (barangRes.data.success) {
                 setBarangList(barangRes.data.data);
@@ -86,6 +94,7 @@ export default function LaporanRekapPage() {
                 limit: 2000,
                 status: 'completed',
                 periode_id: filterPeriode || undefined,
+                dapur_id: filterDapur || undefined,
             };
 
             const response = await transaksiAPI.getAll(params);
@@ -145,12 +154,15 @@ export default function LaporanRekapPage() {
             const dateStr = formatDateShort(trx.tanggal);
 
             // Filter by UD if filter is active
-            const filteredItems = filterUD
-                ? trx.items?.filter(item => {
-                    const itemUdId = item.ud_id?._id || item.ud_id;
-                    return itemUdId === filterUD;
-                })
-                : trx.items;
+            const filteredItems = (trx.items || []).filter(item => {
+                const itemUdId = item.ud_id?._id || item.ud_id;
+                const matchesUd = filterUD ? itemUdId === filterUD : true;
+
+                const itemDapurId = trx.dapur_id?._id || trx.dapur_id;
+                const matchesDapur = filterDapur ? itemDapurId === filterDapur : true;
+
+                return matchesUd && matchesDapur;
+            });
 
             if (!filteredItems || filteredItems.length === 0) return;
 
@@ -258,7 +270,9 @@ export default function LaporanRekapPage() {
             const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
             const periodName = period ? period.nama_periode : 'Semua Periode';
             const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
-            const periodeLabel = `${periodName.toUpperCase()} ${periodRange}`;
+            const selectedDapur = filterDapur ? dapurList.find(d => d._id === filterDapur) : null;
+            const dapurLabel = selectedDapur ? ` - DAPUR: ${selectedDapur.nama_dapur.toUpperCase()}` : '';
+            const periodeLabel = `${periodName.toUpperCase()} ${periodRange}${dapurLabel}`;
             const printTimestamp = `Dicetak pada: ${new Date().toLocaleString('id-ID')}`;
 
             // Check if it's UD specific view
@@ -475,16 +489,137 @@ export default function LaporanRekapPage() {
                 });
             }
 
+            // Check filters for filename
+            const udName = isUDSpecific ? selectedUDData.nama_ud.replace(/\s+/g, '_') : '';
+            const dapurName = selectedDapur ? selectedDapur.nama_dapur.replace(/\s+/g, '_') : '';
+            const periodClean = periodName.replace(/\s+/g, '_');
             const timestamp = new Date().toISOString().split('T')[0];
-            const fileName = isUDSpecific
-                ? `Rekap_${selectedUDData.nama_ud.replace(/\s+/g, '_')}_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`
-                : `Laporan_Rekap_${periodName.replace(/\s+/g, '_')}_${timestamp}.pdf`;
+
+            let fileNamePrefix = 'Laporan_Rekap';
+            let fileNameSuffix = '';
+
+            if (udName || dapurName) {
+                fileNamePrefix = 'Rekap';
+                if (udName) fileNameSuffix += `_${udName}`;
+                if (dapurName) fileNameSuffix += `_Dapur_${dapurName}`;
+            }
+
+            const fileName = `${fileNamePrefix}${fileNameSuffix}_${periodClean}_${timestamp}.pdf`;
 
             doc.save(fileName);
             toast.success('Laporan PDF berhasil dibuat');
         } catch (error) {
             console.error('PDF Generation Error:', error);
             toast.error('Gagal membuat laporan PDF');
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+    const handleDownloadExcel = async () => {
+        if (Object.keys(groupedData).length === 0) {
+            toast.warning('Tidak ada data untuk dibuat laporan');
+            return;
+        }
+
+        setGenerating(true);
+        try {
+            const period = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
+            const periodName = period ? period.nama_periode : 'Semua Periode';
+            const periodRange = period ? `(${formatDateShort(period.tanggal_mulai)} - ${formatDateShort(period.tanggal_selesai)})` : '';
+            const selectedDapur = filterDapur ? dapurList.find(d => d._id === filterDapur) : null;
+            const dapurLabel = selectedDapur ? ` - DAPUR: ${selectedDapur.nama_dapur.toUpperCase()}` : '';
+            const periodeLabel = `${periodName.toUpperCase()} ${periodRange}${dapurLabel}`;
+
+            // Helper to get items grouped by UD (for Excel utility)
+            const getItemsByUD = () => {
+                const udMap = {};
+                const udLookupMap = new Map(udList.map(u => [u._id, u]));
+                const barangMap = new Map(barangList.map(b => [b._id, b]));
+
+                transactions.forEach((trx) => {
+                    trx.items?.forEach((item) => {
+                        const bId = item.barang_id?._id || item.barang_id;
+                        const uId = item.ud_id?._id || item.ud_id;
+
+                        // Check if this item belongs to the filtered dapur if filter is active
+                        const trxDapurId = trx.dapur_id?._id || trx.dapur_id;
+                        if (filterDapur && trxDapurId !== filterDapur) return;
+
+                        const barang = barangMap.get(bId);
+                        const ud = udLookupMap.get(uId);
+
+                        const udIdKey = uId || 'unknown';
+                        const udName = ud?.nama_ud || item.ud_id?.nama_ud || 'Unknown UD';
+
+                        if (!udMap[udIdKey]) {
+                            udMap[udIdKey] = {
+                                _id: udIdKey,
+                                nama_ud: udName,
+                                items: [],
+                                totalJual: 0,
+                                totalModal: 0,
+                                totalKeuntungan: 0,
+                            };
+                        }
+
+                        const actualJual = item.harga_jual ?? barang?.harga_jual;
+                        const actualModal = item.harga_modal ?? barang?.harga_modal;
+
+                        udMap[udIdKey].items.push({
+                            ...item,
+                            barang_id: barang || item.barang_id,
+                            ud_id: ud || item.ud_id,
+                            harga_jual: actualJual,
+                            harga_modal: actualModal,
+                            tanggal: trx.tanggal,
+                        });
+                        udMap[udIdKey].totalJual += (item.subtotal_jual || 0);
+                        udMap[udIdKey].totalModal += (item.subtotal_modal || 0);
+                        udMap[udIdKey].totalKeuntungan += (item.keuntungan || 0);
+                    });
+                });
+                return Object.values(udMap);
+            };
+
+            const itemsByUD = getItemsByUD();
+
+            // Check filters for filename
+            const udName = (filterUD && selectedUDData) ? selectedUDData.nama_ud.replace(/\s+/g, '_') : '';
+            const dapurName = selectedDapur ? selectedDapur.nama_dapur.replace(/\s+/g, '_') : '';
+            const periodClean = periodName.replace(/\s+/g, '_');
+            const timestamp = new Date().toISOString().split('T')[0];
+
+            let fileNamePrefix = 'Laporan_Rekap';
+            let fileNameSuffix = '';
+
+            if (udName || dapurName) {
+                fileNamePrefix = 'Rekap';
+                if (udName) fileNameSuffix += `_${udName}`;
+                if (dapurName) fileNameSuffix += `_Dapur_${dapurName}`;
+            }
+
+            const fileName = `${fileNamePrefix}${fileNameSuffix}_${periodClean}_${timestamp}.xlsx`;
+
+            await exportLaporanExcel({
+                transactions: transactions.filter(trx => {
+                    const trxDapurId = trx.dapur_id?._id || trx.dapur_id;
+                    return filterDapur ? trxDapurId === filterDapur : true;
+                }),
+                itemsByUD,
+                periodeLabel,
+                totalJualAll: grandTotalJual,
+                totalModalAll: grandTotalModal,
+                totalUntungAll: grandTotalKeuntungan,
+                barangList,
+                udList,
+                fileName
+            });
+
+            toast.success('Laporan Excel berhasil dibuat');
+        } catch (error) {
+            console.error('Excel Generation Error:', error);
+            toast.error('Gagal membuat laporan Excel');
         } finally {
             setGenerating(false);
         }
@@ -500,7 +635,7 @@ export default function LaporanRekapPage() {
 
             {/* Filters */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 p-4 md:p-6 shadow-sm print:hidden">
-                <div className="flex flex-col md:grid md:grid-cols-3 items-end gap-4">
+                <div className="flex flex-col md:grid md:grid-cols-4 items-end gap-4">
                     <div className="w-full">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-gray-400" />
@@ -525,12 +660,34 @@ export default function LaporanRekapPage() {
                         <SearchableSelect
                             value={filterUD}
                             onChange={(e) => setFilterUD(e.target.value)}
-                            options={udList.map(u => ({
-                                value: u._id,
-                                label: u.nama_ud
-                            }))}
+                            options={[
+                                { value: '', label: 'Semua UD' },
+                                ...udList.map(u => ({
+                                    value: u._id,
+                                    label: u.nama_ud
+                                }))
+                            ]}
                             placeholder="Semua UD"
                             searchPlaceholder="Cari UD..."
+                        />
+                    </div>
+                    <div className="w-full">
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <Briefcase className="w-4 h-4 text-gray-400" />
+                            Filter Dapur (Opsional)
+                        </label>
+                        <SearchableSelect
+                            value={filterDapur}
+                            onChange={(e) => setFilterDapur(e.target.value)}
+                            options={[
+                                { value: '', label: 'Semua Dapur' },
+                                ...dapurList.map(d => ({
+                                    value: d._id,
+                                    label: d.nama_dapur
+                                }))
+                            ]}
+                            placeholder="Semua Dapur"
+                            searchPlaceholder="Cari dapur..."
                         />
                     </div>
                     <div className="flex w-full gap-2">
@@ -547,18 +704,20 @@ export default function LaporanRekapPage() {
                             Cari Data
                         </button>
                         {Object.keys(groupedData).length > 0 && (
-                            <button
-                                onClick={handleDownloadPDF}
-                                disabled={generating}
-                                className="p-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all border border-slate-200 disabled:opacity-50"
-                                title="Generate PDF"
-                            >
-                                {generating ? (
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                ) : (
-                                    <FileText className="w-5 h-5" />
-                                )}
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleDownloadPDF}
+                                    disabled={generating}
+                                    className="p-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all border border-slate-200 disabled:opacity-50"
+                                    title="Generate PDF"
+                                >
+                                    {generating ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <FileText className="w-5 h-5" />
+                                    )}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -978,19 +1137,22 @@ export default function LaporanRekapPage() {
                         </div>
                     )}
                 </div>
-            )}
+            )
+            }
 
             {/* Empty State */}
-            {!loading && Object.keys(groupedData).length === 0 && (
-                <div className="bg-white rounded-2xl border border-gray-200 py-20 text-center shadow-sm print:hidden">
-                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
-                        <ClipboardList className="w-10 h-10 text-gray-300" />
+            {
+                !loading && Object.keys(groupedData).length === 0 && (
+                    <div className="bg-white rounded-2xl border border-gray-200 py-20 text-center shadow-sm print:hidden">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
+                            <ClipboardList className="w-10 h-10 text-gray-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Belum Ada Data</h3>
+                        <p className="text-gray-500 max-w-sm mx-auto">Pilih periode dan klik tombol cari untuk memuat laporan rekap penjualan.</p>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">Belum Ada Data</h3>
-                    <p className="text-gray-500 max-w-sm mx-auto">Pilih periode dan klik tombol cari untuk memuat laporan rekap penjualan.</p>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
 
