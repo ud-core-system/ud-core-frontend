@@ -267,7 +267,7 @@ export default function TransaksiDetailPage() {
                         </button>
                     )}
 
-                    <button
+                    {/* <button
                         onClick={handleDownloadAll}
                         disabled={downloadingAll}
                         className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl
@@ -279,7 +279,7 @@ export default function TransaksiDetailPage() {
                             <FileText className="w-4 h-4" />
                         )}
                         Download Semua PDF
-                    </button>
+                    </button> */}
                     <button
                         onClick={handlePrintAll}
                         disabled={printing === 'all'}
@@ -382,7 +382,7 @@ export default function TransaksiDetailPage() {
                                                 <Printer className="w-5 h-5" />
                                             )}
                                         </button>
-                                        <button
+                                        {/* <button
                                             onClick={() => handleDownloadIndividual(udId, udData.nama_ud)}
                                             disabled={downloading === udId}
                                             className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-xl font-bold text-xs
@@ -394,7 +394,7 @@ export default function TransaksiDetailPage() {
                                                 <FileText className="w-4 h-4" />
                                             )}
                                             PDF
-                                        </button>
+                                        </button> */}
                                     </div>
                                 </div>
                             </div>
