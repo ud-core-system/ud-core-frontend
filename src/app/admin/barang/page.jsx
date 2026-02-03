@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Fragment } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import {
     Plus,
     Search,
@@ -10,6 +11,7 @@ import {
     Package,
     Loader2,
     Filter,
+    Upload,
 } from 'lucide-react';
 import { barangAPI, udAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
@@ -276,14 +278,24 @@ export default function BarangManagementPage() {
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Management Barang</h1>
                     <p className="text-xs sm:text-sm text-gray-500 mt-1">Kelola data barang dari berbagai UD</p>
                 </div>
-                <button
-                    onClick={openCreateModal}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
-                   hover:bg-blue-700 transition-colors font-medium text-sm sm:text-base"
-                >
-                    <Plus className="w-5 h-5" />
-                    Tambah Barang
-                </button>
+                <div className="flex items-center gap-2">
+                    <Link
+                        href="/admin/barang/bulk-upload"
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300
+                                   text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm sm:text-base"
+                    >
+                        <Upload className="w-5 h-5" />
+                        <span className="hidden sm:inline">Bulk Upload</span>
+                    </Link>
+                    <button
+                        onClick={openCreateModal}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
+                                   hover:bg-blue-700 transition-colors font-medium text-sm sm:text-base"
+                    >
+                        <Plus className="w-5 h-5" />
+                        Tambah Barang
+                    </button>
+                </div>
             </div>
 
             {/* Filters */}

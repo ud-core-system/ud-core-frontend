@@ -41,6 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 # sandbox
-src/app/sandbox
+/sandbox
 referensi_data
 read_excel.js
