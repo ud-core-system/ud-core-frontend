@@ -94,6 +94,7 @@ export const transaksiAPI = {
     update: (id, data) => api.put(`/transaksi/${id}`, data),
     complete: (id) => api.post(`/transaksi/${id}/complete`),
     cancel: (id) => api.delete(`/transaksi/${id}`),
+    hardDelete: (id) => api.delete(`/transaksi/${id}/hard`),
 };
 
 // ============ Dashboard API ============

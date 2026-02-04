@@ -762,6 +762,24 @@ Authorization: bearer <token>
 
 ---
 
+### Hard Delete Transaksi (Permanent)
+```http
+DELETE /transaksi/:id/hard
+Authorization: bearer <token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Transaksi permanently deleted successfully"
+}
+```
+
+> ⚠️ Only cancelled transactions can be hard deleted
+
+---
+
 ## 📊 Dashboard
 
 ### Get Summary Stats

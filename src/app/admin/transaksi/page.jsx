@@ -48,6 +48,12 @@ export default function TransaksiListPage() {
     const [deletingItem, setDeletingItem] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
 
+    // Hard delete state
+    const [hardDeleteDialogOpen, setHardDeleteDialogOpen] = useState(false);
+    const [hardDeletingItem, setHardDeletingItem] = useState(null);
+    const [hardDeleteLoading, setHardDeleteLoading] = useState(false);
+    const [verificationCode, setVerificationCode] = useState('');
+
     useEffect(() => {
         fetchOptions();
     }, []);
@@ -105,7 +111,7 @@ export default function TransaksiListPage() {
         try {
             setDeleteLoading(true);
             await transaksiAPI.cancel(deletingItem._id);
-            toast.success('Transaksi berhasil dihapus');
+            toast.success('Transaksi berhasil dibatalkan');
             setDeleteDialogOpen(false);
             setDeletingItem(null);
             fetchData();
@@ -113,6 +119,28 @@ export default function TransaksiListPage() {
             toast.error(getErrorMessage(error));
         } finally {
             setDeleteLoading(false);
+        }
+    };
+
+    const handleHardDeleteTransaksi = async () => {
+        if (!hardDeletingItem) return;
+        if (verificationCode !== hardDeletingItem.kode_transaksi) {
+            toast.error('Kode transaksi tidak sesuai');
+            return;
+        }
+
+        try {
+            setHardDeleteLoading(true);
+            await transaksiAPI.hardDelete(hardDeletingItem._id);
+            toast.success('Transaksi berhasil dihapus secara permanen');
+            setHardDeleteDialogOpen(false);
+            setHardDeletingItem(null);
+            setVerificationCode('');
+            fetchData();
+        } catch (error) {
+            toast.error(getErrorMessage(error));
+        } finally {
+            setHardDeleteLoading(false);
         }
     };
 
@@ -338,11 +366,24 @@ export default function TransaksiListPage() {
                                                                     setDeleteDialogOpen(true);
                                                                 }}
                                                                 className="p-1.5 hover:bg-red-100 rounded-lg text-red-600 transition-colors"
-                                                                title="Hapus Transaksi"
+                                                                title="Batalkan Transaksi"
                                                             >
                                                                 <Trash2 className="w-4 h-4" />
                                                             </button>
                                                         </>
+                                                    )}
+                                                    {item.status === 'cancelled' && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setHardDeletingItem(item);
+                                                                setHardDeleteDialogOpen(true);
+                                                                setVerificationCode('');
+                                                            }}
+                                                            className="p-1.5 hover:bg-red-100 rounded-lg text-red-700 transition-colors"
+                                                            title="Hapus Permanen"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
                                                     )}
                                                 </div>
                                             </td>
@@ -409,11 +450,24 @@ export default function TransaksiListPage() {
                                                             setDeleteDialogOpen(true);
                                                         }}
                                                         className="flex flex-col items-center justify-center w-10 h-10 bg-red-50 text-red-600 rounded-xl"
-                                                        title="Hapus Transaksi"
+                                                        title="Batalkan Transaksi"
                                                     >
                                                         <Trash2 className="w-5 h-5" />
                                                     </button>
                                                 </>
+                                            )}
+                                            {item.status === 'cancelled' && (
+                                                <button
+                                                    onClick={() => {
+                                                        setHardDeletingItem(item);
+                                                        setHardDeleteDialogOpen(true);
+                                                        setVerificationCode('');
+                                                    }}
+                                                    className="flex flex-col items-center justify-center w-10 h-10 bg-red-50 text-red-700 rounded-xl"
+                                                    title="Hapus Permanen"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
                                             )}
                                         </div>
                                     </div>
@@ -446,11 +500,79 @@ export default function TransaksiListPage() {
                     setDeletingItem(null);
                 }}
                 onConfirm={handleDeleteTransaksi}
-                title="Hapus Transaksi"
-                message={`Apakah Anda yakin ingin menghapus transaksi "${deletingItem?.kode_transaksi}"? Data ini akan dibatalkan dan tidak dapat dikembalikan.`}
-                confirmText="Ya, Hapus"
+                title="Batalkan Transaksi"
+                message={`Apakah Anda yakin ingin membatalkan transaksi "${deletingItem?.kode_transaksi}"? Status transaksi akan berubah menjadi "Dibatalkan".`}
+                confirmText="Ya, Batalkan"
                 loading={deleteLoading}
             />
+
+            {/* Hard Delete Confirm Dialog */}
+            <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${hardDeleteDialogOpen ? 'visible' : 'hidden'}`}>
+                {/* Backdrop */}
+                <div
+                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    onClick={() => {
+                        if (!hardDeleteLoading) {
+                            setHardDeleteDialogOpen(false);
+                            setHardDeletingItem(null);
+                        }
+                    }}
+                />
+
+                {/* Dialog */}
+                <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6 animate-fade-in">
+                    <div className="text-center">
+                        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                            <Trash2 className="w-8 h-8 text-red-600" />
+                        </div>
+
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Hapus Permanen</h3>
+                        <p className="text-gray-500 mb-6 text-sm">
+                            Tindakan ini <span className="font-bold text-red-600 uppercase">tidak dapat dibatalkan</span>.
+                            Transaksi <span className="font-mono font-bold text-gray-900 bg-gray-100 px-1 rounded">{hardDeletingItem?.kode_transaksi}</span> akan dihapus selamanya dari database.
+                        </p>
+
+                        <div className="mb-6 text-left">
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                                Ketik Kode Transaksi untuk Konfirmasi
+                            </label>
+                            <input
+                                type="text"
+                                value={verificationCode}
+                                onChange={(e) => setVerificationCode(e.target.value)}
+                                placeholder={hardDeletingItem?.kode_transaksi}
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 font-mono text-center tracking-wider transition-all"
+                                autoFocus
+                            />
+                        </div>
+
+                        <div className="flex gap-3 mt-8">
+                            <button
+                                onClick={() => {
+                                    setHardDeleteDialogOpen(false);
+                                    setHardDeletingItem(null);
+                                }}
+                                disabled={hardDeleteLoading}
+                                className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-all disabled:opacity-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={handleHardDeleteTransaksi}
+                                disabled={hardDeleteLoading || verificationCode !== hardDeletingItem?.kode_transaksi}
+                                className="flex-[1.5] px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:grayscale disabled:shadow-none active:scale-95"
+                            >
+                                {hardDeleteLoading ? (
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span>Menghapus...</span>
+                                    </div>
+                                ) : 'Hapus Selamanya'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
