@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, udAPI, barangAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
-import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, toLocalDate, formatDateFilename } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, toLocalDate, formatDateFilename, normalizeId } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { exportLaporanExcel } from '@/utils/excel/exportLaporan';
@@ -73,12 +73,67 @@ export default function LaporanPage() {
                 const selectedPeriode = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
 
                 // Fetch full details for each transaction
-                const detailedTransactions = (await Promise.all(
+                const rawDetails = await Promise.all(
                     response.data.data.map(async (trx) => {
                         const detailRes = await transaksiAPI.getById(trx._id);
                         return detailRes.data.success ? detailRes.data.data : trx;
                     })
-                )).filter(trx => {
+                );
+
+                // Robust Enrichment
+                const barangMap = new Map(barangList.map(b => [normalizeId(b._id), b]));
+                const udMap = new Map(udList.map(u => [normalizeId(u._id), u]));
+
+                const missingBarangIds = new Set();
+                const missingUdIds = new Set();
+
+                rawDetails.forEach(trx => {
+                    trx.items?.forEach(item => {
+                        const bId = normalizeId(item.barang_id?._id || item.barang_id);
+                        const uId = normalizeId(item.ud_id?._id || item.ud_id);
+                        if (!barangMap.has(bId) && bId) missingBarangIds.add(bId);
+                        if (!udMap.has(uId) && uId) missingUdIds.add(uId);
+                    });
+                });
+
+                if (missingBarangIds.size > 0 || missingUdIds.size > 0) {
+                    const missingBarangPromises = Array.from(missingBarangIds).map(id => barangAPI.getById(id).catch(() => null));
+                    const missingUdPromises = Array.from(missingUdIds).map(id => udAPI.getById(id).catch(() => null));
+
+                    const [fetchedBarang, fetchedUd] = await Promise.all([
+                        Promise.all(missingBarangPromises),
+                        Promise.all(missingUdPromises)
+                    ]);
+
+                    fetchedBarang.forEach(res => {
+                        if (res?.data?.success) {
+                            const b = res.data.data;
+                            barangMap.set(normalizeId(b._id), b);
+                        }
+                    });
+
+                    fetchedUd.forEach(res => {
+                        if (res?.data?.success) {
+                            const u = res.data.data;
+                            udMap.set(normalizeId(u._id), u);
+                        }
+                    });
+                }
+
+                const detailedTransactions = rawDetails.map(trx => {
+                    if (trx.items) {
+                        trx.items = trx.items.map(item => {
+                            const bId = normalizeId(item.barang_id?._id || item.barang_id);
+                            const uId = normalizeId(item.ud_id?._id || item.ud_id);
+                            return {
+                                ...item,
+                                barang_id: barangMap.get(bId) || item.barang_id,
+                                ud_id: udMap.get(uId) || item.ud_id
+                            };
+                        });
+                    }
+                    return trx;
+                }).filter(trx => {
                     const isCompleted = trx.status === 'completed';
                     if (!selectedPeriode) return isCompleted;
 
@@ -89,7 +144,7 @@ export default function LaporanPage() {
                     const isInRange = trxDate >= startDate && trxDate <= endDate;
 
                     // Client-side Dapur cross-check (optional but safe)
-                    const matchesDapur = filterDapur ? (trx.dapur_id?._id || trx.dapur_id) === filterDapur : true;
+                    const matchesDapur = filterDapur ? normalizeId(trx.dapur_id?._id || trx.dapur_id) === filterDapur : true;
 
                     return isCompleted && isInRange && matchesDapur;
                 });
@@ -104,30 +159,22 @@ export default function LaporanPage() {
     };
 
     const getItemsByUD = () => {
-        const barangMap = new Map(barangList.map(b => [b._id, b]));
-        const udMap = {}; // We need a fresh map for grouping results, the udList map is for lookup
-
-        const udLookupMap = new Map(udList.map(u => [u._id, u]));
+        const udMap = {};
 
         transactions.forEach((trx) => {
             trx.items?.forEach((item) => {
-                const bId = item.barang_id?._id || item.barang_id;
-                const uId = item.ud_id?._id || item.ud_id;
+                const uId = normalizeId(item.ud_id?._id || item.ud_id) || 'unknown';
 
                 // Strict filtering by Dapur
-                const trxDapurId = trx.dapur_id?._id || trx.dapur_id;
+                const trxDapurId = normalizeId(trx.dapur_id?._id || trx.dapur_id);
                 if (filterDapur && trxDapurId !== filterDapur) return;
 
-                const barang = barangMap.get(bId);
-                const ud = udLookupMap.get(uId);
+                const udName = item.ud_nama || item.ud_id?.nama_ud || 'Unknown UD';
+                const udKode = item.ud_kode || item.ud_id?.kode_ud || '';
 
-                const udIdKey = uId || 'unknown';
-                const udName = ud?.nama_ud || item.ud_id?.nama_ud || 'Unknown UD';
-                const udKode = ud?.kode_ud || item.ud_id?.kode_ud || '';
-
-                if (!udMap[udIdKey]) {
-                    udMap[udIdKey] = {
-                        _id: udIdKey,
+                if (!udMap[uId]) {
+                    udMap[uId] = {
+                        _id: uId,
                         nama_ud: udName,
                         kode_ud: udKode,
                         items: [],
@@ -137,22 +184,16 @@ export default function LaporanPage() {
                     };
                 }
 
-                const actualJual = item.harga_jual ?? barang?.harga_jual;
-                const actualModal = item.harga_modal ?? barang?.harga_modal;
-
-                udMap[udIdKey].items.push({
+                udMap[uId].items.push({
                     ...item,
-                    barang_id: barang || item.barang_id,
-                    ud_id: ud || item.ud_id,
-                    harga_jual: actualJual,
-                    harga_modal: actualModal,
+                    nama_barang: item.nama_barang || item.barang_id?.nama_barang || '-',
                     transaksi: trx.kode_transaksi,
                     dapur: trx.dapur_id?.nama_dapur,
                     tanggal: trx.tanggal,
                 });
-                udMap[udIdKey].totalJual += (item.subtotal_jual || 0);
-                udMap[udIdKey].totalModal += (item.subtotal_modal || 0);
-                udMap[udIdKey].totalKeuntungan += (item.keuntungan || 0);
+                udMap[uId].totalJual += (item.subtotal_jual || 0);
+                udMap[uId].totalModal += (item.subtotal_modal || 0);
+                udMap[uId].totalKeuntungan += (item.keuntungan || 0);
             });
         });
         return Object.values(udMap);
@@ -292,10 +333,6 @@ export default function LaporanPage() {
                 headStyles: { fillColor: [71, 85, 105], textColor: [255, 255, 255], halign: 'center', valign: 'middle' },
             });
 
-            // Create lookup maps for enrichment
-            const barangMap = new Map(barangList.map(b => [b._id, b]));
-            const udLookupMap = new Map(udList.map(u => [u._id, u]));
-
             // Group by date THEN by UD
             const groupedData = {};
             transactions.forEach(trx => {
@@ -303,26 +340,20 @@ export default function LaporanPage() {
                 if (!groupedData[dateKey]) groupedData[dateKey] = { tanggal: dateKey, uds: {} };
 
                 trx.items?.forEach(item => {
-                    const bId = item.barang_id?._id || item.barang_id;
-                    const uId = item.ud_id?._id || item.ud_id;
-                    const barang = barangMap.get(bId);
-                    const ud = udLookupMap.get(uId);
+                    const uId = normalizeId(item.ud_id?._id || item.ud_id) || 'unknown';
+                    const udName = item.ud_nama || item.ud_id?.nama_ud || 'Unknown UD';
 
-                    const enrichedItem = {
-                        ...item,
-                        nama_barang: item.nama_barang || barang?.nama_barang || item.barang_id?.nama_barang,
-                        satuan: item.satuan || barang?.satuan || item.barang_id?.satuan
-                    };
-
-                    const udId = uId || 'unknown';
-                    const udName = ud?.nama_ud || item.ud_id?.nama_ud || 'Unknown UD';
-                    if (!groupedData[dateKey].uds[udId]) {
-                        groupedData[dateKey].uds[udId] = {
+                    if (!groupedData[dateKey].uds[uId]) {
+                        groupedData[dateKey].uds[uId] = {
                             nama_ud: udName,
                             items: []
                         };
                     }
-                    groupedData[dateKey].uds[udId].items.push(enrichedItem);
+                    groupedData[dateKey].uds[uId].items.push({
+                        ...item,
+                        nama_barang: item.nama_barang || item.barang_id?.nama_barang || '-',
+                        satuan: item.satuan || item.barang_id?.satuan || '-'
+                    });
                 });
             });
 
@@ -617,10 +648,6 @@ export default function LaporanPage() {
             }
             doc.text(`Dicetak pada: ${printTimestamp}`, 14, currentY);
 
-            // Create lookup maps for enrichment
-            const barangMap = new Map(barangList.map(b => [b._id, b]));
-            const udLookupMap = new Map(udList.map(u => [u._id, u]));
-
             // Group by date
             const groupedByDate = {};
             transactions.forEach(trx => {
@@ -628,16 +655,13 @@ export default function LaporanPage() {
                 if (!groupedByDate[dateKey]) groupedByDate[dateKey] = [];
 
                 trx.items?.forEach(item => {
-                    const bId = item.barang_id?._id || item.barang_id;
-                    const uId = item.ud_id?._id || item.ud_id;
-                    const barang = barangMap.get(bId);
-                    const ud = udLookupMap.get(uId);
+                    const uId = normalizeId(item.ud_id?._id || item.ud_id) || 'unknown';
 
                     groupedByDate[dateKey].push({
                         ...item,
-                        nama_barang: item.nama_barang || barang?.nama_barang || item.barang_id?.nama_barang,
-                        satuan: item.satuan || barang?.satuan || item.barang_id?.satuan,
-                        ud_id_key: uId || 'unknown'
+                        nama_barang: item.nama_barang || item.barang_id?.nama_barang || '-',
+                        satuan: item.satuan || item.barang_id?.satuan || '-',
+                        ud_id_key: uId
                     });
                 });
             });

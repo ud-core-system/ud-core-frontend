@@ -206,3 +206,13 @@ export const statusColors = {
 export function getStatusClass(status) {
     return statusColors[status?.toLowerCase()] || statusColors.inactive;
 }
+/**
+ * Normalize MongoDB ID (handles string and object with $oid)
+ */
+export function normalizeId(id) {
+    if (!id) return '';
+    if (typeof id === 'string') return id;
+    if (typeof id === 'object' && id.$oid) return id.$oid;
+    if (typeof id === 'object' && id._id) return normalizeId(id._id);
+    return id.toString();
+}

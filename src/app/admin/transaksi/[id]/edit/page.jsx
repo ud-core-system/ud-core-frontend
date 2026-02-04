@@ -16,7 +16,7 @@ import {
 import { transaksiAPI, periodeAPI, dapurAPI, barangAPI, udAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
-import { getErrorMessage, formatCurrency, debounce } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, debounce, normalizeId } from '@/lib/utils';
 import CurrencyInput from '@/components/ui/CurrencyInput';
 
 const SATUAN_OPTIONS = [
@@ -116,12 +116,48 @@ export default function EditTransaksiPage() {
 
                 // Enrich items if IDs are just strings
                 if (trx.items && barangRes.data.success && udRes.data.success) {
-                    const barangMap = new Map(barangRes.data.data.map(b => [b._id, b]));
-                    const udMap = new Map(udRes.data.data.map(u => [u._id, u]));
+                    const barangMap = new Map(barangRes.data.data.map(b => [normalizeId(b._id), b]));
+                    const udMap = new Map(udRes.data.data.map(u => [normalizeId(u._id), u]));
+
+                    // Find missing barang/ud IDs
+                    const missingBarangIds = new Set();
+                    const missingUdIds = new Set();
+
+                    trx.items.forEach(item => {
+                        const bId = normalizeId(item.barang_id?._id || item.barang_id);
+                        const uId = normalizeId(item.ud_id?._id || item.ud_id);
+                        if (!barangMap.has(bId) && bId) missingBarangIds.add(bId);
+                        if (!udMap.has(uId) && uId) missingUdIds.add(uId);
+                    });
+
+                    // Fetch missing items and UDs
+                    if (missingBarangIds.size > 0 || missingUdIds.size > 0) {
+                        const missingBarangPromises = Array.from(missingBarangIds).map(id => barangAPI.getById(id).catch(() => null));
+                        const missingUdPromises = Array.from(missingUdIds).map(id => udAPI.getById(id).catch(() => null));
+
+                        const [fetchedBarang, fetchedUd] = await Promise.all([
+                            Promise.all(missingBarangPromises),
+                            Promise.all(missingUdPromises)
+                        ]);
+
+                        fetchedBarang.forEach(res => {
+                            if (res?.data?.success) {
+                                const b = res.data.data;
+                                barangMap.set(normalizeId(b._id), b);
+                            }
+                        });
+
+                        fetchedUd.forEach(res => {
+                            if (res?.data?.success) {
+                                const u = res.data.data;
+                                udMap.set(normalizeId(u._id), u);
+                            }
+                        });
+                    }
 
                     trx.items = trx.items.map(item => {
-                        const bId = item.barang_id?._id || item.barang_id;
-                        const uId = item.ud_id?._id || item.ud_id;
+                        const bId = normalizeId(item.barang_id?._id || item.barang_id);
+                        const uId = normalizeId(item.ud_id?._id || item.ud_id);
                         const barang = barangMap.get(bId);
                         const ud = udMap.get(uId);
 
@@ -147,14 +183,14 @@ export default function EditTransaksiPage() {
 
                 // Format items for the UI
                 const formattedItems = trx.items.map(item => ({
-                    barang_id: item.barang_id?._id || item.barang_id,
-                    nama_barang: item.nama_barang || item.barang_id?.nama_barang,
-                    satuan: item.satuan || item.barang_id?.satuan,
+                    barang_id: normalizeId(item.barang_id?._id || item.barang_id),
+                    nama_barang: item.nama_barang || item.barang_id?.nama_barang || '-',
+                    satuan: item.satuan || item.barang_id?.satuan || '-',
                     harga_jual: item.harga_jual,
                     harga_modal: item.harga_modal,
-                    ud_id: item.ud_id?._id || item.ud_id,
-                    ud_nama: item.ud_id?.nama_ud,
-                    ud_kode: item.ud_id?.kode_ud,
+                    ud_id: normalizeId(item.ud_id?._id || item.ud_id),
+                    ud_nama: item.ud_nama || item.ud_id?.nama_ud || '-',
+                    ud_kode: item.ud_kode || item.ud_id?.kode_ud || '-',
                     qty: item.qty,
                 }));
                 setItems(formattedItems);
@@ -384,6 +420,10 @@ export default function EditTransaksiPage() {
                     harga_jual: item.harga_jual,
                     harga_modal: item.harga_modal,
                     satuan: item.satuan,
+                    // Snapshotting
+                    nama_barang: item.nama_barang,
+                    ud_nama: item.ud_nama,
+                    ud_kode: item.ud_kode,
                 })),
             };
 

@@ -321,6 +321,10 @@ export default function NewTransaksiPage() {
                     harga_jual: item.harga_jual,
                     harga_modal: item.harga_modal,
                     satuan: item.satuan,
+                    // Snapshotting
+                    nama_barang: item.nama_barang,
+                    ud_nama: item.ud_nama,
+                    ud_kode: item.ud_kode,
                 })),
             };
 
