@@ -131,6 +131,9 @@ export default function BulkTransaksiPage() {
     };
 
     const handleSelectBarang = (idx, barang) => {
+        const uId = normalizeId(barang.ud_id?._id || barang.ud_id);
+        const ud = udList.find(u => normalizeId(u._id) === uId);
+
         setItems(prev => prev.map((item, i) => i === idx ? {
             ...item,
             barang_id: barang._id,
@@ -138,9 +141,9 @@ export default function BulkTransaksiPage() {
             satuan: barang.satuan,
             harga_jual: barang.harga_jual,
             harga_modal: barang.harga_modal || 0,
-            ud_id: normalizeId(barang.ud_id),
-            ud_nama: barang.ud_id?.nama_ud,
-            ud_kode: barang.ud_id?.kode_ud,
+            ud_id: uId,
+            ud_nama: ud?.nama_ud || barang.ud_id?.nama_ud || '',
+            ud_kode: ud?.kode_ud || barang.ud_id?.kode_ud || '',
             isNew: false
         } : item));
         setActiveSearchIdx(null);
@@ -202,9 +205,36 @@ export default function BulkTransaksiPage() {
                     hargaModal: headers.indexOf('Harga Modal'),
                 };
 
-                // Fetch ALL barangs to match by name across any UD
-                const barangRes = await barangAPI.getAll({ limit: 2000 });
+                // Fetch ALL barangs to match by name across any UD (Large limit for initial coverage)
+                const barangRes = await barangAPI.getAll({ limit: 5000 });
                 const existingBarangs = barangRes.data.success ? barangRes.data.data : [];
+
+                // Deep Matching: Identify names not found in the initial cache
+                const missingNames = new Set();
+                dataRows.forEach((row) => {
+                    const namaRaw = row[colIndex.namaBarang]?.toString().trim();
+                    if (!namaRaw || row.every(c => c === '')) return;
+                    const matched = existingBarangs.find(b => b.nama_barang.toLowerCase() === namaRaw.toLowerCase());
+                    if (!matched) missingNames.add(namaRaw);
+                });
+
+                // Secondary selective search for specific missing items
+                if (missingNames.size > 0) {
+                    const searchResults = await Promise.all(
+                        Array.from(missingNames).map(async (name) => {
+                            try {
+                                const res = await barangAPI.search({ q: name, limit: 5 });
+                                if (res.data.success) {
+                                    return res.data.data.find(b => b.nama_barang.toLowerCase() === name.toLowerCase()) || null;
+                                }
+                            } catch (e) { return null; }
+                            return null;
+                        })
+                    );
+                    searchResults.forEach(found => {
+                        if (found) existingBarangs.push(found);
+                    });
+                }
 
                 const parsedItems = [];
                 dataRows.forEach((row, idx) => {
@@ -218,10 +248,18 @@ export default function BulkTransaksiPage() {
                     const hargaJual = parseFloat(String(row[colIndex.hargaJual]).replace(/[^0-9.-]/g, '')) || 0;
                     const hargaModal = parseFloat(String(row[colIndex.hargaModal]).replace(/[^0-9.-]/g, '')) || 0;
 
-                    // Match with existing barang
+                    // Match with existing barang (now including deep search results)
                     const matched = existingBarangs.find(b =>
                         b.nama_barang.toLowerCase() === namaRaw.toLowerCase()
                     );
+
+                    let uId = '';
+                    let ud = null;
+
+                    if (matched) {
+                        uId = normalizeId(matched.ud_id?._id || matched.ud_id);
+                        ud = udList.find(u => normalizeId(u._id) === uId);
+                    }
 
                     parsedItems.push({
                         barang_id: matched?._id || null,
@@ -229,9 +267,9 @@ export default function BulkTransaksiPage() {
                         satuan: matched?.satuan || satuan,
                         harga_jual: matched?.harga_jual || hargaJual,
                         harga_modal: matched?.harga_modal || hargaModal,
-                        ud_id: matched ? normalizeId(matched.ud_id) : '',
-                        ud_nama: matched?.ud_id?.nama_ud || '',
-                        ud_kode: matched?.ud_id?.kode_ud || '',
+                        ud_id: uId,
+                        ud_nama: ud?.nama_ud || matched?.ud_id?.nama_ud || '',
+                        ud_kode: ud?.kode_ud || matched?.ud_id?.kode_ud || '',
                         qty: qty,
                         isNew: !matched
                     });
