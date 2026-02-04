@@ -22,7 +22,7 @@ import autoTable from 'jspdf-autotable';
 import { exportLaporanExcel } from '@/utils/excel/exportLaporan';
 import { periodeAPI, transaksiAPI, udAPI, barangAPI, dapurAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
-import { getErrorMessage, formatCurrency, formatDateShort, formatDateFilename } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDateShort, formatDateFilename, normalizeId } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import SearchableSelect from '@/components/ui/SearchableSelect';
 
@@ -100,12 +100,67 @@ export default function LaporanRekapPage() {
             const response = await transaksiAPI.getAll(params);
             if (response.data.success) {
                 // Fetch full details for each transaction to get items and UD info
-                const detailedTransactions = (await Promise.all(
+                const rawDetails = await Promise.all(
                     response.data.data.map(async (trx) => {
                         const detailRes = await transaksiAPI.getById(trx._id);
                         return detailRes.data.success ? detailRes.data.data : trx;
                     })
-                )).filter(trx => {
+                );
+
+                // Robust Enrichment
+                const barangMap = new Map(barangList.map(b => [normalizeId(b._id), b]));
+                const udMap = new Map(udList.map(u => [normalizeId(u._id), u]));
+
+                const missingBarangIds = new Set();
+                const missingUdIds = new Set();
+
+                rawDetails.forEach(trx => {
+                    trx.items?.forEach(item => {
+                        const bId = normalizeId(item.barang_id?._id || item.barang_id);
+                        const uId = normalizeId(item.ud_id?._id || item.ud_id);
+                        if (!barangMap.has(bId) && bId) missingBarangIds.add(bId);
+                        if (!udMap.has(uId) && uId) missingUdIds.add(uId);
+                    });
+                });
+
+                if (missingBarangIds.size > 0 || missingUdIds.size > 0) {
+                    const missingBarangPromises = Array.from(missingBarangIds).map(id => barangAPI.getById(id).catch(() => null));
+                    const missingUdPromises = Array.from(missingUdIds).map(id => udAPI.getById(id).catch(() => null));
+
+                    const [fetchedBarang, fetchedUd] = await Promise.all([
+                        Promise.all(missingBarangPromises),
+                        Promise.all(missingUdPromises)
+                    ]);
+
+                    fetchedBarang.forEach(res => {
+                        if (res?.data?.success) {
+                            const b = res.data.data;
+                            barangMap.set(normalizeId(b._id), b);
+                        }
+                    });
+
+                    fetchedUd.forEach(res => {
+                        if (res?.data?.success) {
+                            const u = res.data.data;
+                            udMap.set(normalizeId(u._id), u);
+                        }
+                    });
+                }
+
+                const detailedTransactions = rawDetails.map(trx => {
+                    if (trx.items) {
+                        trx.items = trx.items.map(item => {
+                            const bId = normalizeId(item.barang_id?._id || item.barang_id);
+                            const uId = normalizeId(item.ud_id?._id || item.ud_id);
+                            return {
+                                ...item,
+                                barang_id: barangMap.get(bId) || item.barang_id,
+                                ud_id: udMap.get(uId) || item.ud_id
+                            };
+                        });
+                    }
+                    return trx;
+                }).filter(trx => {
                     const isCompleted = trx.status === 'completed';
                     if (!selectedPeriode) return isCompleted;
 
@@ -155,10 +210,10 @@ export default function LaporanRekapPage() {
 
             // Filter by UD if filter is active
             const filteredItems = (trx.items || []).filter(item => {
-                const itemUdId = item.ud_id?._id || item.ud_id;
+                const itemUdId = normalizeId(item.ud_id?._id || item.ud_id);
                 const matchesUd = filterUD ? itemUdId === filterUD : true;
 
-                const itemDapurId = trx.dapur_id?._id || trx.dapur_id;
+                const itemDapurId = normalizeId(trx.dapur_id?._id || trx.dapur_id);
                 const matchesDapur = filterDapur ? itemDapurId === filterDapur : true;
 
                 return matchesUd && matchesDapur;
@@ -177,27 +232,12 @@ export default function LaporanRekapPage() {
                 };
             }
 
-            const barangMap = new Map(barangList.map(b => [b._id, b]));
-            const udLookupMap = new Map(udList.map(u => [u._id, u]));
-
-            console.log('🔍 Enrichment Debug:', {
-                barangListCount: barangList.length,
-                udListCount: udList.length,
-                filteredItemsCount: filteredItems.length,
-                sampleItem: filteredItems[0]
-            });
-
             filteredItems.forEach((item) => {
-                const bId = item.barang_id?._id || item.barang_id;
-                const uId = item.ud_id?._id || item.ud_id;
+                const uId = normalizeId(item.ud_id?._id || item.ud_id) || 'none';
+                const udName = item.ud_nama || item.ud_id?.nama_ud || 'Tanpa UD';
 
-                const barang = barangMap.get(bId);
-                const ud = udLookupMap.get(uId);
-
-                const udName = ud?.nama_ud || item.ud_id?.nama_ud || 'Tanpa UD';
-
-                if (!grouped[dateStr].uds[uId || 'none']) {
-                    grouped[dateStr].uds[uId || 'none'] = {
+                if (!grouped[dateStr].uds[uId]) {
+                    grouped[dateStr].uds[uId] = {
                         name: udName,
                         items: [],
                         totalJual: 0,
@@ -208,29 +248,27 @@ export default function LaporanRekapPage() {
                 }
 
                 // Snapshotted prices from transaction item
-                const actualJual = item.harga_jual ?? (barang?.harga_jual || item.barang_id?.harga_jual);
-                const actualModal = item.harga_modal ?? (barang?.harga_modal || item.barang_id?.harga_modal);
+                const actualJual = item.harga_jual;
+                const actualModal = item.harga_modal;
 
-                // Catalog price from Master Data (for Budget Dapur reference)
-                const masterPrice = barang?.harga_jual || item.barang_id?.harga_jual || actualJual;
+                // Catalog price from Master Data (for Budget Dapur reference) - fallback to actual if missing master data
+                const masterPrice = item.barang_id?.harga_jual || actualJual;
                 const itemBudgetTotal = item.qty * masterPrice;
 
-                grouped[dateStr].uds[uId || 'none'].items.push({
+                grouped[dateStr].uds[uId].items.push({
                     ...item,
-                    barang_id: barang || item.barang_id,
-                    ud_id: ud || item.ud_id,
-                    nama_barang: item.nama_barang || barang?.nama_barang || item.barang_id?.nama_barang,
-                    satuan: item.satuan || barang?.satuan || item.barang_id?.satuan,
+                    nama_barang: item.nama_barang || item.barang_id?.nama_barang || '-',
+                    satuan: item.satuan || item.barang_id?.satuan || '-',
                     harga_jual: actualJual,
                     harga_modal: actualModal,
                     masterPrice: masterPrice,
                     itemBudgetTotal: itemBudgetTotal
                 });
 
-                grouped[dateStr].uds[uId || 'none'].totalJual += item.subtotal_jual;
-                grouped[dateStr].uds[uId || 'none'].totalModal += item.subtotal_modal;
-                grouped[dateStr].uds[uId || 'none'].totalKeuntungan += item.keuntungan;
-                grouped[dateStr].uds[uId || 'none'].totalBudget += itemBudgetTotal;
+                grouped[dateStr].uds[uId].totalJual += item.subtotal_jual;
+                grouped[dateStr].uds[uId].totalModal += item.subtotal_modal;
+                grouped[dateStr].uds[uId].totalKeuntungan += item.keuntungan;
+                grouped[dateStr].uds[uId].totalBudget += itemBudgetTotal;
 
                 grouped[dateStr].subtotalJual += item.subtotal_jual;
                 grouped[dateStr].subtotalModal += item.subtotal_modal;
@@ -530,27 +568,20 @@ export default function LaporanRekapPage() {
             // Helper to get items grouped by UD (for Excel utility)
             const getItemsByUD = () => {
                 const udMap = {};
-                const udLookupMap = new Map(udList.map(u => [u._id, u]));
-                const barangMap = new Map(barangList.map(b => [b._id, b]));
 
                 transactions.forEach((trx) => {
                     trx.items?.forEach((item) => {
-                        const bId = item.barang_id?._id || item.barang_id;
-                        const uId = item.ud_id?._id || item.ud_id;
+                        const uId = normalizeId(item.ud_id?._id || item.ud_id) || 'unknown';
 
                         // Check if this item belongs to the filtered dapur if filter is active
-                        const trxDapurId = trx.dapur_id?._id || trx.dapur_id;
+                        const trxDapurId = normalizeId(trx.dapur_id?._id || trx.dapur_id);
                         if (filterDapur && trxDapurId !== filterDapur) return;
 
-                        const barang = barangMap.get(bId);
-                        const ud = udLookupMap.get(uId);
+                        const udName = item.ud_nama || item.ud_id?.nama_ud || 'Unknown UD';
 
-                        const udIdKey = uId || 'unknown';
-                        const udName = ud?.nama_ud || item.ud_id?.nama_ud || 'Unknown UD';
-
-                        if (!udMap[udIdKey]) {
-                            udMap[udIdKey] = {
-                                _id: udIdKey,
+                        if (!udMap[uId]) {
+                            udMap[uId] = {
+                                _id: uId,
                                 nama_ud: udName,
                                 items: [],
                                 totalJual: 0,
@@ -559,20 +590,15 @@ export default function LaporanRekapPage() {
                             };
                         }
 
-                        const actualJual = item.harga_jual ?? barang?.harga_jual;
-                        const actualModal = item.harga_modal ?? barang?.harga_modal;
-
-                        udMap[udIdKey].items.push({
+                        udMap[uId].items.push({
                             ...item,
-                            barang_id: barang || item.barang_id,
-                            ud_id: ud || item.ud_id,
-                            harga_jual: actualJual,
-                            harga_modal: actualModal,
+                            nama_barang: item.nama_barang || item.barang_id?.nama_barang || '-',
+                            satuan: item.satuan || item.barang_id?.satuan || '-',
                             tanggal: trx.tanggal,
                         });
-                        udMap[udIdKey].totalJual += (item.subtotal_jual || 0);
-                        udMap[udIdKey].totalModal += (item.subtotal_modal || 0);
-                        udMap[udIdKey].totalKeuntungan += (item.keuntungan || 0);
+                        udMap[uId].totalJual += (item.subtotal_jual || 0);
+                        udMap[uId].totalModal += (item.subtotal_modal || 0);
+                        udMap[uId].totalKeuntungan += (item.keuntungan || 0);
                     });
                 });
                 return Object.values(udMap);

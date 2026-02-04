@@ -14,7 +14,7 @@ import {
 import { transaksiAPI, periodeAPI, dapurAPI, udAPI, barangAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
-import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, toLocalDate, formatDateFilename } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDateShort, toDateInputValue, toLocalDate, formatDateFilename, normalizeId } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { exportLaporanExcel } from '@/utils/dapurexcelpdf/exportLaporan';
@@ -85,12 +85,67 @@ export default function LaporanDapurPage() {
                 const selectedPeriode = filterPeriode ? periodeList.find(p => p._id === filterPeriode) : null;
 
                 // Fetch full details for each transaction
-                const detailedTransactions = (await Promise.all(
+                const rawDetails = await Promise.all(
                     response.data.data.map(async (trx) => {
                         const detailRes = await transaksiAPI.getById(trx._id);
                         return detailRes.data.success ? detailRes.data.data : trx;
                     })
-                )).filter(trx => {
+                );
+
+                // Robust Enrichment
+                const barangMap = new Map(barangList.map(b => [normalizeId(b._id), b]));
+                const udMap = new Map(udList.map(u => [normalizeId(u._id), u]));
+
+                const missingBarangIds = new Set();
+                const missingUdIds = new Set();
+
+                rawDetails.forEach(trx => {
+                    trx.items?.forEach(item => {
+                        const bId = normalizeId(item.barang_id?._id || item.barang_id);
+                        const uId = normalizeId(item.ud_id?._id || item.ud_id);
+                        if (!barangMap.has(bId) && bId) missingBarangIds.add(bId);
+                        if (!udMap.has(uId) && uId) missingUdIds.add(uId);
+                    });
+                });
+
+                if (missingBarangIds.size > 0 || missingUdIds.size > 0) {
+                    const missingBarangPromises = Array.from(missingBarangIds).map(id => barangAPI.getById(id).catch(() => null));
+                    const missingUdPromises = Array.from(missingUdIds).map(id => udAPI.getById(id).catch(() => null));
+
+                    const [fetchedBarang, fetchedUd] = await Promise.all([
+                        Promise.all(missingBarangPromises),
+                        Promise.all(missingUdPromises)
+                    ]);
+
+                    fetchedBarang.forEach(res => {
+                        if (res?.data?.success) {
+                            const b = res.data.data;
+                            barangMap.set(normalizeId(b._id), b);
+                        }
+                    });
+
+                    fetchedUd.forEach(res => {
+                        if (res?.data?.success) {
+                            const u = res.data.data;
+                            udMap.set(normalizeId(u._id), u);
+                        }
+                    });
+                }
+
+                const detailedTransactions = rawDetails.map(trx => {
+                    if (trx.items) {
+                        trx.items = trx.items.map(item => {
+                            const bId = normalizeId(item.barang_id?._id || item.barang_id);
+                            const uId = normalizeId(item.ud_id?._id || item.ud_id);
+                            return {
+                                ...item,
+                                barang_id: barangMap.get(bId) || item.barang_id,
+                                ud_id: udMap.get(uId) || item.ud_id
+                            };
+                        });
+                    }
+                    return trx;
+                }).filter(trx => {
                     const isCompleted = trx.status === 'completed';
                     if (!selectedPeriode) return isCompleted;
 
@@ -114,8 +169,6 @@ export default function LaporanDapurPage() {
     };
 
     const getItemsByDate = () => {
-        const barangMap = new Map(barangList.map(b => [b._id, b]));
-        const udMap = new Map(udList.map(u => [u._id, u]));
         const grouped = {};
 
         transactions.forEach((trx) => {
@@ -128,18 +181,16 @@ export default function LaporanDapurPage() {
             }
 
             trx.items?.forEach((item) => {
-                const bId = item.barang_id?._id || item.barang_id;
-                const barang = barangMap.get(bId);
-                const ud = barang?.ud_id?._id ? udMap.get(barang.ud_id._id) : (barang?.ud_id ? udMap.get(barang.ud_id) : null);
+                const udName = item.ud_nama || item.ud_id?.nama_ud || 'Lainnya';
+                const uId = normalizeId(item.ud_id?._id || item.ud_id) || 'other';
 
                 grouped[dateKey].items.push({
                     ...item,
-                    barang_id: barang || item.barang_id,
-                    nama_barang: item.nama_barang || barang?.nama_barang || item.barang_id?.nama_barang || '-',
-                    satuan: item.satuan || barang?.satuan || item.barang_id?.satuan || '-',
+                    nama_barang: item.nama_barang || item.barang_id?.nama_barang || '-',
+                    satuan: item.satuan || item.barang_id?.satuan || '-',
                     transaksi: trx.kode_transaksi,
-                    ud_id: ud?._id || 'other',
-                    nama_ud: ud?.nama_ud || 'Lainnya',
+                    ud_id: uId,
+                    nama_ud: udName,
                 });
             });
         });

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
     ShoppingCart,
     Search,
@@ -12,6 +13,7 @@ import {
     CheckCircle,
     ArrowLeft,
     X,
+    FileSpreadsheet,
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, barangAPI, udAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
@@ -58,6 +60,7 @@ export default function NewTransaksiPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [tableSearch, setTableSearch] = useState('');
+    const [groupingMode, setGroupingMode] = useState('ud');
 
     // Create Barang Modal state
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -321,6 +324,10 @@ export default function NewTransaksiPage() {
                     harga_jual: item.harga_jual,
                     harga_modal: item.harga_modal,
                     satuan: item.satuan,
+                    // Snapshotting
+                    nama_barang: item.nama_barang,
+                    ud_nama: item.ud_nama,
+                    ud_kode: item.ud_kode,
                 })),
             };
 
@@ -378,6 +385,14 @@ export default function NewTransaksiPage() {
                     <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Input Transaksi Baru</h1>
                     <p className="text-sm md:text-gray-500 mt-0.5">Masukkan data barang untuk transaksi</p>
                 </div>
+                <Link
+                    href="/admin/transaksi/bulk"
+                    className="ml-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl
+                               hover:bg-green-700 transition-all font-semibold shadow-lg shadow-green-500/20 active:scale-95 text-sm"
+                >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Bulk Upload dari Excel
+                </Link>
             </div>
 
             {/* Form */}
@@ -447,30 +462,47 @@ export default function NewTransaksiPage() {
                     </div>
                 </div>
 
-                {/* Filter UD */}
-                <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Filter Unit Dagang (UD)
-                    </label>
-                    <select
-                        value={selectedUdId}
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            setSelectedUdId(val);
-                            if (searchQuery.length >= 2) {
-                                searchBarang(searchQuery, val);
-                            }
-                        }}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
-                    >
-                        <option value="">Semua UD (Tanpa Filter)</option>
-                        {udList.map((ud) => (
-                            <option key={ud._id} value={ud._id}>
-                                {ud.nama_ud} ({ud.kode_ud})
-                            </option>
-                        ))}
-                    </select>
+                {/* Filter UD & Grouping */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Filter Unit Dagang (UD)
+                        </label>
+                        <select
+                            value={selectedUdId}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setSelectedUdId(val);
+                                if (searchQuery.length >= 2) {
+                                    searchBarang(searchQuery, val);
+                                }
+                            }}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
+                        >
+                            <option value="">Semua UD (Tanpa Filter)</option>
+                            {udList.map((ud) => (
+                                <option key={ud._id} value={ud._id}>
+                                    {ud.nama_ud} ({ud.kode_ud})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Mode Tampilan Daftar
+                        </label>
+                        <select
+                            value={groupingMode}
+                            onChange={(e) => setGroupingMode(e.target.value)}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
+                        >
+                            <option value="ud">Group per UD</option>
+                            <option value="none">Tanpa Grouping</option>
+                        </select>
+                    </div>
                 </div>
 
                 {/* Search Barang */}
@@ -596,7 +628,7 @@ export default function NewTransaksiPage() {
                                                 )}
                                             </td>
                                         </tr>
-                                    ) : (
+                                    ) : groupingMode === 'none' ? (
                                         filteredItems.map((item, index) => (
                                             <tr key={item.barang_id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-4 py-4 text-gray-600">{index + 1}</td>
@@ -654,6 +686,93 @@ export default function NewTransaksiPage() {
                                                 </td>
                                             </tr>
                                         ))
+                                    ) : (
+                                        (() => {
+                                            const sortedData = [...filteredItems].sort((a, b) => (a.ud_nama || 'ZZZ').localeCompare(b.ud_nama || 'ZZZ'));
+                                            const groupedData = sortedData.reduce((acc, item) => {
+                                                const udId = item.ud_id || 'others';
+                                                if (!acc[udId]) {
+                                                    acc[udId] = {
+                                                        ud_nama: item.ud_nama,
+                                                        ud_kode: item.ud_kode,
+                                                        items: []
+                                                    };
+                                                }
+                                                acc[udId].items.push(item);
+                                                return acc;
+                                            }, {});
+
+                                            return Object.entries(groupedData).map(([udId, group]) => (
+                                                <Fragment key={udId}>
+                                                    <tr className="bg-gray-100/50">
+                                                        <td colSpan="9" className="px-4 py-2">
+                                                            <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">
+                                                                {group.ud_nama || 'Tanpa UD'} ({group.items.length} Barang)
+                                                            </p>
+                                                        </td>
+                                                    </tr>
+                                                    {group.items.map((item, localIndex) => (
+                                                        <tr key={item.barang_id} className="hover:bg-gray-50 transition-colors">
+                                                            <td className="px-4 py-4 text-gray-600 font-medium text-xs">
+                                                                {localIndex + 1}
+                                                            </td>
+                                                            <td className="px-4 py-4">
+                                                                <p className="font-medium text-gray-900">{item.nama_barang}</p>
+                                                            </td>
+                                                            <td className="px-4 py-4">
+                                                                <p className="text-sm text-gray-600">{item.ud_nama}</p>
+                                                                <p className="text-xs text-gray-400">{item.ud_kode}</p>
+                                                            </td>
+                                                            <td className="px-4 py-4 text-center">
+                                                                <input
+                                                                    type="text"
+                                                                    value={item.satuan}
+                                                                    onChange={(e) => handleSatuanChange(item.barang_id, e.target.value)}
+                                                                    className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-xs font-medium"
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-4 text-center">
+                                                                <input
+                                                                    type="number"
+                                                                    value={item.qty}
+                                                                    onChange={(e) => handleQtyChange(item.barang_id, e.target.value)}
+                                                                    onBlur={() => handleQtyBlur(item.barang_id)}
+                                                                    onFocus={(e) => e.target.select()}
+                                                                    step="any"
+                                                                    className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-4 text-center">
+                                                                <CurrencyInput
+                                                                    value={item.harga_modal}
+                                                                    onChange={(e) => handleHargaModalChange(item.barang_id, e.target.value)}
+                                                                    className="w-32 px-2 py-1.5 text-center text-sm"
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-4 text-center">
+                                                                <CurrencyInput
+                                                                    value={item.harga_jual}
+                                                                    onChange={(e) => handleHargaJualChange(item.barang_id, e.target.value)}
+                                                                    className="w-32 px-2 py-1.5 text-center text-sm"
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-4 text-right font-semibold text-gray-900">
+                                                                {formatCurrency(calculateSubtotal(item))}
+                                                            </td>
+                                                            <td className="px-4 py-4 text-center">
+                                                                <button
+                                                                    onClick={() => handleRemoveItem(item.barang_id)}
+                                                                    className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                                                    title="Hapus Barang"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </Fragment>
+                                            ));
+                                        })()
                                     )}
                                 </tbody>
                             </table>
@@ -676,7 +795,7 @@ export default function NewTransaksiPage() {
                                         </>
                                     )}
                                 </div>
-                            ) : (
+                            ) : groupingMode === 'none' ? (
                                 <div className="divide-y divide-gray-100">
                                     {filteredItems.map((item, index) => (
                                         <div key={item.barang_id} className="p-4 space-y-4">
@@ -743,6 +862,101 @@ export default function NewTransaksiPage() {
                                         </div>
                                     ))}
                                 </div>
+                            ) : (
+                                (() => {
+                                    const sortedData = [...filteredItems].sort((a, b) => (a.ud_nama || 'ZZZ').localeCompare(b.ud_nama || 'ZZZ'));
+                                    const groupedData = sortedData.reduce((acc, item) => {
+                                        const udId = item.ud_id || 'others';
+                                        if (!acc[udId]) {
+                                            acc[udId] = {
+                                                ud_nama: item.ud_nama,
+                                                ud_kode: item.ud_kode,
+                                                items: []
+                                            };
+                                        }
+                                        acc[udId].items.push(item);
+                                        return acc;
+                                    }, {});
+
+                                    return Object.entries(groupedData).map(([udId, group]) => (
+                                        <div key={udId} className="divide-y divide-gray-100">
+                                            <div className="bg-gray-50 px-4 py-2 border-y border-gray-100">
+                                                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
+                                                    {group.ud_nama || 'Tanpa UD'} ({group.items.length} Barang)
+                                                </p>
+                                            </div>
+                                            {group.items.map((item, localIndex) => (
+                                                <div key={item.barang_id} className="p-4 space-y-4 relative">
+                                                    <div className="absolute top-4 left-4 -ml-2 -mt-2">
+                                                        <span className="w-5 h-5 bg-blue-100 text-blue-600 text-[10px] font-bold rounded-full flex items-center justify-center">
+                                                            {localIndex + 1}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between items-start pl-6">
+                                                        <div className="space-y-1">
+                                                            <p className="font-bold text-gray-900 leading-tight">{item.nama_barang}</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="text-xs text-gray-500">{item.ud_nama} •</p>
+                                                                <input
+                                                                    type="text"
+                                                                    value={item.satuan}
+                                                                    onChange={(e) => handleSatuanChange(item.barang_id, e.target.value)}
+                                                                    className="w-16 px-1.5 py-0.5 border border-gray-200 rounded text-[10px] font-medium focus:ring-1 focus:ring-blue-500/20 outline-none"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleRemoveItem(item.barang_id)}
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                                        >
+                                                            <Trash2 className="w-5 h-5" />
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-3 pl-6">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Qty</label>
+                                                            <input
+                                                                type="number"
+                                                                value={item.qty}
+                                                                onChange={(e) => handleQtyChange(item.barang_id, e.target.value)}
+                                                                onBlur={() => handleQtyBlur(item.barang_id)}
+                                                                onFocus={(e) => e.target.select()}
+                                                                step="any"
+                                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1 text-right">
+                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Subtotal</label>
+                                                            <p className="py-2 font-bold text-blue-600">
+                                                                {formatCurrency(calculateSubtotal(item))}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-3 pl-6">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Harga Modal</label>
+                                                            <CurrencyInput
+                                                                value={item.harga_modal}
+                                                                onChange={(e) => handleHargaModalChange(item.barang_id, e.target.value)}
+                                                                className="px-3 py-2 text-sm"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Harga Jual</label>
+                                                            <CurrencyInput
+                                                                value={item.harga_jual}
+                                                                onChange={(e) => handleHargaJualChange(item.barang_id, e.target.value)}
+                                                                className="px-3 py-2 text-sm"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ));
+                                })()
                             )}
                         </div>
                     </div>

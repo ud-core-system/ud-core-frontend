@@ -9,7 +9,7 @@ import {
     Printer,
     CheckCircle,
 } from 'lucide-react';
-import { getErrorMessage, formatCurrency, formatDate, getStatusClass, toLocalDate, formatDateFilename } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatDate, getStatusClass, toLocalDate, formatDateFilename, normalizeId } from '@/lib/utils';
 import { transaksiAPI, barangAPI, udAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import NotaDapur from '@/components/print/NotaDapur';
@@ -58,12 +58,48 @@ export default function TransaksiDetailPage() {
 
                 // Enrich items if IDs are just strings
                 if (trx.items && barangRes.data.success && udRes.data.success) {
-                    const barangMap = new Map(barangRes.data.data.map(b => [b._id, b]));
-                    const udMap = new Map(udRes.data.data.map(u => [u._id, u]));
+                    const barangMap = new Map(barangRes.data.data.map(b => [normalizeId(b._id), b]));
+                    const udMap = new Map(udRes.data.data.map(u => [normalizeId(u._id), u]));
+
+                    // Find missing barang/ud IDs
+                    const missingBarangIds = new Set();
+                    const missingUdIds = new Set();
+
+                    trx.items.forEach(item => {
+                        const bId = normalizeId(item.barang_id?._id || item.barang_id);
+                        const uId = normalizeId(item.ud_id?._id || item.ud_id);
+                        if (!barangMap.has(bId) && bId) missingBarangIds.add(bId);
+                        if (!udMap.has(uId) && uId) missingUdIds.add(uId);
+                    });
+
+                    // Fetch missing items and UDs
+                    if (missingBarangIds.size > 0 || missingUdIds.size > 0) {
+                        const missingBarangPromises = Array.from(missingBarangIds).map(id => barangAPI.getById(id).catch(() => null));
+                        const missingUdPromises = Array.from(missingUdIds).map(id => udAPI.getById(id).catch(() => null));
+
+                        const [fetchedBarang, fetchedUd] = await Promise.all([
+                            Promise.all(missingBarangPromises),
+                            Promise.all(missingUdPromises)
+                        ]);
+
+                        fetchedBarang.forEach(res => {
+                            if (res?.data?.success) {
+                                const b = res.data.data;
+                                barangMap.set(normalizeId(b._id), b);
+                            }
+                        });
+
+                        fetchedUd.forEach(res => {
+                            if (res?.data?.success) {
+                                const u = res.data.data;
+                                udMap.set(normalizeId(u._id), u);
+                            }
+                        });
+                    }
 
                     trx.items = trx.items.map(item => {
-                        const bId = item.barang_id?._id || item.barang_id;
-                        const uId = item.ud_id?._id || item.ud_id;
+                        const bId = normalizeId(item.barang_id?._id || item.barang_id);
+                        const uId = normalizeId(item.ud_id?._id || item.ud_id);
 
                         return {
                             ...item,
@@ -100,13 +136,13 @@ export default function TransaksiDetailPage() {
     const getItemsByUD = () => {
         if (!data?.items) return {};
         return data.items.reduce((acc, item) => {
-            const udId = item.ud_id?._id || 'unknown';
-            const udName = item.ud_id?.nama_ud || 'Unknown UD';
+            const udId = normalizeId(item.ud_id?._id || item.ud_id) || 'unknown';
+            const udName = item.ud_nama || item.ud_id?.nama_ud || 'Unknown UD';
             if (!acc[udId]) {
                 acc[udId] = {
                     id: udId,
                     nama_ud: udName,
-                    kode_ud: item.ud_id?.kode_ud || '',
+                    kode_ud: item.ud_kode || item.ud_id?.kode_ud || '',
                     items: [],
                     total: 0,
                 };
