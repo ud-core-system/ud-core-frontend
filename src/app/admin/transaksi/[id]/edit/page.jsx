@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import {
     ShoppingCart,
@@ -60,6 +60,7 @@ export default function EditTransaksiPage() {
     const [submitting, setSubmitting] = useState(false);
     const [fetchingData, setFetchingData] = useState(true);
     const [tableSearch, setTableSearch] = useState('');
+    const [groupingMode, setGroupingMode] = useState('ud');
 
     // Create Barang Modal state
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -539,30 +540,47 @@ export default function EditTransaksiPage() {
                     </div>
                 </div>
 
-                {/* Filter UD */}
-                <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Filter Unit Dagang (UD)
-                    </label>
-                    <select
-                        value={selectedUdId}
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            setSelectedUdId(val);
-                            if (searchQuery.length >= 2) {
-                                searchBarang(searchQuery, val);
-                            }
-                        }}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
-                    >
-                        <option value="">Semua UD (Tanpa Filter)</option>
-                        {udList.map((ud) => (
-                            <option key={ud._id} value={ud._id}>
-                                {ud.nama_ud} ({ud.kode_ud})
-                            </option>
-                        ))}
-                    </select>
+                {/* Filter UD & Grouping */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Filter Unit Dagang (UD)
+                        </label>
+                        <select
+                            value={selectedUdId}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setSelectedUdId(val);
+                                if (searchQuery.length >= 2) {
+                                    searchBarang(searchQuery, val);
+                                }
+                            }}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
+                        >
+                            <option value="">Semua UD (Tanpa Filter)</option>
+                            {udList.map((ud) => (
+                                <option key={ud._id} value={ud._id}>
+                                    {ud.nama_ud} ({ud.kode_ud})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Mode Tampilan Daftar
+                        </label>
+                        <select
+                            value={groupingMode}
+                            onChange={(e) => setGroupingMode(e.target.value)}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
+                        >
+                            <option value="ud">Group per UD</option>
+                            <option value="none">Tanpa Grouping</option>
+                        </select>
+                    </div>
                 </div>
 
                 {/* Search Barang */}
@@ -687,7 +705,7 @@ export default function EditTransaksiPage() {
                                                 )}
                                             </td>
                                         </tr>
-                                    ) : (
+                                    ) : groupingMode === 'none' ? (
                                         filteredItems.map((item, index) => (
                                             <tr key={item.barang_id} className="hover:bg-blue-50/20 transition-colors border-b border-gray-100 last:border-0">
                                                 <td className="px-2 py-4 text-[10px] font-bold text-gray-400">{(index + 1).toString().padStart(2, '0')}</td>
@@ -747,6 +765,93 @@ export default function EditTransaksiPage() {
                                                 </td>
                                             </tr>
                                         ))
+                                    ) : (
+                                        (() => {
+                                            const sortedData = [...filteredItems].sort((a, b) => (a.ud_nama || 'ZZZ').localeCompare(b.ud_nama || 'ZZZ'));
+                                            const groupedData = sortedData.reduce((acc, item) => {
+                                                const udId = item.ud_id || 'others';
+                                                if (!acc[udId]) {
+                                                    acc[udId] = {
+                                                        ud_nama: item.ud_nama,
+                                                        ud_kode: item.ud_kode,
+                                                        items: []
+                                                    };
+                                                }
+                                                acc[udId].items.push(item);
+                                                return acc;
+                                            }, {});
+
+                                            return Object.entries(groupedData).map(([udId, group]) => (
+                                                <Fragment key={udId}>
+                                                    <tr className="bg-gray-100/50">
+                                                        <td colSpan="8" className="px-4 py-2">
+                                                            <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest leading-none">
+                                                                {group.ud_nama || 'Tanpa UD'} ({group.items.length} Barang)
+                                                            </p>
+                                                        </td>
+                                                    </tr>
+                                                    {group.items.map((item, localIndex) => (
+                                                        <tr key={item.barang_id} className="hover:bg-blue-50/20 transition-colors border-b border-gray-100 last:border-0">
+                                                            <td className="px-2 py-4 text-[10px] font-bold text-gray-400">{(localIndex + 1).toString().padStart(2, '0')}</td>
+                                                            <td className="px-3 py-4 max-w-[150px] lg:max-w-xs">
+                                                                <p className="font-bold text-gray-900 text-sm truncate leading-tight" title={item.nama_barang}>
+                                                                    {item.nama_barang}
+                                                                </p>
+                                                                <div className="flex flex-col mt-0.5">
+                                                                    <span className="text-[10px] text-blue-600 font-bold leading-none truncate">{item.ud_nama}</span>
+                                                                    <span className="text-[8px] text-gray-400 font-medium leading-none mt-0.5">{item.ud_kode}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-2 py-4 text-center">
+                                                                <input
+                                                                    type="text"
+                                                                    value={item.satuan}
+                                                                    onChange={(e) => handleSatuanChange(item.barang_id, e.target.value)}
+                                                                    className="w-14 px-1 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-[10px] font-bold uppercase"
+                                                                />
+                                                            </td>
+                                                            <td className="px-2 py-4 text-center">
+                                                                <input
+                                                                    type="number"
+                                                                    value={item.qty}
+                                                                    onChange={(e) => handleQtyChange(item.barang_id, e.target.value)}
+                                                                    onBlur={() => handleQtyBlur(item.barang_id)}
+                                                                    onFocus={(e) => e.target.select()}
+                                                                    step="any"
+                                                                    className="w-16 px-1 py-1.5 border border-gray-200 rounded-md text-center focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-xs font-bold"
+                                                                />
+                                                            </td>
+                                                            <td className="px-2 py-4 text-center">
+                                                                <CurrencyInput
+                                                                    value={item.harga_modal}
+                                                                    onChange={(e) => handleHargaModalChange(item.barang_id, e.target.value)}
+                                                                    className="w-24 px-2 py-1.5 text-center text-xs font-medium"
+                                                                />
+                                                            </td>
+                                                            <td className="px-2 py-4 text-center">
+                                                                <CurrencyInput
+                                                                    value={item.harga_jual}
+                                                                    onChange={(e) => handleHargaJualChange(item.barang_id, e.target.value)}
+                                                                    className="w-24 px-2 py-1.5 text-center text-xs font-bold text-gray-900"
+                                                                />
+                                                            </td>
+                                                            <td className="px-3 py-4 text-right font-black text-blue-600 text-xs whitespace-nowrap">
+                                                                {formatCurrency(calculateSubtotal(item))}
+                                                            </td>
+                                                            <td className="px-2 py-4 text-center">
+                                                                <button
+                                                                    onClick={() => handleRemoveItem(item.barang_id)}
+                                                                    className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
+                                                                    title="Hapus Barang"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </Fragment>
+                                            ));
+                                        })()
                                     )}
                                 </tbody>
                             </table>
@@ -769,7 +874,7 @@ export default function EditTransaksiPage() {
                                         </>
                                     )}
                                 </div>
-                            ) : (
+                            ) : groupingMode === 'none' ? (
                                 <div className="divide-y divide-gray-100">
                                     {filteredItems.map((item, index) => (
                                         <div key={item.barang_id} className="p-4 space-y-4">
@@ -836,6 +941,101 @@ export default function EditTransaksiPage() {
                                         </div>
                                     ))}
                                 </div>
+                            ) : (
+                                (() => {
+                                    const sortedData = [...filteredItems].sort((a, b) => (a.ud_nama || 'ZZZ').localeCompare(b.ud_nama || 'ZZZ'));
+                                    const groupedData = sortedData.reduce((acc, item) => {
+                                        const udId = item.ud_id || 'others';
+                                        if (!acc[udId]) {
+                                            acc[udId] = {
+                                                ud_nama: item.ud_nama,
+                                                ud_kode: item.ud_kode,
+                                                items: []
+                                            };
+                                        }
+                                        acc[udId].items.push(item);
+                                        return acc;
+                                    }, {});
+
+                                    return Object.entries(groupedData).map(([udId, group]) => (
+                                        <div key={udId} className="divide-y divide-gray-100">
+                                            <div className="bg-gray-50 px-4 py-2 border-y border-gray-100">
+                                                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest leading-none">
+                                                    {group.ud_nama || 'Tanpa UD'} ({group.items.length} Barang)
+                                                </p>
+                                            </div>
+                                            {group.items.map((item, localIndex) => (
+                                                <div key={item.barang_id} className="p-4 space-y-4 relative">
+                                                    <div className="absolute top-4 left-4 -ml-2 -mt-2">
+                                                        <span className="w-5 h-5 bg-blue-100 text-blue-600 text-[10px] font-bold rounded-full flex items-center justify-center">
+                                                            {localIndex + 1}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between items-start pl-6">
+                                                        <div className="space-y-1">
+                                                            <p className="font-bold text-gray-900 leading-tight">{item.nama_barang}</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="text-xs text-gray-500">{item.ud_nama} •</p>
+                                                                <input
+                                                                    type="text"
+                                                                    value={item.satuan}
+                                                                    onChange={(e) => handleSatuanChange(item.barang_id, e.target.value)}
+                                                                    className="w-16 px-1.5 py-0.5 border border-gray-200 rounded text-[10px] font-medium focus:ring-1 focus:ring-blue-500/20 outline-none"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleRemoveItem(item.barang_id)}
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                                        >
+                                                            <Trash2 className="w-5 h-5" />
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-3 pl-6">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Qty</label>
+                                                            <input
+                                                                type="number"
+                                                                value={item.qty}
+                                                                onChange={(e) => handleQtyChange(item.barang_id, e.target.value)}
+                                                                onBlur={() => handleQtyBlur(item.barang_id)}
+                                                                onFocus={(e) => e.target.select()}
+                                                                step="any"
+                                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1 text-right">
+                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Subtotal</label>
+                                                            <p className="py-2 font-bold text-blue-600">
+                                                                {formatCurrency(calculateSubtotal(item))}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-3 pl-6">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Harga Modal</label>
+                                                            <CurrencyInput
+                                                                value={item.harga_modal}
+                                                                onChange={(e) => handleHargaModalChange(item.barang_id, e.target.value)}
+                                                                className="px-3 py-2 text-sm font-medium"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Harga Jual</label>
+                                                            <CurrencyInput
+                                                                value={item.harga_jual}
+                                                                onChange={(e) => handleHargaJualChange(item.barang_id, e.target.value)}
+                                                                className="px-3 py-2 text-sm font-bold"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ));
+                                })()
                             )}
                         </div>
                     </div>
