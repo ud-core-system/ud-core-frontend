@@ -16,6 +16,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatCurrency } from '@/lib/utils';
 import Pagination from '@/components/ui/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
+import Modal from '@/components/ui/Modal';
 
 export default function KitchenBarangPage() {
     const { toast } = useToast();
@@ -25,6 +26,7 @@ export default function KitchenBarangPage() {
     const [kitchenCode, setKitchenCode] = useState('');
     const [verifying, setVerifying] = useState(false);
     const [kitchenName, setKitchenName] = useState('');
+    const [showAccessModal, setShowAccessModal] = useState(false);
 
     // Data State
     const [data, setData] = useState([]);
@@ -39,8 +41,8 @@ export default function KitchenBarangPage() {
 
     useEffect(() => {
         // Check local storage for existing session
-        const storedCode = localStorage.getItem('kitchen_access_code');
-        const storedName = localStorage.getItem('kitchen_name');
+        const storedCode = sessionStorage.getItem('kitchen_access_code');
+        const storedName = sessionStorage.getItem('kitchen_name');
         if (storedCode && storedName) {
             setKitchenCode(storedCode);
             setKitchenName(storedName);
@@ -62,16 +64,28 @@ export default function KitchenBarangPage() {
                 limit: pagination.limit,
                 search: search || undefined,
             };
-            const response = await barangAPI.getAll(params);
+            const headers = {
+                'x-kitchen-code': kitchenCode
+            };
+            const response = await barangAPI.getPublic(params, headers);
             if (response.data.success) {
                 setData(response.data.data);
                 setPagination((prev) => ({
                     ...prev,
                     ...response.data.pagination,
                 }));
+                // Sync kitchen name if it changed
+                if (response.data.dapur?.nama_dapur) {
+                    setKitchenName(response.data.dapur.nama_dapur);
+                    localStorage.setItem('kitchen_name', response.data.dapur.nama_dapur);
+                }
             }
         } catch (error) {
-            toast.error(getErrorMessage(error));
+            if (error.response?.status === 401) {
+                setShowAccessModal(true);
+            } else {
+                toast.error(getErrorMessage(error));
+            }
         } finally {
             setLoading(false);
         }
@@ -79,41 +93,44 @@ export default function KitchenBarangPage() {
 
     const handleVerify = async (e) => {
         if (e) e.preventDefault();
-        if (!kitchenCode.trim()) {
+        const code = kitchenCode.trim();
+        if (!code) {
             toast.warning('Masukkan kode dapur');
             return;
         }
 
         try {
             setVerifying(true);
-            const response = await dapurAPI.getAll({ isActive: true });
-            if (response.data.success) {
-                const kitchens = response.data.data;
-                const kitchen = kitchens.find(k => k.kode_dapur.toLowerCase() === kitchenCode.trim().toLowerCase());
+            // Try to fetch items using this code as verification
+            const headers = { 'x-kitchen-code': code };
+            const response = await barangAPI.getPublic({ page: 1, limit: 1 }, headers);
 
-                if (kitchen) {
-                    setIsVerified(true);
-                    setKitchenName(kitchen.nama_dapur);
-                    localStorage.setItem('kitchen_access_code', kitchenCode.trim());
-                    localStorage.setItem('kitchen_name', kitchen.nama_dapur);
-                    toast.success(`Akses diberikan: ${kitchen.nama_dapur}`);
-                } else {
-                    toast.error('Kode dapur tidak valid atau tidak aktif');
-                }
+            if (response.data.success) {
+                const name = response.data.dapur?.nama_dapur || 'Dapur';
+                setIsVerified(true);
+                setKitchenName(name);
+                sessionStorage.setItem('kitchen_access_code', code);
+                sessionStorage.setItem('kitchen_name', name);
+                toast.success(`Akses diberikan: ${name}`);
             }
         } catch (error) {
-            toast.error('Gagal memverifikasi kode');
+            if (error.response?.status === 401) {
+                toast.error('Kode dapur tidak valid atau tidak aktif');
+            } else {
+                toast.error('Gagal memverifikasi kode. Silakan coba lagi.');
+            }
         } finally {
             setVerifying(false);
         }
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('kitchen_access_code');
-        localStorage.removeItem('kitchen_name');
+        sessionStorage.removeItem('kitchen_access_code');
+        sessionStorage.removeItem('kitchen_name');
         setIsVerified(false);
         setKitchenCode('');
         setKitchenName('');
+        setShowAccessModal(false);
     };
 
     const handleSearch = (e) => {
@@ -242,7 +259,6 @@ export default function KitchenBarangPage() {
                                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest w-20">No</th>
                                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Nama Barang</th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-widest w-40">Satuan</th>
-                                            <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-widest w-40">Harga Jual</th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-widest w-60">Status Stok</th>
                                         </tr>
                                     </thead>
@@ -259,9 +275,6 @@ export default function KitchenBarangPage() {
                                                     <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg uppercase tracking-wider">
                                                         {item.satuan}
                                                     </span>
-                                                </td>
-                                                <td className="px-6 py-5 text-right font-bold text-blue-600">
-                                                    {formatCurrency(item.harga_jual)}
                                                 </td>
                                                 <td className="px-6 py-5 text-center">
                                                     <div className="flex items-center justify-center gap-2">
@@ -294,7 +307,6 @@ export default function KitchenBarangPage() {
                                                 <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-bold rounded uppercase tracking-tighter">{item.satuan}</span>
                                             </div>
                                             <h3 className="font-bold text-gray-900 truncate pr-2">{item.nama_barang}</h3>
-                                            <p className="text-sm font-bold text-blue-600 mt-1">{formatCurrency(item.harga_jual)}</p>
                                         </div>
                                         <div className="shrink-0">
                                             {item.isActive ? (
@@ -330,6 +342,32 @@ export default function KitchenBarangPage() {
                     )}
                 </div>
             </div>
+
+            {/* Access Denied Modal */}
+            <Modal
+                isOpen={showAccessModal}
+                onClose={() => setShowAccessModal(false)}
+                title="Akses Ditolak"
+            >
+                <div className="flex flex-col items-center text-center space-y-4">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                        <XCircle className="w-8 h-8 text-red-600" />
+                    </div>
+                    <div>
+                        <p className="text-gray-900 font-bold text-lg">Kode Dapur Tidak Valid</p>
+                        <p className="text-gray-500 mt-1">
+                            Kode dapur yang Anda gunakan sudah tidak aktif atau salah. Silakan masukkan kode yang benar.
+                        </p>
+                    </div>
+                    <button
+                        onClick={handleLogout}
+                        className="w-full py-3 bg-red-600 text-white rounded-xl font-bold shadow-lg shadow-red-100
+                                 hover:bg-red-700 active:scale-[0.98] transition-all"
+                    >
+                        Kembali ke Halaman Masuk
+                    </button>
+                </div>
+            </Modal>
         </div>
     );
 }

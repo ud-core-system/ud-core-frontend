@@ -40,6 +40,14 @@ api.interceptors.response.use(
     }
 );
 
+// Public axios instance (no auth redirect)
+export const publicApi = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
 // ============ Auth API ============
 export const authAPI = {
     login: (credentials) => api.post('/auth/login', credentials),
@@ -60,6 +68,7 @@ export const udAPI = {
 // ============ Barang API ============
 export const barangAPI = {
     getAll: (params) => api.get('/barang', { params }),
+    getPublic: (params, headers) => publicApi.get('/barang/publik', { params, headers }),
     getById: (id) => api.get(`/barang/${id}`),
     search: (params) => api.get('/barang/search', { params }),
     create: (data) => api.post('/barang', data),
@@ -69,7 +78,7 @@ export const barangAPI = {
 
 // ============ Dapur API ============
 export const dapurAPI = {
-    getAll: (params) => api.get('/dapur', { params }),
+    getAll: (params) => publicApi.get('/dapur', { params }),
     getById: (id) => api.get(`/dapur/${id}`),
     create: (data) => api.post('/dapur', data),
     update: (id, data) => api.put(`/dapur/${id}`, data),
