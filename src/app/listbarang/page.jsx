@@ -69,7 +69,18 @@ export default function KitchenBarangPage() {
             };
             const response = await barangAPI.getPublic(params, headers);
             if (response.data.success) {
-                setData(response.data.data);
+                // Filter duplicates by nama_barang
+                const uniqueData = response.data.data.reduce((acc, current) => {
+                    const isDuplicate = acc.find(item => item.nama_barang === current.nama_barang
+                        && item.harga_jual === current.harga_jual
+                    );
+                    if (!isDuplicate) {
+                        return acc.concat([current]);
+                    }
+                    return acc;
+                }, []);
+
+                setData(uniqueData);
                 setPagination((prev) => ({
                     ...prev,
                     ...response.data.pagination,
