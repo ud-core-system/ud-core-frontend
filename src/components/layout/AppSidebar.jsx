@@ -163,7 +163,7 @@ const AppSidebar = () => {
             onMouseLeave={() => setIsHovered(false)}
         >
             {/* Logo Section */}
-            <div className="py-4 flex justify-center">
+            <div className="pt-4 pb-0 flex justify-center">
                 <Link
                     href="/admin"
                     onClick={() => {
@@ -173,20 +173,14 @@ const AppSidebar = () => {
                     }}
                     className={`flex flex-col items-center gap-2 ${!isExpanded && !isHovered && !isMobileOpen ? 'lg:px-2' : ''}`}
                 >
-                    <div className="w-24 h-24 flex items-center justify-center flex-shrink-0">
-                        <img src="/LOGO MUTIARA CARE.webp" alt="Mutiara Care Logo" className="w-24 h-24 object-contain" />
+                    <div className={`${isExpanded || isHovered || isMobileOpen ? 'w-60 h-60' : 'w-12 h-12'} flex items-center justify-center flex-shrink-0 transition-all duration-300`}>
+                        <img src="/LOGO MUTIARA CARE.webp" alt="Mutiara Care Logo" className="w-full h-full object-contain" />
                     </div>
-                    {(isExpanded || isHovered || isMobileOpen) && (
-                        <div className="flex flex-col items-center text-center">
-                            <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">MUTIARA CARE</h1>
-                            <p className="text-xs font-bold text-gray-400 tracking-widest uppercase mt-1">Indonesia</p>
-                        </div>
-                    )}
                 </Link>
             </div>
 
             {/* Navigation */}
-            <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar pb-28">
+            <div className={`flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar pb-28 ${isExpanded || isHovered || isMobileOpen ? '-mt-10' : ''}`}>
                 <nav className="mb-6">
                     <div className="flex flex-col gap-4">
                         {/* Main Menu */}
