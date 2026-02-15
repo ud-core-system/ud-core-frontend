@@ -163,7 +163,7 @@ const AppSidebar = () => {
             onMouseLeave={() => setIsHovered(false)}
         >
             {/* Logo Section */}
-            <div className={`py-8 flex ${!isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start'}`}>
+            <div className="py-8 flex justify-center">
                 <Link
                     href="/admin"
                     onClick={() => {
@@ -171,15 +171,15 @@ const AppSidebar = () => {
                             setIsMobileOpen(false);
                         }
                     }}
-                    className="flex items-center gap-3"
+                    className={`flex flex-col items-center gap-4 ${!isExpanded && !isHovered && !isMobileOpen ? 'lg:px-2' : ''}`}
                 >
-                    <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Building2 className="w-6 h-6 text-white" />
+                    <div className="w-24 h-24 flex items-center justify-center flex-shrink-0">
+                        <img src="/LOGO MUTIARA CARE.webp" alt="Mutiara Care Logo" className="w-24 h-24 object-contain" />
                     </div>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                        <div className="flex flex-col">
-                            <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">UD System</h1>
-                            <p className="text-xs font-medium text-gray-400">Management Panel</p>
+                        <div className="flex flex-col items-center text-center">
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">MUTIARA CARE</h1>
+                            <p className="text-xs font-bold text-gray-400 tracking-widest uppercase mt-1">Indonesia</p>
                         </div>
                     )}
                 </Link>

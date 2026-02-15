@@ -110,8 +110,8 @@ const AppHeader = () => {
                     </div> */}
 
                     {/* Mobile Title */}
-                    <h1 className="lg:hidden text-lg font-semibold text-gray-900 dark:text-white">
-                        UD System
+                    <h1 className="lg:hidden text-lg font-bold text-gray-900 dark:text-white uppercase">
+                        Mutiara Care
                     </h1>
 
                     {/* Clock - Desktop Only */}

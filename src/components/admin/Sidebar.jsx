@@ -127,15 +127,15 @@ export default function Sidebar({ currentPath, isCollapsed, setIsCollapsed }) {
                 <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 flex-shrink-0">
                     {!isCollapsed && (
                         <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <span className="text-sm font-bold text-white">UD</span>
+                            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                                <img src="/LOGO MUTIARA CARE.webp" alt="Mutiara Care Logo" className="w-8 h-8 object-contain" />
                             </div>
-                            <span className="font-semibold text-gray-900 truncate">UD System</span>
+                            <span className="font-bold text-gray-900 truncate">MUTIARA CARE</span>
                         </div>
                     )}
                     {isCollapsed && (
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mx-auto">
-                            <span className="text-sm font-bold text-white">UD</span>
+                        <div className="w-8 h-8 flex items-center justify-center mx-auto">
+                            <img src="/LOGO MUTIARA CARE.webp" alt="Mutiara Care Logo" className="w-8 h-8 object-contain" />
                         </div>
                     )}
 

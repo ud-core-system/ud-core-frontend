@@ -42,5 +42,5 @@ next-env.d.ts
 
 # sandbox
 /sandbox
-# referensi_data
+referensi_data
 read_excel.js

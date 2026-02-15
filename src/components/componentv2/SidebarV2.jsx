@@ -127,12 +127,12 @@ export default function SidebarV2({ currentPath, isCollapsed, setIsCollapsed }) 
             >
                 {/* Header Section */}
                 <div className="pt-10 px-6 pb-10 flex items-start gap-4 m-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-200">
-                        <Building2 className="w-7 h-7 text-white" />
+                    <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                        <img src="/LOGO MUTIARA CARE.webp" alt="Mutiara Care Logo" className="w-12 h-12 object-contain" />
                     </div>
                     <div className="flex flex-col pt-1">
-                        <h1 className="text-xl font-bold text-slate-900 leading-tight">UD System</h1>
-                        <p className="text-[13px] font-medium text-slate-400">Management Panel</p>
+                        <h1 className="text-xl font-bold text-slate-900 leading-tight uppercase">Mutiara Care</h1>
+                        <p className="text-[13px] font-medium text-slate-400 uppercase">Indonesia</p>
                     </div>
 
                     {/* Mobile Close Button */}
