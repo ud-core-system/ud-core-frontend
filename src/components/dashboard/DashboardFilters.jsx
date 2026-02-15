@@ -1,6 +1,7 @@
 'use client';
 
 import { Calendar, Building2, Filter } from 'lucide-react';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 
 const DashboardFilters = ({
     periodeList = [],
@@ -19,18 +20,16 @@ const DashboardFilters = ({
                         <Calendar className="w-3.5 h-3.5" />
                         Periode
                     </label>
-                    <select
+                    <SearchableSelect
+                        options={[{ value: '', label: 'Semua Periode' }, ...periodeList.map(p => ({
+                            value: p._id,
+                            label: p.nama_periode
+                        }))]}
                         value={filterPeriode}
                         onChange={(e) => setFilterPeriode(e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all dark:text-white text-sm"
-                    >
-                        <option value="">Semua Periode</option>
-                        {periodeList.map((p) => (
-                            <option key={p._id} value={p._id}>
-                                {p.nama_periode}
-                            </option>
-                        ))}
-                    </select>
+                        placeholder="Pilih Periode"
+                        searchPlaceholder="Cari periode..."
+                    />
                 </div>
 
                 <div className="flex-1">
@@ -38,18 +37,16 @@ const DashboardFilters = ({
                         <Building2 className="w-3.5 h-3.5" />
                         Unit Dagang (UD)
                     </label>
-                    <select
+                    <SearchableSelect
+                        options={[{ value: '', label: 'Semua UD' }, ...udList.map(ud => ({
+                            value: ud._id,
+                            label: `${ud.nama_ud} (${ud.kode_ud})`
+                        }))]}
                         value={filterUD}
                         onChange={(e) => setFilterUD(e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all dark:text-white text-sm"
-                    >
-                        <option value="">Semua UD</option>
-                        {udList.map((ud) => (
-                            <option key={ud._id} value={ud._id}>
-                                {ud.nama_ud} ({ud.kode_ud})
-                            </option>
-                        ))}
-                    </select>
+                        placeholder="Pilih UD"
+                        searchPlaceholder="Cari Unit Dagang..."
+                    />
                 </div>
 
                 <button
