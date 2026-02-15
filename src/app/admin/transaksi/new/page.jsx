@@ -63,6 +63,86 @@ export default function NewTransaksiPage() {
     const [tableSearch, setTableSearch] = useState('');
     const [groupingMode, setGroupingMode] = useState('ud');
 
+    const SESSION_STORAGE_KEY = 'new_transaksi_state';
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    // Secure Clear Modal state
+    const [showClearModal, setShowClearModal] = useState(false);
+    const [clearConfirmCode, setClearConfirmCode] = useState('');
+    const [userInputCode, setUserInputCode] = useState('');
+
+    const generateRandomCode = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded confusing chars like 0, O, 1, I, L
+        let result = '';
+        for (let i = 0; i < 4; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    };
+
+    const handleOpenClearModal = () => {
+        setClearConfirmCode(generateRandomCode());
+        setUserInputCode('');
+        setShowClearModal(true);
+    };
+
+    const handleConfirmClear = () => {
+        if (userInputCode.toUpperCase() !== clearConfirmCode) {
+            toast.error('Kode konfirmasi tidak cocok');
+            return;
+        }
+
+        setPeriodeId('');
+        setDapurId('');
+        setTanggal(new Date());
+        setItems([]);
+        setSelectedUdId('');
+        setGroupingMode('ud');
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        setShowClearModal(false);
+        toast.info('Formulir berhasil dibersihkan');
+    };
+
+    const handleClearForm = () => {
+        handleOpenClearModal();
+    };
+
+    const hasData = !!(periodeId || dapurId || items.length > 0);
+
+    // Session persistence: Load on mount
+    useEffect(() => {
+        const savedState = sessionStorage.getItem(SESSION_STORAGE_KEY);
+        if (savedState) {
+            try {
+                const parsed = JSON.parse(savedState);
+                if (parsed.periodeId) setPeriodeId(parsed.periodeId);
+                if (parsed.dapurId) setDapurId(parsed.dapurId);
+                if (parsed.tanggal) setTanggal(new Date(parsed.tanggal));
+                if (parsed.items) setItems(parsed.items);
+                if (parsed.selectedUdId) setSelectedUdId(parsed.selectedUdId);
+                if (parsed.groupingMode) setGroupingMode(parsed.groupingMode);
+            } catch (error) {
+                console.error('Error loading saved state:', error);
+            }
+        }
+        setIsLoaded(true);
+    }, []);
+
+    // Session persistence: Save on changes
+    useEffect(() => {
+        if (!isLoaded) return;
+
+        const stateToSave = {
+            periodeId,
+            dapurId,
+            tanggal: tanggal instanceof Date ? tanggal.toISOString() : new Date().toISOString(),
+            items,
+            selectedUdId,
+            groupingMode
+        };
+        sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(stateToSave));
+    }, [periodeId, dapurId, tanggal, items, selectedUdId, groupingMode, isLoaded]);
+
     // Create Barang Modal state
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newBarang, setNewBarang] = useState({
@@ -384,6 +464,7 @@ export default function NewTransaksiPage() {
                 toast.success('Transaksi berhasil disimpan sebagai draft');
             }
 
+            sessionStorage.removeItem(SESSION_STORAGE_KEY);
             router.push('/admin/transaksi');
         } catch (error) {
             toast.error(getErrorMessage(error));
@@ -422,10 +503,20 @@ export default function NewTransaksiPage() {
                     <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Input Transaksi Baru</h1>
                     <p className="text-sm md:text-gray-500 mt-0.5">Masukkan data barang untuk transaksi</p>
                 </div>
+                {hasData && (
+                    <button
+                        onClick={handleClearForm}
+                        className="ml-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl
+                                   hover:bg-red-100 transition-all font-semibold active:scale-95 text-sm"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                        Bersihkan Form
+                    </button>
+                )}
                 <Link
                     href="/admin/transaksi/bulk"
-                    className="ml-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl
-                               hover:bg-green-700 transition-all font-semibold shadow-lg shadow-green-500/20 active:scale-95 text-sm"
+                    className={`${hasData ? 'ml-0' : 'ml-auto'} inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl
+                                hover:bg-green-700 transition-all font-semibold shadow-lg shadow-green-500/20 active:scale-95 text-sm`}
                 >
                     <FileSpreadsheet className="w-4 h-4" />
                     Bulk Upload dari Excel
@@ -1307,6 +1398,68 @@ export default function NewTransaksiPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* Secure Clear Modal */}
+            {showClearModal && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-red-50/50">
+                            <div className="flex items-center gap-2 text-red-600">
+                                <Trash2 className="w-5 h-5" />
+                                <h3 className="text-lg font-bold">Konfirmasi Bersihkan Form</h3>
+                            </div>
+                            <button
+                                onClick={() => setShowClearModal(false)}
+                                className="p-2 hover:bg-white rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-gray-400" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                                Apakah Anda yakin ingin menghapus <strong>seluruh data input</strong> transaksi ini? Tindakan ini tidak dapat dibatalkan.
+                            </p>
+
+                            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center space-y-3">
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Ketik kode di bawah untuk konfirmasi:</p>
+                                <div className="flex items-center justify-center gap-2">
+                                    {clearConfirmCode.split('').map((char, i) => (
+                                        <span key={i} className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 rounded-lg text-xl font-black text-red-600 shadow-sm select-none">
+                                            {char}
+                                        </span>
+                                    ))}
+                                </div>
+                                <input
+                                    type="text"
+                                    value={userInputCode}
+                                    onChange={(e) => setUserInputCode(e.target.value.toUpperCase())}
+                                    onKeyDown={(e) => e.key === 'Enter' && userInputCode.length === 4 && handleConfirmClear()}
+                                    className="w-full mt-2 px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-center text-lg font-bold focus:border-red-500 focus:ring-0 outline-none transition-all placeholder:text-gray-300"
+                                    placeholder="Ketik 4 digit kode"
+                                    maxLength={4}
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    onClick={() => setShowClearModal(false)}
+                                    className="flex-1 py-3 px-4 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-all active:scale-[0.98]"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={handleConfirmClear}
+                                    disabled={userInputCode.toUpperCase() !== clearConfirmCode}
+                                    className="flex-[1.5] py-3 px-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-500/30 transition-all active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:shadow-none"
+                                >
+                                    Ya, Bersihkan Form
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
