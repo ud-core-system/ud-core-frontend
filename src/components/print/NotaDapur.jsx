@@ -396,7 +396,225 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
     </div>
 );
 
-// Template 5: Generic Template (for new UDs without specific branding)
+// Template 5: UD BOGA FOOD RAYA
+const TemplateBogaFood = ({ data, udData, udId }) => (
+    <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
+        <div className="flex justify-between items-center mb-4">
+            <div className="w-1/3 text-center">
+                <div className="font-bold text-lg">UD BOGA FOOD RAYA</div>
+                <div className="font-bold">LOMBOK NTB</div>
+            </div>
+            <div className="w-1/3 flex justify-center">
+                <img src="/LOGO BOGA FOOD RAYA.jpeg" alt="Boga Food Logo" className="h-24 w-auto" />
+            </div>
+            <div className="w-1/3 text-right">
+                <div>Lombok Barat, {(() => {
+                    const d = new Date(data.tanggal);
+                    return `${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`;
+                })()}</div>
+                <div>Penerima. {data.dapur_id?.nama_dapur || 'SPPG Batu Layar'}</div>
+            </div>
+        </div>
+
+        <table className="nota-table">
+            <thead>
+                <tr>
+                    <th className="w-10 text-center">No.</th>
+                    <th className="text-center">Pembelian</th>
+                    <th className="text-center w-16">Qty</th>
+                    <th className="text-center w-16">Sat</th>
+                    <th className="text-right w-32">Harga Satuan</th>
+                    <th className="text-right w-40">Jumlah Pembelian</th>
+                </tr>
+            </thead>
+            <tbody>
+                {udData.items.map((item, idx) => (
+                    <tr key={idx}>
+                        <td className="text-center">{idx + 1}</td>
+                        <td>{item.nama_barang || item.barang_id?.nama_barang}</td>
+                        <td className="text-center">{item.qty}</td>
+                        <td className="text-center">{item.satuan || item.barang_id?.satuan}</td>
+                        <td className="text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
+                        <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
+                    </tr>
+                ))}
+                {[...Array(Math.max(0, 15 - udData.items.length))].map((_, idx) => (
+                    <tr key={`empty-${idx}`}>
+                        <td className="h-6 text-center">{udData.items.length + idx + 1}</td>
+                        <td></td><td></td><td></td><td></td><td></td>
+                    </tr>
+                ))}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colSpan="5" className="text-right font-bold border-t-2">TOTAL (Rp.)</td>
+                    <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div className="flex justify-between mt-12 px-24 no-break">
+            <div className="text-center">
+                <div>Penerima :</div>
+                <div className="mt-20 border-t border-black w-48"></div>
+            </div>
+            <div className="text-center">
+                <div>Hormat Kami :</div>
+                <div className="mt-20 border-t border-black w-48"></div>
+            </div>
+        </div>
+    </div>
+);
+
+// Template 6: UD KAYA ALAM
+const TemplateKayaAlam = ({ data, udData, udId }) => (
+    <div id={`nota-${udId}`} className="nota-container page-break font-times text-black bg-white">
+        <div className="flex justify-between items-start mb-4">
+            <div className="w-1/3 pt-4">
+                <div className="text-sm">Mataram, {formatDate(data.tanggal)}</div>
+                <div className="text-sm font-bold">Kepada : <span className="font-bold">{data.dapur_id?.nama_dapur || 'Dapur'}</span></div>
+                <div className="text-sm">Di -</div>
+                <div className="text-sm font-bold uppercase">{data.dapur_id?.alamat || 'Lombok NTB'}</div>
+            </div>
+            <div className="w-1/3 text-center pt-2">
+                <div className="font-bold text-xl uppercase">UD KAYA ALAM</div>
+                <div className="text-sm font-bold text-red-600">FRESH FOOD SUPPLIER</div>
+            </div>
+            <div className="w-1/3 flex justify-end">
+                <img src="/LOGO KAYA ALAM.jpeg" alt="Kaya Alam Logo" className="h-24 w-auto" />
+            </div>
+        </div>
+
+        <table className="nota-table">
+            <thead>
+                <tr>
+                    <th className="text-center w-12">No.</th>
+                    <th>Nama Barang</th>
+                    <th className="text-center w-16">Qty.</th>
+                    <th className="text-center w-20">Satuan</th>
+                    <th className="text-right w-32">Harga</th>
+                    <th className="text-right w-32">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {udData.items.map((item, idx) => (
+                    <tr key={idx}>
+                        <td className="text-center">{idx + 1}</td>
+                        <td>{item.nama_barang || item.barang_id?.nama_barang}</td>
+                        <td className="text-center">{item.qty}</td>
+                        <td className="text-center">{item.satuan || item.barang_id?.satuan}</td>
+                        <td className="text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
+                        <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
+                    </tr>
+                ))}
+                {[...Array(Math.max(0, 15 - udData.items.length))].map((_, idx) => (
+                    <tr key={`empty-${idx}`}>
+                        <td className="h-6">&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
+                    </tr>
+                ))}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colSpan="5" className="text-right font-bold border-t-2 uppercase">Jumlah Total (Rp)</td>
+                    <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div className="flex justify-between mt-12 px-12 no-break">
+            <div className="text-center">
+                <div className="uppercase">Penerima,</div>
+                <div className="mt-16 border-t border-black w-40"></div>
+            </div>
+            <div className="text-center">
+                <div className="uppercase font-bold">UD KAYA ALAM</div>
+                <div className="mt-16 border-t border-black w-40"></div>
+            </div>
+        </div>
+    </div>
+);
+
+// Template 7: UD MAYUR SEHAT
+const TemplateMayurSehat = ({ data, udData, udId }) => (
+    <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
+        <div className="flex justify-between items-start mb-4">
+            <div className="flex flex-col items-center flex-1">
+                <img src="/LOGO MAYUR SEHAT.jpeg" alt="Mayur Sehat Logo" className="h-20 w-auto" />
+                <div className="text-[14px] font-bold text-center mt-2">
+                    UD MAYUR SEHAT<br />
+                    Mataram - NTB
+                </div>
+            </div>
+            <div className="border border-black">
+                <table className="text-sm">
+                    <tbody>
+                        <tr className="border-b border-black">
+                            <td className="px-2 py-1 font-bold border-r border-black">Tgl.</td>
+                            <td className="px-2 py-1">{formatDate(data.tanggal)}</td>
+                        </tr>
+                        <tr className="border-b border-black">
+                            <td className="px-2 py-1 font-bold border-r border-black">Kepada</td>
+                            <td className="px-2 py-1">{data.dapur_id?.nama_dapur}</td>
+                        </tr>
+                        <tr>
+                            <td className="px-2 py-1 font-bold border-r border-black">Alamat</td>
+                            <td className="px-2 py-1">{data.dapur_id?.alamat}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <table className="nota-table">
+            <thead>
+                <tr>
+                    <th className="w-10">No.</th>
+                    <th>Nama Pesanan</th>
+                    <th className="text-center w-16">Qty.</th>
+                    <th className="text-center w-16">Sat.</th>
+                    <th className="text-right w-24">Harga</th>
+                    <th className="text-right w-32">Jumlah</th>
+                </tr>
+            </thead>
+            <tbody>
+                {udData.items.map((item, idx) => (
+                    <tr key={idx}>
+                        <td className="text-center">{idx + 1}</td>
+                        <td>{item.nama_barang || item.barang_id?.nama_barang}</td>
+                        <td className="text-center">{item.qty}</td>
+                        <td className="text-center">{item.satuan || item.barang_id?.satuan}</td>
+                        <td className="text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
+                        <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
+                    </tr>
+                ))}
+                {[...Array(Math.max(0, 15 - udData.items.length))].map((_, idx) => (
+                    <tr key={`empty-${idx}`}>
+                        <td className="h-6">&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
+                    </tr>
+                ))}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colSpan="5" className="text-right font-bold border-t-2">TOTAL (Rp.)</td>
+                    <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div className="flex justify-between mt-12 px-12 no-break">
+            <div className="text-center">
+                <div>Penerima,</div>
+                <div className="mt-16 border-t border-black w-40"></div>
+            </div>
+            <div className="text-center">
+                <div>Hormat Kami,</div>
+                <div className="mt-16 border-t border-black w-40"></div>
+            </div>
+        </div>
+    </div>
+);
+
+// Template 8: Generic Template (for new UDs without specific branding)
 const TemplateGeneric = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
         <div className="text-center mb-6">
@@ -480,6 +698,12 @@ export default function NotaDapur({ data, itemsByUD, udIdFilter = null }) {
             return <TemplateASM key={udName} data={data} udData={udData} udId={udId} />;
         } else if (name.includes('BANYU MAS') || name.includes('BANYUMAS')) {
             return <TemplateBanyuMas key={udName} data={data} udData={udData} udId={udId} />;
+        } else if (name.includes('BOGA FOOD')) {
+            return <TemplateBogaFood key={udName} data={data} udData={udData} udId={udId} />;
+        } else if (name.includes('KAYA ALAM')) {
+            return <TemplateKayaAlam key={udName} data={data} udData={udData} udId={udId} />;
+        } else if (name.includes('MAYUR SEHAT') || name.includes('NAYUR SEHAT')) {
+            return <TemplateMayurSehat key={udName} data={data} udData={udData} udId={udId} />;
         }
         // Default to TemplateGeneric for any new UD without specific branding
         return <TemplateGeneric key={udName} data={data} udData={udData} udId={udId} />;
