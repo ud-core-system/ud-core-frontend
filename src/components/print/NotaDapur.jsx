@@ -486,7 +486,14 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
                 <img src="/LOGO KAYA ALAM.jpeg" alt="Kaya Alam Logo" className="h-44 w-auto" />
             </div>
             <div className="flex justify-center">
-                <div className="border-2 border-black bg-gray-200 p-3 min-w-[280px] max-w-sm text-base">
+                <div
+                    className="border-4 border-black p-3 min-w-[280px] max-w-sm text-base text-black"
+                    style={{
+                        backgroundColor: '#d1d5db',
+                        WebkitPrintColorAdjust: 'exact',
+                        printColorAdjust: 'exact'
+                    }}
+                >
                     <div>Mataram, {formatDate(data.tanggal)}</div>
                     <div>Kepada Yth. <span className="font-bold">{data.dapur_id?.nama_dapur || 'Dapur SPPG'}</span></div>
                     <div>Di -</div>
@@ -495,36 +502,43 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
             </div>
         </div>
 
-        <table className="nota-table">
+        <table className="nota-table border-2 border-black">
             <thead>
                 <tr>
-                    <th className="w-20 text-center font-bold">JUMLAH</th>
-                    <th className="w-20 text-center font-bold">SATUAN</th>
-                    <th className="text-center font-bold">NAMA BARANG</th>
-                    <th className="w-32 text-center font-bold">HARGA</th>
-                    <th className="w-32 text-center font-bold">TOTAL</th>
+                    <th className="w-12 text-center font-bold border border-black">NO.</th>
+                    <th className="text-center font-bold border border-black">NAMA BARANG</th>
+                    <th className="w-24 text-center font-bold border border-black">JUMLAH</th>
+                    <th className="w-16 text-center font-bold border border-black">SAT</th>
+                    <th className="w-32 text-center font-bold border border-black">HARGA</th>
+                    <th className="w-32 text-center font-bold border border-black">TOTAL</th>
                 </tr>
             </thead>
             <tbody>
                 {udData.items.map((item, idx) => (
                     <tr key={idx}>
-                        <td className="text-center">{item.qty}</td>
-                        <td className="text-center">{item.satuan || item.barang_id?.satuan}</td>
-                        <td>{item.nama_barang || item.barang_id?.nama_barang}</td>
-                        <td className="text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
-                        <td className="text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
+                        <td className="text-center border border-black">{idx + 1}</td>
+                        <td className="border border-black px-2">{item.nama_barang || item.barang_id?.nama_barang}</td>
+                        <td className="text-center border border-black">{item.qty}</td>
+                        <td className="text-center border border-black">{item.satuan || item.barang_id?.satuan}</td>
+                        <td className="text-right border border-black px-2">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
+                        <td className="text-right border border-black px-2">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
                     </tr>
                 ))}
                 {[...Array(Math.max(0, 9 - udData.items.length))].map((_, idx) => (
                     <tr key={`empty-${idx}`}>
-                        <td className="h-8 text-center">&nbsp;</td><td></td><td></td><td></td><td></td>
+                        <td className="h-8 text-center border border-black">&nbsp;</td>
+                        <td className="border border-black"></td>
+                        <td className="border border-black"></td>
+                        <td className="border border-black"></td>
+                        <td className="border border-black"></td>
+                        <td className="border border-black"></td>
                     </tr>
                 ))}
             </tbody>
             <tfoot>
                 <tr>
-                    <td colSpan="4" className="text-center font-bold border-t-2 uppercase bg-white">TOTAL TRANSAKSI (RP)</td>
-                    <td className="text-right font-bold border-t-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
+                    <td colSpan="5" className="text-center font-bold border-2 border-black uppercase bg-white py-2">TOTAL TRANSAKSI (RP)</td>
+                    <td className="text-right font-bold border-2 border-black px-2">{formatCurrency(udData.total).replace('Rp', '')}</td>
                 </tr>
             </tfoot>
         </table>
