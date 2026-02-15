@@ -136,6 +136,11 @@ const AppHeader = () => {
                                 })} WITA
                             </span>
                         </div>
+                        <img
+                            src="/TOPAN.webp"
+                            alt="Topan Logo"
+                            className="h-7 ml-2 -mt-1 w-auto rounded-lg object-contain"
+                        />
                     </div>
 
                     {/* Right Actions - Mobile Toggle */}
