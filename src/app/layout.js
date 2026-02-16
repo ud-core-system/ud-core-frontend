@@ -7,11 +7,11 @@ import { BulkUploadProvider } from '@/contexts/BulkUploadContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-    title: 'Sistem UD Management',
+    title: 'Mutiara Care Indonesia',
     description: 'Sistem Manajemen Usaha Dagang untuk MBG',
     icons: {
         icon: '/favicon_io/favicon.ico',
-        shortcut: '/favicon_io/android-chrome-512x512.png',
+        shortcut: '/favicon_io/cropped_circle_image.png',
         apple: '/favicon_io/apple-touch-icon.png',
     },
 };
