@@ -9,7 +9,7 @@ import {
     Printer,
     CheckCircle,
 } from 'lucide-react';
-import { getErrorMessage, formatCurrency, formatDate, getStatusClass, toLocalDate, formatDateFilename, normalizeId } from '@/lib/utils';
+import { getErrorMessage, formatCurrency, formatNumber, formatDate, getStatusClass, toLocalDate, formatDateFilename, normalizeId } from '@/lib/utils';
 import { transaksiAPI, barangAPI, udAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import NotaDapur from '@/components/print/NotaDapur';
@@ -461,7 +461,7 @@ export default function TransaksiDetailPage() {
                                                     {item.nama_barang || item.barang_id?.nama_barang || '-'}
                                                 </p>
                                             </td>
-                                            <td className="px-4 py-4 text-center font-bold text-gray-700 text-sm">{item.qty}</td>
+                                            <td className="px-4 py-4 text-center font-bold text-gray-700 text-sm">{formatNumber(item.qty)}</td>
                                             <td className="px-4 py-4 text-center">
                                                 <span className="px-2 py-0.5 text-[10px] font-bold bg-gray-100 text-gray-600 rounded-md uppercase whitespace-nowrap">
                                                     {item.satuan || item.barang_id?.satuan || '-'}
@@ -498,7 +498,7 @@ export default function TransaksiDetailPage() {
                                                 {item.nama_barang || item.barang_id?.nama_barang || '-'}
                                             </h4>
                                             <p className="text-[10px] text-gray-500 uppercase">
-                                                Qty: <span className="font-bold text-gray-900">{item.qty}</span> • {item.satuan || item.barang_id?.satuan || '-'}
+                                                Qty: <span className="font-bold text-gray-900">{formatNumber(item.qty)}</span> • {item.satuan || item.barang_id?.satuan || '-'}
                                             </p>
                                         </div>
                                     </div>
