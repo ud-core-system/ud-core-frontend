@@ -9,6 +9,11 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata = {
     title: 'Sistem UD Management',
     description: 'Sistem Manajemen Usaha Dagang untuk MBG',
+    icons: {
+        icon: '/favicon_io/favicon.ico',
+        shortcut: '/favicon_io/android-chrome-512x512.png',
+        apple: '/favicon_io/apple-touch-icon.png',
+    },
 };
 
 export default function RootLayout({ children }) {
