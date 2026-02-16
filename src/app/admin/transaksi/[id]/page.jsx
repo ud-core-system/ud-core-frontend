@@ -156,7 +156,8 @@ export default function TransaksiDetailPage() {
     const handlePrintAll = () => {
         const originalTitle = document.title;
         const dateStr = data.tanggal ? formatDateFilename(data.tanggal) : 'date';
-        const newTitle = `Semua_Nota_${dateStr}`;
+        const dapurName = data.dapur_id?.nama_dapur?.replace(/\s+/g, '_') || 'Dapur';
+        const newTitle = `Nota_${dapurName}_Semua_${dateStr}`;
         document.title = newTitle;
 
         setPrinting('all');
@@ -176,8 +177,9 @@ export default function TransaksiDetailPage() {
         const udData = itemsByUD[udId];
         const originalTitle = document.title;
         const dateStr = data.tanggal ? formatDateFilename(data.tanggal) : 'date';
+        const dapurName = data.dapur_id?.nama_dapur?.replace(/\s+/g, '_') || 'Dapur';
         const udName = udData?.nama_ud || 'UD';
-        const newTitle = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}`;
+        const newTitle = `Nota_${dapurName}_${udName.replace(/\s+/g, '_')}_${dateStr}`;
         document.title = newTitle;
 
         setPrinting(udId);
@@ -196,7 +198,8 @@ export default function TransaksiDetailPage() {
         try {
             setDownloading(udId);
             const dateStr = data.tanggal ? formatDateFilename(data.tanggal) : 'date';
-            const fileName = `Nota_${udName.replace(/\s+/g, '_')}_${dateStr}.pdf`;
+            const dapurName = data.dapur_id?.nama_dapur?.replace(/\s+/g, '_') || 'Dapur';
+            const fileName = `Nota_${dapurName}_${udName.replace(/\s+/g, '_')}_${dateStr}.pdf`;
 
             // Persistent title for mobile tab identification
             document.title = fileName.replace('.pdf', '');
@@ -226,14 +229,15 @@ export default function TransaksiDetailPage() {
         try {
             setDownloadingAll(true);
             const dateStr = data.tanggal ? formatDateFilename(data.tanggal) : 'date';
+            const dapurName = data.dapur_id?.nama_dapur?.replace(/\s+/g, '_') || 'Dapur';
 
-            document.title = `Semua_Nota_${dateStr}`;
+            document.title = `Nota_${dapurName}_Semua_${dateStr}`;
 
             // Beri waktu React untuk render komponen ke DOM
             await new Promise(resolve => setTimeout(resolve, 300));
 
             for (const [udId, udData] of udEntries) {
-                const fileName = `Nota_${udData.nama_ud.replace(/\s+/g, '_')}_${dateStr}.pdf`;
+                const fileName = `Nota_${dapurName}_${udData.nama_ud.replace(/\s+/g, '_')}_${dateStr}.pdf`;
                 await downloadPDF(`pdf-nota-${udId}`, fileName);
                 // Small delay to prevent browser blocking multiple downloads
                 await new Promise(resolve => setTimeout(resolve, 500));
