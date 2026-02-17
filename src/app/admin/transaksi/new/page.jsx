@@ -674,43 +674,53 @@ export default function NewTransaksiPage() {
                     </div>
 
                     {/* Dropdown Results */}
-                    {showDropdown && searchResults.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
-                            {searchResults.map((barang) => (
-                                <button
-                                    key={barang._id}
-                                    onClick={() => handleSelectBarang(barang)}
-                                    className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="font-medium text-gray-900">{barang.nama_barang}</p>
-                                            <p className="text-sm text-gray-500">
-                                                {barang.ud_id?.nama_ud} • {barang.satuan}
-                                            </p>
-                                        </div>
-                                        <p className="font-medium text-blue-600">
-                                            {formatCurrency(barang.harga_jual)}
-                                        </p>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    )}
+                    {showDropdown && searchQuery.length >= 2 && !searchLoading && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto overflow-x-hidden">
+                            {/* List of Results */}
+                            {searchResults.length > 0 && (
+                                <div className="divide-y divide-gray-100">
+                                    {searchResults.map((barang) => (
+                                        <button
+                                            key={barang._id}
+                                            onClick={() => handleSelectBarang(barang)}
+                                            className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors"
+                                        >
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <p className="font-medium text-gray-900 truncate">{barang.nama_barang}</p>
+                                                    <p className="text-xs text-gray-500 truncate">
+                                                        {barang.ud_id?.nama_ud} • {barang.satuan}
+                                                    </p>
+                                                </div>
+                                                <p className="font-bold text-blue-600 whitespace-nowrap">
+                                                    {formatCurrency(barang.harga_jual)}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
 
-                    {showDropdown && searchQuery.length >= 2 && searchResults.length === 0 && !searchLoading && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 text-center">
-                            <p className="text-gray-500 mb-3">Tidak ada barang ditemukan</p>
-                            <button
-                                onClick={() => {
-                                    setNewBarang(prev => ({ ...prev, nama_barang: searchQuery, ud_id: selectedUdId }));
-                                    setShowCreateModal(true);
-                                }}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                            >
-                                <Plus className="w-4 h-4" />
-                                Tambah "{searchQuery}" Baru
-                            </button>
+                            {/* No Results Message */}
+                            {searchResults.length === 0 && (
+                                <div className="px-4 py-6 text-center">
+                                    <p className="text-gray-500 text-sm">Tidak ada barang yang cocok ditemukan</p>
+                                </div>
+                            )}
+
+                            {/* Always visible Add New button */}
+                            <div className="p-3 bg-gray-50 border-t border-gray-100 sticky bottom-0">
+                                <button
+                                    onClick={() => {
+                                        setNewBarang(prev => ({ ...prev, nama_barang: searchQuery, ud_id: selectedUdId }));
+                                        setShowCreateModal(true);
+                                    }}
+                                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20 active:scale-[0.98]"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Tambah "{searchQuery}" Baru
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
