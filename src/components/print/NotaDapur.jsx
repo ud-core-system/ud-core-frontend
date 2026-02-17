@@ -584,12 +584,12 @@ const TemplateMayurSehat = ({ data, udData, udId }) => (
         <table className="nota-table border-2 border-black no-repeat-header">
             <thead>
                 <tr className="bg-gray-200">
-                    <th className="w-16 border-2 border-black font-bold">No.</th>
+                    <th className="w-10 border-2 border-black font-bold">No.</th>
                     <th className="border-2 border-black font-bold">Barang</th>
-                    <th className="w-24 border-2 border-black font-bold">Bnyk</th>
-                    <th className="w-24 border-2 border-black font-bold">Sat.</th>
-                    <th className="w-36 border-2 border-black font-bold">Harga</th>
-                    <th className="w-40 border-2 border-black font-bold">Total</th>
+                    <th className="w-16 border-2 border-black font-bold">Bnyk</th>
+                    <th className="w-16 border-2 border-black font-bold">Sat.</th>
+                    <th className="w-24 border-2 border-black font-bold">Harga</th>
+                    <th className="w-32 border-2 border-black font-bold">Total</th>
                 </tr>
             </thead>
             <tbody>
