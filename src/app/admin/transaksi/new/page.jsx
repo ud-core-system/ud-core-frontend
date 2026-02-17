@@ -31,6 +31,10 @@ const SATUAN_OPTIONS = [
     { value: 'dus', label: 'Dus' },
     { value: 'tray', label: 'Tray' },
     { value: 'gln', label: 'Galon (gln)' },
+    { value: 'pack', label: 'Pack' },
+    { value: 'ktk', label: 'Kotak (ktk)' },
+    { value: 'jrg', label: 'Jerigen (jrg)' },
+    { value: 'box', label: 'Box' },
     { value: 'unit', label: 'Unit' },
     { value: 'lainnya', label: 'Lainnya (Custom)' },
 ];
