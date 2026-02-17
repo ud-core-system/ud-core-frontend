@@ -341,7 +341,7 @@ export default function TransaksiListPage() {
                                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden xl:table-cell">
                                             Periode
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden 2xl:table-cell">
+                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                                             Tanggal
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">
@@ -379,7 +379,7 @@ export default function TransaksiListPage() {
                                                     {item.periode_id?.nama_periode || '-'}
                                                 </p>
                                             </td>
-                                            <td className="px-4 py-4 hidden 2xl:table-cell whitespace-nowrap">
+                                            <td className="px-4 py-4 whitespace-nowrap">
                                                 <p className="text-gray-500 text-sm">{formatDateShort(item.tanggal)}</p>
                                             </td>
                                             <td className="px-4 py-4 text-right font-black text-gray-900 text-sm whitespace-nowrap">
