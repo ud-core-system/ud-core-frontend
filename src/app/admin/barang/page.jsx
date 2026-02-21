@@ -48,7 +48,8 @@ const INITIAL_FORM = {
     custom_satuan: '',
     harga_jual: '',
     harga_modal: '',
-    ud_id: '',
+    ud_id: '',      // used when editing (single)
+    ud_ids: [],     // used when creating (multi)
     isActive: true,
 };
 
@@ -240,29 +241,54 @@ export default function BarangManagementPage() {
             toast.warning('Harga jual harus diisi dan lebih dari 0');
             return;
         }
-        if (!formData.ud_id) {
-            toast.warning('UD harus dipilih');
-            return;
+
+        if (editingItem) {
+            // Edit mode: single UD
+            if (!formData.ud_id) {
+                toast.warning('UD harus dipilih');
+                return;
+            }
+        } else {
+            // Create mode: at least one UD must be selected
+            if (formData.ud_ids.length === 0) {
+                toast.warning('Pilih minimal 1 UD');
+                return;
+            }
         }
 
         try {
             setFormLoading(true);
 
-            const payload = {
-                ...formData,
+            const basePayload = {
+                nama_barang: formData.nama_barang.trim(),
                 satuan: formData.satuan === 'lainnya' ? formData.custom_satuan.trim() : formData.satuan,
                 harga_jual: parseFloat(formData.harga_jual),
                 harga_modal: formData.harga_modal ? parseFloat(formData.harga_modal) : 0,
+                isActive: formData.isActive,
             };
-            // Remove custom_satuan from payload
-            delete payload.custom_satuan;
 
             if (editingItem) {
-                await barangAPI.update(editingItem._id, payload);
+                await barangAPI.update(editingItem._id, { ...basePayload, ud_id: formData.ud_id });
                 toast.success('Barang berhasil diperbarui');
             } else {
-                await barangAPI.create(payload);
-                toast.success('Barang berhasil ditambahkan');
+                // Create one barang per selected UD
+                const selectedUDs = formData.ud_ids;
+                let successCount = 0;
+                let failCount = 0;
+                for (const udId of selectedUDs) {
+                    try {
+                        await barangAPI.create({ ...basePayload, ud_id: udId });
+                        successCount++;
+                    } catch (err) {
+                        failCount++;
+                        console.error(`Failed to create barang for UD ${udId}:`, err);
+                    }
+                }
+                if (failCount === 0) {
+                    toast.success(`Berhasil menambahkan barang ke ${successCount} UD`);
+                } else {
+                    toast.warning(`${successCount} berhasil, ${failCount} gagal ditambahkan`);
+                }
             }
 
             closeModal();
@@ -1019,21 +1045,90 @@ export default function BarangManagementPage() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             UD Referensi <span className="text-red-500">*</span>
+                            {!editingItem && (
+                                <span className="ml-2 text-xs font-normal text-blue-600">
+                                    (pilih satu atau lebih)
+                                </span>
+                            )}
                         </label>
-                        <select
-                            name="ud_id"
-                            value={formData.ud_id}
-                            onChange={handleFormChange}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg
+
+                        {editingItem ? (
+                            // Edit mode: single UD select
+                            <select
+                                name="ud_id"
+                                value={formData.ud_id}
+                                onChange={handleFormChange}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg
                        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
-                        >
-                            <option value="">Pilih UD</option>
-                            {udList.map((ud) => (
-                                <option key={ud._id} value={ud._id}>
-                                    {ud.nama_ud} ({ud.kode_ud})
-                                </option>
-                            ))}
-                        </select>
+                            >
+                                <option value="">Pilih UD</option>
+                                {udList.map((ud) => (
+                                    <option key={ud._id} value={ud._id}>
+                                        {ud.nama_ud} ({ud.kode_ud})
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            // Create mode: multi-checkbox UD
+                            <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                {udList.length === 0 ? (
+                                    <p className="px-3 py-2 text-sm text-gray-400">Tidak ada UD tersedia</p>
+                                ) : (
+                                    <>
+                                        {/* Select All toggle */}
+                                        <label className="flex items-center gap-2.5 px-3 py-2 bg-gray-50 border-b border-gray-100 cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.ud_ids.length === udList.length}
+                                                onChange={(e) => {
+                                                    setFormData((prev) => ({
+                                                        ...prev,
+                                                        ud_ids: e.target.checked ? udList.map((u) => u._id) : [],
+                                                    }));
+                                                }}
+                                                className="w-4 h-4 text-blue-600 rounded border-gray-300"
+                                            />
+                                            <span className="text-xs font-semibold text-gray-600">
+                                                Pilih Semua ({udList.length} UD)
+                                            </span>
+                                        </label>
+                                        {/* Individual UD checkboxes */}
+                                        <div className="max-h-44 overflow-y-auto divide-y divide-gray-50">
+                                            {udList.map((ud) => (
+                                                <label
+                                                    key={ud._id}
+                                                    className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.ud_ids.includes(ud._id)}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                ud_ids: e.target.checked
+                                                                    ? [...prev.ud_ids, ud._id]
+                                                                    : prev.ud_ids.filter((id) => id !== ud._id),
+                                                            }));
+                                                        }}
+                                                        className="w-4 h-4 text-blue-600 rounded border-gray-300"
+                                                    />
+                                                    <span className="text-sm text-gray-800 flex-1">{ud.nama_ud}</span>
+                                                    <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{ud.kode_ud}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                        {/* Selection summary */}
+                                        {formData.ud_ids.length > 0 && (
+                                            <div className="px-3 py-1.5 bg-blue-50 border-t border-blue-100">
+                                                <p className="text-xs text-blue-600 font-medium">
+                                                    {formData.ud_ids.length} UD dipilih — akan membuat {formData.ud_ids.length} barang
+                                                </p>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Status */}
