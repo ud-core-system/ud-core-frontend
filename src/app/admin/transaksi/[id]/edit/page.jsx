@@ -704,9 +704,14 @@ export default function EditTransaksiPage() {
                                                         {barang.ud_id?.nama_ud} • {barang.satuan}
                                                     </p>
                                                 </div>
-                                                <p className="font-bold text-blue-600 whitespace-nowrap">
-                                                    {formatCurrency(barang.harga_jual)}
-                                                </p>
+                                                <div className="text-right">
+                                                    <p className="font-bold text-blue-600 whitespace-nowrap">
+                                                        {formatCurrency(barang.harga_jual)}
+                                                    </p>
+                                                    <p className="text-[10px] text-gray-500 whitespace-nowrap">
+                                                        Harga Modal: {formatCurrency(barang.harga_modal)}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </button>
                                     ))}
