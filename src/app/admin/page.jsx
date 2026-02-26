@@ -66,7 +66,8 @@ export default function DashboardPage() {
                 if (filterUD && uId !== filterUD) return;
 
                 const barang = barangLookup.get(bId);
-                const itemName = item.nama_barang || barang?.nama_barang || 'Unknown Item';
+                const itemName = item.nama_barang || barang?.nama_barang;
+                if (!itemName) return; // Skip items with no valid name
                 const ud = udLookup.get(uId);
                 const udName = ud?.nama_ud || 'Unknown UD';
 

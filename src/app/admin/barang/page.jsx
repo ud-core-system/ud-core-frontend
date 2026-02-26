@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, Fragment, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -12,6 +12,10 @@ import {
     Loader2,
     Filter,
     Upload,
+    Download,
+    FileSpreadsheet,
+    FileText,
+    ChevronDown,
 } from 'lucide-react';
 import { barangAPI, udAPI } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
@@ -21,6 +25,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Pagination from '@/components/ui/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import { exportBarangExcel, exportBarangPDF } from '@/lib/barangDownload';
 
 const SATUAN_OPTIONS = [
     { value: 'pcs', label: 'Pieces (pcs)' },
@@ -43,7 +48,8 @@ const INITIAL_FORM = {
     custom_satuan: '',
     harga_jual: '',
     harga_modal: '',
-    ud_id: '',
+    ud_id: '',      // used when editing (single)
+    ud_ids: [],     // used when creating (multi)
     isActive: true,
 };
 
@@ -80,8 +86,25 @@ export default function BarangManagementPage() {
     const [deletingItem, setDeletingItem] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
 
+    // Download state
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 });
+    const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+    const downloadMenuRef = useRef(null);
+
     useEffect(() => {
         fetchUDList();
+    }, []);
+
+    // Close download menu on outside click
+    useEffect(() => {
+        const handleClick = (e) => {
+            if (downloadMenuRef.current && !downloadMenuRef.current.contains(e.target)) {
+                setShowDownloadMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
     }, []);
 
     useEffect(() => {
@@ -218,29 +241,54 @@ export default function BarangManagementPage() {
             toast.warning('Harga jual harus diisi dan lebih dari 0');
             return;
         }
-        if (!formData.ud_id) {
-            toast.warning('UD harus dipilih');
-            return;
+
+        if (editingItem) {
+            // Edit mode: single UD
+            if (!formData.ud_id) {
+                toast.warning('UD harus dipilih');
+                return;
+            }
+        } else {
+            // Create mode: at least one UD must be selected
+            if (formData.ud_ids.length === 0) {
+                toast.warning('Pilih minimal 1 UD');
+                return;
+            }
         }
 
         try {
             setFormLoading(true);
 
-            const payload = {
-                ...formData,
+            const basePayload = {
+                nama_barang: formData.nama_barang.trim(),
                 satuan: formData.satuan === 'lainnya' ? formData.custom_satuan.trim() : formData.satuan,
                 harga_jual: parseFloat(formData.harga_jual),
                 harga_modal: formData.harga_modal ? parseFloat(formData.harga_modal) : 0,
+                isActive: formData.isActive,
             };
-            // Remove custom_satuan from payload
-            delete payload.custom_satuan;
 
             if (editingItem) {
-                await barangAPI.update(editingItem._id, payload);
+                await barangAPI.update(editingItem._id, { ...basePayload, ud_id: formData.ud_id });
                 toast.success('Barang berhasil diperbarui');
             } else {
-                await barangAPI.create(payload);
-                toast.success('Barang berhasil ditambahkan');
+                // Create one barang per selected UD
+                const selectedUDs = formData.ud_ids;
+                let successCount = 0;
+                let failCount = 0;
+                for (const udId of selectedUDs) {
+                    try {
+                        await barangAPI.create({ ...basePayload, ud_id: udId });
+                        successCount++;
+                    } catch (err) {
+                        failCount++;
+                        console.error(`Failed to create barang for UD ${udId}:`, err);
+                    }
+                }
+                if (failCount === 0) {
+                    toast.success(`Berhasil menambahkan barang ke ${successCount} UD`);
+                } else {
+                    toast.warning(`${successCount} berhasil, ${failCount} gagal ditambahkan`);
+                }
             }
 
             closeModal();
@@ -274,6 +322,68 @@ export default function BarangManagementPage() {
         }
     };
 
+    // ===== Background download: fetch ALL pages =====
+    const fetchAllBarang = async () => {
+        const allItems = [];
+        const BATCH_LIMIT = 500;
+        let page = 1;
+        let totalPages = 1;
+
+        const params = {
+            limit: BATCH_LIMIT,
+            search: search || undefined,
+            ud_id: filterUD || undefined,
+            sort: 'ud_id',
+        };
+
+        do {
+            const response = await barangAPI.getAll({ ...params, page });
+            if (!response.data.success) break;
+            const fetched = response.data.data;
+            allItems.push(...fetched);
+            totalPages = response.data.pagination?.totalPages || 1;
+            setDownloadProgress({ current: page, total: totalPages });
+            page++;
+        } while (page <= totalPages);
+
+        return allItems;
+    };
+
+    const handleDownload = async (format) => {
+        setShowDownloadMenu(false);
+        if (isDownloading) return;
+
+        setIsDownloading(true);
+        setDownloadProgress({ current: 0, total: 0 });
+        toast.info(
+            filterUD
+                ? `Menyiapkan download ${format.toUpperCase()} untuk UD yang dipilih...`
+                : `Menyiapkan download ${format.toUpperCase()} semua barang...`
+        );
+
+        try {
+            const allData = await fetchAllBarang();
+
+            if (allData.length === 0) {
+                toast.warning('Tidak ada data barang untuk diunduh.');
+                return;
+            }
+
+            if (format === 'excel') {
+                exportBarangExcel(allData);
+            } else {
+                exportBarangPDF(allData);
+            }
+
+            toast.success(`Berhasil mengunduh ${allData.length} barang sebagai ${format.toUpperCase()}.`);
+        } catch (error) {
+            toast.error(getErrorMessage(error));
+        } finally {
+            setIsDownloading(false);
+            setDownloadProgress({ current: 0, total: 0 });
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Page Header */}
@@ -291,6 +401,58 @@ export default function BarangManagementPage() {
                         <Upload className="w-5 h-5" />
                         <span className="hidden sm:inline">Bulk Upload</span>
                     </Link>
+
+                    {/* Download Dropdown */}
+                    <div className="relative" ref={downloadMenuRef}>
+                        <button
+                            onClick={() => setShowDownloadMenu((v) => !v)}
+                            disabled={isDownloading}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-green-500
+                                       text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors
+                                       font-medium text-sm sm:text-base disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            {isDownloading ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span className="hidden sm:inline">
+                                        {downloadProgress.total > 0
+                                            ? `Mengambil ${downloadProgress.current}/${downloadProgress.total}...`
+                                            : 'Menyiapkan...'}
+                                    </span>
+                                    <span className="sm:hidden">...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Download className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Download</span>
+                                    <ChevronDown className="w-4 h-4" />
+                                </>
+                            )}
+                        </button>
+
+                        {showDownloadMenu && !isDownloading && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden">
+                                <div className="px-3 py-2 border-b border-gray-100">
+                                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Format Download</p>
+                                </div>
+                                <button
+                                    onClick={() => handleDownload('excel')}
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
+                                >
+                                    <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                                    <span>Excel (.xlsx)</span>
+                                </button>
+                                <button
+                                    onClick={() => handleDownload('pdf')}
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors"
+                                >
+                                    <FileText className="w-4 h-4 text-red-500" />
+                                    <span>PDF (.pdf)</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
                     <button
                         onClick={openCreateModal}
                         className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg
@@ -883,21 +1045,90 @@ export default function BarangManagementPage() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             UD Referensi <span className="text-red-500">*</span>
+                            {!editingItem && (
+                                <span className="ml-2 text-xs font-normal text-blue-600">
+                                    (pilih satu atau lebih)
+                                </span>
+                            )}
                         </label>
-                        <select
-                            name="ud_id"
-                            value={formData.ud_id}
-                            onChange={handleFormChange}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg
+
+                        {editingItem ? (
+                            // Edit mode: single UD select
+                            <select
+                                name="ud_id"
+                                value={formData.ud_id}
+                                onChange={handleFormChange}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg
                        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
-                        >
-                            <option value="">Pilih UD</option>
-                            {udList.map((ud) => (
-                                <option key={ud._id} value={ud._id}>
-                                    {ud.nama_ud} ({ud.kode_ud})
-                                </option>
-                            ))}
-                        </select>
+                            >
+                                <option value="">Pilih UD</option>
+                                {udList.map((ud) => (
+                                    <option key={ud._id} value={ud._id}>
+                                        {ud.nama_ud} ({ud.kode_ud})
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            // Create mode: multi-checkbox UD
+                            <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                {udList.length === 0 ? (
+                                    <p className="px-3 py-2 text-sm text-gray-400">Tidak ada UD tersedia</p>
+                                ) : (
+                                    <>
+                                        {/* Select All toggle */}
+                                        <label className="flex items-center gap-2.5 px-3 py-2 bg-gray-50 border-b border-gray-100 cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.ud_ids.length === udList.length}
+                                                onChange={(e) => {
+                                                    setFormData((prev) => ({
+                                                        ...prev,
+                                                        ud_ids: e.target.checked ? udList.map((u) => u._id) : [],
+                                                    }));
+                                                }}
+                                                className="w-4 h-4 text-blue-600 rounded border-gray-300"
+                                            />
+                                            <span className="text-xs font-semibold text-gray-600">
+                                                Pilih Semua ({udList.length} UD)
+                                            </span>
+                                        </label>
+                                        {/* Individual UD checkboxes */}
+                                        <div className="max-h-44 overflow-y-auto divide-y divide-gray-50">
+                                            {udList.map((ud) => (
+                                                <label
+                                                    key={ud._id}
+                                                    className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.ud_ids.includes(ud._id)}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                ud_ids: e.target.checked
+                                                                    ? [...prev.ud_ids, ud._id]
+                                                                    : prev.ud_ids.filter((id) => id !== ud._id),
+                                                            }));
+                                                        }}
+                                                        className="w-4 h-4 text-blue-600 rounded border-gray-300"
+                                                    />
+                                                    <span className="text-sm text-gray-800 flex-1">{ud.nama_ud}</span>
+                                                    <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{ud.kode_ud}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                        {/* Selection summary */}
+                                        {formData.ud_ids.length > 0 && (
+                                            <div className="px-3 py-1.5 bg-blue-50 border-t border-blue-100">
+                                                <p className="text-xs text-blue-600 font-medium">
+                                                    {formData.ud_ids.length} UD dipilih — akan membuat {formData.ud_ids.length} barang
+                                                </p>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Status */}
