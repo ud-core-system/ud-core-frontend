@@ -700,7 +700,7 @@ export default function NewTransaksiPage() {
                                                     <p className="font-bold text-blue-600 whitespace-nowrap">
                                                         {formatCurrency(barang.harga_jual)}
                                                     </p>
-                                                    <p className="text-[10px] text-gray-500 whitespace-nowrap">
+                                                    <p className="text-[11px] font-bold text-black whitespace-nowrap">
                                                         Harga Modal: {formatCurrency(barang.harga_modal)}
                                                     </p>
                                                 </div>
