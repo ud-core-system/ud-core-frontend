@@ -102,6 +102,9 @@ const PrintStyles = () => (
         .font-nirmala { 
             font-family: 'Nirmala UI', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important; 
         }
+        .font-cambria { 
+            font-family: 'Cambria', Georgia, serif !important; 
+        }
         .no-repeat-header thead {
             display: table-row-group !important;
         }
@@ -841,6 +844,90 @@ const TemplateKaryaBesar = ({ data, udData, udId }) => (
     </div>
 );
 
+// Template 10: UD ASYURA PANGAN MADANI
+const TemplateAsyura = ({ data, udData, udId }) => (
+    <div id={`nota-${udId}`} className="nota-container page-break font-cambria text-black bg-white">
+        <div className="flex justify-between mb-4 items-center">
+            {/* Box on the left */}
+            <div className="border-[3px] border-black p-3 min-w-[240px] text-base leading-snug">
+                <div>{(() => {
+                    const d = new Date(data.tanggal);
+                    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                    return `${days[d.getDay()]}, ${formatDate(data.tanggal)}`;
+                })()}</div>
+                <div>Dapur MBG. <span className="font-bold">{data.dapur_id?.nama_dapur || 'SPPG Monjok'}</span></div>
+                <div className="uppercase font-bold">{data.dapur_id?.alamat?.split(' ')[0] || 'MATARAM'}</div>
+            </div>
+
+            {/* Title in the center */}
+            <div className="flex-1 text-left ml-4">
+                <div className="font-bold text-1xl uppercase leading-tight">
+                    <span className="text-2xl mr-2">UD</span> ASYURA PANGAN
+                </div>
+                <div className="font-bold text-2xl uppercase leading-tight">MADANI</div>
+                <div className="font-bold text-lg uppercase mt-1">LOMBOK BARAT</div>
+            </div>
+
+            {/* Logo on the right */}
+            <div className="flex-shrink-0">
+                <img src="/LOGO ASYURA.png" alt="Asyura Logo" className="h-38  w-48" />
+            </div>
+        </div>
+
+        <table className="nota-table w-full border-collapse border border-black">
+            <thead>
+                <tr className="bg-white">
+                    <th className="border border-black px-1 py-1 w-12 text-center uppercase">NO.</th>
+                    <th className="border border-black px-1 py-1 text-center uppercase">Protein</th>
+                    <th className="border border-black px-1 py-1 w-16 text-center uppercase">Jmlh</th>
+                    <th className="border border-black px-1 py-1 w-16 text-center uppercase">Sat.</th>
+                    <th className="border border-black px-1 py-1 w-32 text-center uppercase">Harga Satuan</th>
+                    <th className="border border-black px-1 py-1 w-36 text-center uppercase">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {udData.items.map((item, idx) => (
+                    <tr key={idx}>
+                        <td className="border border-black px-2 py-1 text-center">{idx + 1}</td>
+                        <td className="border border-black px-2 py-1">{item.nama_barang || item.barang_id?.nama_barang}</td>
+                        <td className="border border-black px-2 py-1 text-center font-bold">{item.qty}</td>
+                        <td className="border border-black px-2 py-1 text-center">{item.satuan || item.barang_id?.satuan}</td>
+                        <td className="border border-black px-2 py-1 text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
+                        <td className="border border-black px-2 py-1 text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
+                    </tr>
+                ))}
+                {[...Array(Math.max(0, 6 - udData.items.length))].map((_, idx) => (
+                    <tr key={`empty-${idx}`}>
+                        <td className="border border-black px-1 py-1 h-8 text-center">{udData.items.length + idx + 1}</td>
+                        <td className="border border-black px-1 py-1"></td>
+                        <td className="border border-black px-1 py-1"></td>
+                        <td className="border border-black px-1 py-1"></td>
+                        <td className="border border-black px-1 py-1"></td>
+                        <td className="border border-black px-1 py-1"></td>
+                    </tr>
+                ))}
+            </tbody>
+            <tfoot>
+                <tr className="font-bold">
+                    <td colSpan="5" className="border border-black px-2 py-1 text-right uppercase">TOTAL</td>
+                    <td className="border border-black px-2 py-1 text-right">{formatCurrency(udData.total).replace('Rp', '')}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div className="flex justify-between mt-16 px-16">
+            <div className="text-center">
+                <div>{data.dapur_id?.nama_dapur || 'SPPG Monjok'},</div>
+                <div className="mt-20 border-t border-black w-48 mx-auto"></div>
+            </div>
+            <div className="text-center">
+                <div>Pihak Kami,</div>
+                <div className="mt-20 border-t border-black w-48 mx-auto"></div>
+            </div>
+        </div>
+    </div>
+);
+
 export default function NotaDapur({ data, itemsByUD, udIdFilter = null }) {
     if (!data || !itemsByUD) return null;
 
@@ -862,6 +949,8 @@ export default function NotaDapur({ data, itemsByUD, udIdFilter = null }) {
             return <TemplateMayurSehat key={udName} data={data} udData={udData} udId={udId} />;
         } else if (name.includes('KARYA BESAR')) {
             return <TemplateKaryaBesar key={udName} data={data} udData={udData} udId={udId} />;
+        } else if (name.includes('ASYURA')) {
+            return <TemplateAsyura key={udName} data={data} udData={udData} udId={udId} />;
         }
         // Default to TemplateGeneric for any new UD without specific branding
         return <TemplateGeneric key={udName} data={data} udData={udData} udId={udId} />;
