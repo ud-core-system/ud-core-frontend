@@ -192,7 +192,7 @@ const TemplateESC = ({ data, udData, udId }) => (
                 {/* Signature Row */}
                 <tr className="no-break signature-row">
                     <td colSpan="6" className="pt-12">
-                        <div className="flex justify-between px-12">
+                        <div className="flex justify-between px-12 no-break">
                             <div className="text-center">
                                 <div>Penerima,</div>
                                 <div className="mt-16 border-t border-black w-40"></div>
@@ -265,7 +265,7 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
                 {/* Signature Row */}
                 <tr className="no-break signature-row">
                     <td colSpan="5" className="pt-12">
-                        <div className="flex justify-between px-12">
+                        <div className="flex justify-between px-12 no-break">
                             <div className="text-center">
                                 <div className="uppercase">PENERIMA,</div>
                                 <div className="mt-16 border-t border-black w-40"></div>
@@ -349,7 +349,7 @@ const TemplateASM = ({ data, udData, udId }) => (
                 {/* Signature Row */}
                 <tr className="no-break signature-row">
                     <td colSpan="6" className="pt-12">
-                        <div className="flex justify-between px-12">
+                        <div className="flex justify-between px-12 no-break">
                             <div className="text-center">
                                 <div>Penerima,</div>
                                 <div className="mt-16 border-t border-black w-40"></div>
@@ -433,7 +433,7 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
                 {/* Signature Row */}
                 <tr className="no-break signature-row">
                     <td colSpan="6" className="pt-12">
-                        <div className="flex justify-between px-12">
+                        <div className="flex justify-between px-12 no-break">
                             <div className="text-center">
                                 <div>Penerima,</div>
                                 <div className="mt-16 border-t border-black w-40"></div>
@@ -507,7 +507,7 @@ const TemplateBogaFood = ({ data, udData, udId }) => (
                 {/* Signature Row */}
                 <tr className="no-break signature-row">
                     <td colSpan="6" className="pt-12">
-                        <div className="flex justify-between px-24">
+                        <div className="flex justify-between px-24 no-break">
                             <div className="text-center">
                                 <div>Penerima :</div>
                                 <div className="mt-20 border-t border-black w-48"></div>
@@ -589,7 +589,7 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
                 {/* Signature Row */}
                 <tr className="no-break signature-row">
                     <td colSpan="6" className="pt-12">
-                        <div className="flex justify-between px-24">
+                        <div className="flex justify-between px-24 no-break">
                             <div className="text-center">
                                 <div>Penerima :</div>
                                 <div className="mt-20 border-t border-black w-48"></div>
@@ -669,7 +669,7 @@ const TemplateMayurSehat = ({ data, udData, udId }) => (
                 {/* Signature Row */}
                 <tr className="no-break signature-row">
                     <td colSpan="6" className="pt-12">
-                        <div className="flex justify-between px-24">
+                        <div className="flex justify-between px-24 no-break">
                             <div className="text-center">
                                 <div>Penerima :</div>
                                 <div className="mt-20 border-t border-black w-48"></div>
@@ -744,7 +744,7 @@ const TemplateGeneric = ({ data, udData, udId }) => (
                 {/* Signature Row */}
                 <tr className="no-break signature-row">
                     <td colSpan="6" className="pt-12">
-                        <div className="flex justify-between px-12">
+                        <div className="flex justify-between px-12 no-break">
                             <div className="text-center">
                                 <div>Penerima,</div>
                                 <div className="mt-16 border-t border-black w-40"></div>
@@ -798,7 +798,7 @@ const TemplateKaryaBesar = ({ data, udData, udId }) => (
                     <th className="border border-black px-1 py-0.5 w-12 text-center">Qty</th>
                     <th className="border border-black px-1 py-0.5 w-16 text-center">Satuan</th>
                     <th className="border border-black px-1 py-0.5 w-28 text-center">Harga</th>
-                    <th className="border border-black px-1 py-0.5 w-36 text-center">Jumlah</th>
+                    <th className="border border-black px-1 py-0.5 w-28 text-center">Jumlah</th>
                 </tr>
             </thead>
             <tbody>
@@ -831,7 +831,7 @@ const TemplateKaryaBesar = ({ data, udData, udId }) => (
             </tfoot>
         </table>
 
-        <div className="flex justify-between mt-16 px-16">
+        <div className="flex justify-between mt-16 px-16 no-break">
             <div className="text-center">
                 <div>Pihak Penerima,</div>
                 <div className="mt-20 border-t border-black w-48"></div>
@@ -856,16 +856,16 @@ const TemplateAsyura = ({ data, udData, udId }) => (
                     return `${days[d.getDay()]}, ${formatDate(data.tanggal)}`;
                 })()}</div>
                 <div>Dapur MBG. <span className="font-bold">{data.dapur_id?.nama_dapur || 'SPPG Monjok'}</span></div>
-                <div className="uppercase font-bold">{data.dapur_id?.alamat?.split(' ')[0] || 'MATARAM'}</div>
+                <div className="uppercase font-bold">MATARAM</div>
             </div>
 
             {/* Title in the center */}
             <div className="flex-1 text-left ml-4">
-                <div className="font-bold text-1xl uppercase leading-tight">
-                    <span className="text-2xl mr-2">UD</span> ASYURA PANGAN
+                <div className="font-bold text-1.5xl uppercase leading-tight">
+                    <span className="text-3xl">UD</span> ASYURA PANGAN
                 </div>
-                <div className="font-bold text-2xl uppercase leading-tight">MADANI</div>
-                <div className="font-bold text-lg uppercase mt-1">LOMBOK BARAT</div>
+                <div className="font-bold text-1.5xl uppercase leading-tight">MADANI</div>
+                <div className="font-bold text-1.5xl uppercase mt-1">LOMBOK BARAT</div>
             </div>
 
             {/* Logo on the right */}
@@ -890,7 +890,7 @@ const TemplateAsyura = ({ data, udData, udId }) => (
                     <tr key={idx}>
                         <td className="border border-black px-2 py-1 text-center">{idx + 1}</td>
                         <td className="border border-black px-2 py-1">{item.nama_barang || item.barang_id?.nama_barang}</td>
-                        <td className="border border-black px-2 py-1 text-center font-bold">{item.qty}</td>
+                        <td className="border border-black px-2 py-1 text-center">{item.qty}</td>
                         <td className="border border-black px-2 py-1 text-center">{item.satuan || item.barang_id?.satuan}</td>
                         <td className="border border-black px-2 py-1 text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
                         <td className="border border-black px-2 py-1 text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
@@ -915,7 +915,7 @@ const TemplateAsyura = ({ data, udData, udId }) => (
             </tfoot>
         </table>
 
-        <div className="flex justify-between mt-16 px-16">
+        <div className="flex justify-between mt-16 px-16 no-break">
             <div className="text-center">
                 <div>{data.dapur_id?.nama_dapur || 'SPPG Monjok'},</div>
                 <div className="mt-20 border-t border-black w-48 mx-auto"></div>
