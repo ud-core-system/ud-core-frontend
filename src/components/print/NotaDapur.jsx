@@ -389,7 +389,7 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
                 </table>
             </div>
             <div className="flex flex-col items-center flex-1">
-                <img src="/logo banyumas.png" alt="Banyu Mas Logo" className="h-16 w-auto mb-1" />
+                <img src="/logo banyumas.png" alt="Banyu Mas Logo" className="h-16 w-26 mb-1" />
                 <div className="text-[12px] font-bold text-center">
                     UD. BANYU MAS<br />
                     SELAPARANG - KOTA MATARAM
@@ -806,7 +806,7 @@ const TemplateKaryaBesar = ({ data, udData, udId }) => (
                     <tr key={idx}>
                         <td className="border border-black px-1 py-0.5 text-center">{idx + 1}</td>
                         <td className="border border-black px-1 py-0.5">{(item.nama_barang || item.barang_id?.nama_barang || '').trim()}</td>
-                        <td className="border border-black px-1 py-0.5 text-center font-bold">{item.qty}</td>
+                        <td className="border border-black px-1 py-0.5 text-center  ">{item.qty}</td>
                         <td className="border border-black px-1 py-0.5 text-center">{item.satuan || item.barang_id?.satuan}</td>
                         <td className="border border-black px-1 py-0.5 text-right">{formatCurrency(item.harga_jual).replace('Rp', '')}</td>
                         <td className="border border-black px-1 py-0.5 text-right">{formatCurrency(item.subtotal_jual).replace('Rp', '')}</td>
@@ -847,9 +847,9 @@ const TemplateKaryaBesar = ({ data, udData, udId }) => (
 // Template 10: UD ASYURA PANGAN MADANI
 const TemplateAsyura = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-cambria text-black bg-white">
-        <div className="flex justify-between mb-4 items-center">
+        <div className="flex justify-between -mb-6 items-center">
             {/* Box on the left */}
-            <div className="border-[3px] border-black p-3 min-w-[240px] text-base leading-snug">
+            <div className="border-[3px] border-black p-1 ml-6 min-w-[240px] text-base leading-snug">
                 <div>{(() => {
                     const d = new Date(data.tanggal);
                     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -860,7 +860,7 @@ const TemplateAsyura = ({ data, udData, udId }) => (
             </div>
 
             {/* Title in the center */}
-            <div className="flex-1 text-left ml-4">
+            <div className="flex-1 text-left ml-4 -mr-14">
                 <div className="font-bold text-1.5xl uppercase leading-tight">
                     <span className="text-3xl">UD</span> ASYURA PANGAN
                 </div>
@@ -870,7 +870,7 @@ const TemplateAsyura = ({ data, udData, udId }) => (
 
             {/* Logo on the right */}
             <div className="flex-shrink-0">
-                <img src="/LOGO ASYURA.png" alt="Asyura Logo" className="h-38  w-48" />
+                <img src="/LOGO ASYURA.png" alt="Asyura Logo" className="h-38  w-54 ml-4" />
             </div>
         </div>
 
