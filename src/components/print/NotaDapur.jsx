@@ -369,9 +369,9 @@ const TemplateASM = ({ data, udData, udId }) => (
 // Template 4: UD. BANYU MAS
 const TemplateBanyuMas = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
-        <div className="flex justify-between items-start mb-4">
-            <div className="border border-black">
-                <table className="text-sm">
+        <div className="flex justify-between items-end mb-4">
+            <div className="border border-black flex-1 mr-12">
+                <table className="text-sm w-full">
                     <tbody>
                         <tr className="border-b border-black">
                             <td className="px-2 py-1 font-bold border-r border-black">Tgl.</td>
@@ -388,8 +388,8 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
                     </tbody>
                 </table>
             </div>
-            <div className="flex flex-col items-center flex-1">
-                <img src="/logo banyumas.png" alt="Banyu Mas Logo" className="h-16 w-26 mb-1" />
+            <div className="flex flex-col items-center">
+                <img src="/logo banyumas.png" alt="Banyu Mas Logo" className="h-20 w-26 mb-1" />
                 <div className="text-[12px] font-bold text-center">
                     UD. BANYU MAS<br />
                     SELAPARANG - KOTA MATARAM
