@@ -12,13 +12,13 @@ import {
     Lock,
     Unlock,
     X,
+    RotateCcw,
 } from 'lucide-react';
 import { periodeAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getErrorMessage, formatDate, toDateInputValue } from '@/lib/utils';
 import Modal from '@/components/ui/Modal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Pagination from '@/components/ui/Pagination';
 import EmptyState from '@/components/ui/EmptyState';
 import DatePicker from '@/components/ui/DatePicker';
@@ -60,12 +60,36 @@ export default function PeriodeManagementPage() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deletingItem, setDeletingItem] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [deleteVerifCode, setDeleteVerifCode] = useState('');
+    const [deleteGeneratedCode, setDeleteGeneratedCode] = useState('');
 
     // Close periode state
     const [closeDialogOpen, setCloseDialogOpen] = useState(false);
     const [closingItem, setClosingItem] = useState(null);
     const [closeLoading, setCloseLoading] = useState(false);
+    const [closeVerifCode, setCloseVerifCode] = useState('');
+    const [closeGeneratedCode, setCloseGeneratedCode] = useState('');
+
+    // Unlock periode state
+    const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
+    const [unlockingItem, setUnlockingItem] = useState(null);
+    const [unlockLoading, setUnlockLoading] = useState(false);
+    const [unlockVerifCode, setUnlockVerifCode] = useState('');
+    const [unlockGeneratedCode, setUnlockGeneratedCode] = useState('');
+
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
+    // Generate random verification code from periode name
+    const generateVerifCode = (namaPeriode) => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        const initials = (namaPeriode || 'P')
+            .split(' ')
+            .map((w) => w[0]?.toUpperCase() || '')
+            .join('')
+            .slice(0, 3);
+        const random = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        return `${initials}-${random}`;
+    };
 
     useEffect(() => {
         fetchData();
@@ -236,12 +260,19 @@ export default function PeriodeManagementPage() {
             toast.warning('Periode yang sudah ditutup tidak dapat dihapus');
             return;
         }
+        const code = generateVerifCode(item.nama_periode);
+        setDeleteGeneratedCode(code);
+        setDeleteVerifCode('');
         setDeletingItem(item);
         setDeleteDialogOpen(true);
     };
 
     const handleDelete = async () => {
         if (!deletingItem) return;
+        if (deleteVerifCode !== deleteGeneratedCode) {
+            toast.error('Kode konfirmasi tidak sesuai');
+            return;
+        }
 
         try {
             setDeleteLoading(true);
@@ -249,6 +280,8 @@ export default function PeriodeManagementPage() {
             toast.success('Periode berhasil dihapus');
             setDeleteDialogOpen(false);
             setDeletingItem(null);
+            setDeleteVerifCode('');
+            setDeleteGeneratedCode('');
             fetchData();
         } catch (error) {
             toast.error(getErrorMessage(error));
@@ -262,12 +295,19 @@ export default function PeriodeManagementPage() {
             toast.info('Periode sudah ditutup');
             return;
         }
+        const code = generateVerifCode(item.nama_periode);
+        setCloseGeneratedCode(code);
+        setCloseVerifCode('');
         setClosingItem(item);
         setCloseDialogOpen(true);
     };
 
     const handleClosePeriode = async () => {
         if (!closingItem) return;
+        if (closeVerifCode !== closeGeneratedCode) {
+            toast.error('Kode konfirmasi tidak sesuai');
+            return;
+        }
 
         try {
             setCloseLoading(true);
@@ -275,11 +315,48 @@ export default function PeriodeManagementPage() {
             toast.success('Periode berhasil ditutup');
             setCloseDialogOpen(false);
             setClosingItem(null);
+            setCloseVerifCode('');
+            setCloseGeneratedCode('');
             fetchData();
         } catch (error) {
             toast.error(getErrorMessage(error));
         } finally {
             setCloseLoading(false);
+        }
+    };
+
+    const openUnlockDialog = (item) => {
+        if (!item.isClosed) {
+            toast.info('Periode belum terkunci');
+            return;
+        }
+        const code = generateVerifCode(item.nama_periode);
+        setUnlockGeneratedCode(code);
+        setUnlockVerifCode('');
+        setUnlockingItem(item);
+        setUnlockDialogOpen(true);
+    };
+
+    const handleUnlockPeriode = async () => {
+        if (!unlockingItem) return;
+        if (unlockVerifCode !== unlockGeneratedCode) {
+            toast.error('Kode konfirmasi tidak sesuai');
+            return;
+        }
+
+        try {
+            setUnlockLoading(true);
+            await periodeAPI.open(unlockingItem._id);
+            toast.success('Periode berhasil dibuka kembali');
+            setUnlockDialogOpen(false);
+            setUnlockingItem(null);
+            setUnlockVerifCode('');
+            setUnlockGeneratedCode('');
+            fetchData();
+        } catch (error) {
+            toast.error(getErrorMessage(error));
+        } finally {
+            setUnlockLoading(false);
         }
     };
 
@@ -436,10 +513,20 @@ export default function PeriodeManagementPage() {
                                                 </div>
                                             )
                                         ) : (
-                                            <div className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                                                <Lock className="w-4 h-4" />
-                                                PERIODE TERKUNCI
-                                            </div>
+                                            !isReadOnly() ? (
+                                                <button
+                                                    onClick={() => openUnlockDialog(item)}
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-amber-50 text-amber-600 rounded-xl text-sm font-bold hover:bg-amber-100 transition-colors active:scale-95 border border-amber-200"
+                                                >
+                                                    <Unlock className="w-4 h-4" />
+                                                    Buka Kembali
+                                                </button>
+                                            ) : (
+                                                <div className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                                    <Lock className="w-4 h-4" />
+                                                    PERIODE TERKUNCI
+                                                </div>
+                                            )
                                         )}
                                     </div>
                                 </div>
@@ -535,7 +622,17 @@ export default function PeriodeManagementPage() {
                                                                 <span className="text-[10px] md:text-xs text-gray-400 font-medium italic">Buka</span>
                                                             )
                                                         ) : (
-                                                            <span className="text-[10px] md:text-xs text-gray-400 font-medium italic">Terkunci</span>
+                                                            !isReadOnly() ? (
+                                                                <button
+                                                                    onClick={() => openUnlockDialog(item)}
+                                                                    className="p-1 md:p-1.5 lg:p-2 hover:bg-amber-50 rounded-lg text-amber-600 transition-all hover:scale-110"
+                                                                    title="Buka Kembali"
+                                                                >
+                                                                    <Unlock className="w-3.5 h-3.5 md:w-4 h-4" />
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-[10px] md:text-xs text-gray-400 font-medium italic">Terkunci</span>
+                                                            )
                                                         )}
                                                     </div>
                                                 </td>
@@ -658,34 +755,173 @@ export default function PeriodeManagementPage() {
                 </form>
             </Modal>
 
-            {/* Delete Confirm Dialog */}
-            <ConfirmDialog
-                isOpen={deleteDialogOpen}
-                onClose={() => {
-                    setDeleteDialogOpen(false);
-                    setDeletingItem(null);
-                }}
-                onConfirm={handleDelete}
-                title="Hapus Periode"
-                message={`Apakah Anda yakin ingin menghapus "${deletingItem?.nama_periode}"?`}
-                confirmText="Ya, Hapus"
-                loading={deleteLoading}
-            />
+            {/* Delete Periode Dialog — Custom with Verification Code */}
+            <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${deleteDialogOpen ? 'visible' : 'hidden'}`}>
+                <div
+                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    onClick={() => { if (!deleteLoading) { setDeleteDialogOpen(false); setDeletingItem(null); } }}
+                />
+                <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6 animate-fade-in text-center">
+                    <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                        <Trash2 className="w-8 h-8 text-red-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">Hapus Periode</h3>
+                    <p className="text-gray-500 mb-5 text-sm">
+                        Anda akan menghapus periode <span className="font-bold text-gray-900">{deletingItem?.nama_periode}</span>.
+                        Tindakan ini permanen dan tidak dapat dibatalkan.
+                    </p>
+                    <div className="mb-5 p-3 bg-red-50 rounded-xl border border-red-100">
+                        <p className="text-xs text-red-500 font-semibold uppercase tracking-widest mb-1">Kode Konfirmasi</p>
+                        <p className="font-mono text-2xl font-black text-red-700 tracking-[0.3em]">{deleteGeneratedCode}</p>
+                    </div>
+                    <div className="mb-6 text-left">
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                            Ketik Kode di Atas untuk Konfirmasi
+                        </label>
+                        <input
+                            type="text"
+                            value={deleteVerifCode}
+                            onChange={(e) => setDeleteVerifCode(e.target.value.toUpperCase())}
+                            placeholder={deleteGeneratedCode}
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 font-mono text-center text-lg tracking-[0.2em] transition-all uppercase"
+                            autoFocus
+                        />
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => { setDeleteDialogOpen(false); setDeletingItem(null); }}
+                            disabled={deleteLoading}
+                            className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-all disabled:opacity-50"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            disabled={deleteLoading || deleteVerifCode !== deleteGeneratedCode}
+                            className="flex-[1.5] px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:grayscale disabled:shadow-none active:scale-95"
+                        >
+                            {deleteLoading ? (
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>Menghapus...</span>
+                                </div>
+                            ) : 'Ya, Hapus'}
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-            {/* Close Periode Dialog */}
-            <ConfirmDialog
-                isOpen={closeDialogOpen}
-                onClose={() => {
-                    setCloseDialogOpen(false);
-                    setClosingItem(null);
-                }}
-                onConfirm={handleClosePeriode}
-                title="Tutup Periode"
-                message={`Apakah Anda yakin ingin menutup "${closingItem?.nama_periode}"? Periode yang sudah ditutup tidak dapat diubah atau dihapus.`}
-                confirmText="Ya, Tutup"
-                variant="warning"
-                loading={closeLoading}
-            />
+            {/* Close Periode Dialog — Custom with Verification Code */}
+            <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${closeDialogOpen ? 'visible' : 'hidden'}`}>
+                <div
+                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    onClick={() => { if (!closeLoading) { setCloseDialogOpen(false); setClosingItem(null); } }}
+                />
+                <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6 animate-fade-in text-center">
+                    <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
+                        <Lock className="w-8 h-8 text-purple-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">Kunci Periode</h3>
+                    <p className="text-gray-500 mb-5 text-sm">
+                        Anda akan mengunci <span className="font-bold text-gray-900">{closingItem?.nama_periode}</span>.
+                        Periode yang dikunci tidak dapat diubah atau dihapus.
+                    </p>
+                    <div className="mb-5 p-3 bg-purple-50 rounded-xl border border-purple-100">
+                        <p className="text-xs text-purple-500 font-semibold uppercase tracking-widest mb-1">Kode Konfirmasi</p>
+                        <p className="font-mono text-2xl font-black text-purple-700 tracking-[0.3em]">{closeGeneratedCode}</p>
+                    </div>
+                    <div className="mb-6 text-left">
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                            Ketik Kode di Atas untuk Konfirmasi
+                        </label>
+                        <input
+                            type="text"
+                            value={closeVerifCode}
+                            onChange={(e) => setCloseVerifCode(e.target.value.toUpperCase())}
+                            placeholder={closeGeneratedCode}
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 font-mono text-center text-lg tracking-[0.2em] transition-all uppercase"
+                            autoFocus
+                        />
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => { setCloseDialogOpen(false); setClosingItem(null); }}
+                            disabled={closeLoading}
+                            className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-all disabled:opacity-50"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            onClick={handleClosePeriode}
+                            disabled={closeLoading || closeVerifCode !== closeGeneratedCode}
+                            className="flex-[1.5] px-4 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:grayscale disabled:shadow-none active:scale-95"
+                        >
+                            {closeLoading ? (
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>Mengunci...</span>
+                                </div>
+                            ) : 'Ya, Kunci Periode'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Unlock Periode Dialog — Custom with Verification Code */}
+            <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${unlockDialogOpen ? 'visible' : 'hidden'}`}>
+                <div
+                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    onClick={() => { if (!unlockLoading) { setUnlockDialogOpen(false); setUnlockingItem(null); } }}
+                />
+                <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6 animate-fade-in text-center">
+                    <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                        <Unlock className="w-8 h-8 text-amber-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">Buka Kembali Periode</h3>
+                    <p className="text-gray-500 mb-5 text-sm">
+                        Anda akan membuka kembali periode <span className="font-bold text-gray-900">{unlockingItem?.nama_periode}</span>.
+                        Periode akan dapat diubah dan digunakan kembali.
+                    </p>
+                    <div className="mb-5 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest mb-1">Kode Konfirmasi</p>
+                        <p className="font-mono text-2xl font-black text-amber-700 tracking-[0.3em]">{unlockGeneratedCode}</p>
+                    </div>
+                    <div className="mb-6 text-left">
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                            Ketik Kode di Atas untuk Konfirmasi
+                        </label>
+                        <input
+                            type="text"
+                            value={unlockVerifCode}
+                            onChange={(e) => setUnlockVerifCode(e.target.value.toUpperCase())}
+                            placeholder={unlockGeneratedCode}
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-mono text-center text-lg tracking-[0.2em] transition-all uppercase"
+                            autoFocus
+                        />
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => { setUnlockDialogOpen(false); setUnlockingItem(null); }}
+                            disabled={unlockLoading}
+                            className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-all disabled:opacity-50"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            onClick={handleUnlockPeriode}
+                            disabled={unlockLoading || unlockVerifCode !== unlockGeneratedCode}
+                            className="flex-[1.5] px-4 py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:grayscale disabled:shadow-none active:scale-95"
+                        >
+                            {unlockLoading ? (
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>Membuka...</span>
+                                </div>
+                            ) : 'Ya, Buka Periode'}
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             {/* Detail Modal */}
             <Modal
