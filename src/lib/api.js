@@ -92,6 +92,7 @@ export const periodeAPI = {
     create: (data) => api.post('/periode', data),
     update: (id, data) => api.put(`/periode/${id}`, data),
     close: (id) => api.put(`/periode/${id}/close`),
+    open: (id) => api.put(`/periode/${id}/open`),
     delete: (id) => api.delete(`/periode/${id}`),
 };
 
