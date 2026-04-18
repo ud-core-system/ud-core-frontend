@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
     Plus,
@@ -26,23 +27,40 @@ import DatePicker from '@/components/ui/DatePicker';
 export default function TransaksiListPage() {
     const { toast } = useToast();
     const { isReadOnly } = useAuth();
+    const router = useRouter();
+    const searchParams = useSearchParams();
 
     // State
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [pagination, setPagination] = useState({
-        page: 1,
+        page: parseInt(searchParams.get('page') || '1', 10),
         limit: 10,
         totalPages: 1,
         totalDocuments: 0,
     });
 
-    // Filters
+    // Filters — dibaca dari URL agar persist saat back-navigation
     const [search, setSearch] = useState('');
-    const [filterPeriode, setFilterPeriode] = useState('');
-    const [filterDapur, setFilterDapur] = useState('');
-    const [filterStatus, setFilterStatus] = useState('');
-    const [filterTanggal, setFilterTanggal] = useState(null);
+    const [filterPeriode, setFilterPeriode] = useState(searchParams.get('periode') || '');
+    const [filterDapur, setFilterDapur] = useState(searchParams.get('dapur') || '');
+    const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || '');
+    const [filterTanggal, setFilterTanggal] = useState(
+        searchParams.get('tanggal') ? new Date(searchParams.get('tanggal')) : null
+    );
+
+    // Helper: update URL query params tanpa memicu full reload
+    const updateURL = useCallback((updates) => {
+        const params = new URLSearchParams(searchParams.toString());
+        Object.entries(updates).forEach(([key, value]) => {
+            if (value === null || value === undefined || value === '') {
+                params.delete(key);
+            } else {
+                params.set(key, value);
+            }
+        });
+        router.replace(`?${params.toString()}`, { scroll: false });
+    }, [router, searchParams]);
 
     // Options
     const [periodeList, setPeriodeList] = useState([]);
@@ -78,7 +96,7 @@ export default function TransaksiListPage() {
     useEffect(() => {
         fetchData();
         fetchHighlightedDates();
-    }, [pagination.page, filterPeriode, filterDapur, filterStatus, filterTanggal]);
+    }, [pagination.page, filterPeriode, filterDapur, filterStatus, filterTanggal]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const fetchOptions = async () => {
         try {
@@ -275,6 +293,7 @@ export default function TransaksiListPage() {
                             onChange={(e) => {
                                 setFilterPeriode(e.target.value);
                                 setPagination((prev) => ({ ...prev, page: 1 }));
+                                updateURL({ periode: e.target.value, page: null });
                             }}
                             options={periodeList.map(p => ({
                                 value: p._id,
@@ -293,6 +312,7 @@ export default function TransaksiListPage() {
                             onChange={(e) => {
                                 setFilterDapur(e.target.value);
                                 setPagination((prev) => ({ ...prev, page: 1 }));
+                                updateURL({ dapur: e.target.value, page: null });
                             }}
                             options={dapurList.map(d => ({
                                 value: d._id,
@@ -312,6 +332,7 @@ export default function TransaksiListPage() {
                             onChange={(e) => {
                                 setFilterStatus(e.target.value);
                                 setPagination((prev) => ({ ...prev, page: 1 }));
+                                updateURL({ status: e.target.value, page: null });
                             }}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg appearance-none
                                    focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-sm"
@@ -330,6 +351,10 @@ export default function TransaksiListPage() {
                             onChange={(date) => {
                                 setFilterTanggal(date);
                                 setPagination((prev) => ({ ...prev, page: 1 }));
+                                const dateStr = date
+                                    ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+                                    : null;
+                                updateURL({ tanggal: dateStr, page: null });
                             }}
                             placeholder="Semua Tanggal"
                             highlightDates={highlightedDates}
@@ -346,6 +371,7 @@ export default function TransaksiListPage() {
                             setFilterStatus('');
                             setFilterTanggal(null);
                             setPagination((prev) => ({ ...prev, page: 1 }));
+                            updateURL({ periode: null, dapur: null, status: null, tanggal: null, page: null });
                         }}
                         className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium
                                  hover:bg-gray-50 transition-colors text-sm"
@@ -640,7 +666,10 @@ export default function TransaksiListPage() {
                                 <Pagination
                                     currentPage={pagination.page}
                                     totalPages={pagination.totalPages}
-                                    onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+                                    onPageChange={(page) => {
+                                        setPagination((prev) => ({ ...prev, page }));
+                                        updateURL({ page: page === 1 ? null : page });
+                                    }}
                                 />
                             </div>
                         </div>
