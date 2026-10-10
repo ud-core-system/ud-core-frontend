@@ -73,7 +73,7 @@ const PDFStyles = () => (
 const getNomorNota = (data, udId) =>
     data.nota_nomor?.find((n) => String(n.ud_id?._id || n.ud_id) === String(udId))?.nomor || '';
 
-// Nomor nota gaya contoh client ("No Nota : K301"); baris sendiri tepat di atas tabel,
+// Nomor nota gaya contoh client ("No Nota : K301"); baris sendiri tepat di atas/bawah tabel (beda per template),
 // rata kiri/tengah/kanan mengikuti tepi tabel (jangan pakai margin/absolute agar tidak tumpang tindih)
 const NomorNota = ({ data, udId, className = '' }) => {
     const nomor = getNomorNota(data, udId);
@@ -180,7 +180,6 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
             </div>
         </div>
 
-        <NomorNota data={data} udId={udId} className="text-left mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -214,6 +213,7 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
                 </tr>
             </tfoot>
         </table>
+        <NomorNota data={data} udId={udId} className="text-center mt-1" />
 
         <div className="flex justify-between mt-12 px-12">
             <div className="text-center">
@@ -340,7 +340,6 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
             </div>
         </div>
 
-        <NomorNota data={data} udId={udId} className="text-left mb-2" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -376,6 +375,7 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
                 </tr>
             </tfoot>
         </table>
+        <NomorNota data={data} udId={udId} className="text-right mt-1" />
 
         <div className="flex justify-between mt-12 px-12">
             <div className="text-center">
@@ -410,7 +410,7 @@ const TemplateBogaFood = ({ data, udData, udId }) => (
             </div>
         </div>
 
-        <NomorNota data={data} udId={udId} className="text-right mb-1" />
+        <NomorNota data={data} udId={udId} className="text-left mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -478,7 +478,6 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
             </div>
         </div>
 
-        <NomorNota data={data} udId={udId} className="text-center mb-2" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -514,6 +513,7 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
                 </tr>
             </tfoot>
         </table>
+        <NomorNota data={data} udId={udId} className="text-left mt-1" />
 
         <div className="flex justify-between mt-12 px-24 italic">
             <div className="text-center">
@@ -626,7 +626,6 @@ const TemplateGeneric = ({ data, udData, udId }) => (
             </div>
         </div>
 
-        <NomorNota data={data} udId={udId} className="text-left mb-2" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -662,6 +661,7 @@ const TemplateGeneric = ({ data, udData, udId }) => (
                 </tr>
             </tfoot>
         </table>
+        <NomorNota data={data} udId={udId} className="text-center mt-1" />
 
         <div className="flex justify-between mt-12 px-12">
             <div className="text-center">
