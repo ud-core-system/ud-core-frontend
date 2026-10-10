@@ -17,6 +17,10 @@ const PrintStyles = () => (
             body * {
                 visibility: hidden;
             }
+            /* visibility saja masih menyisakan tinggi halaman admin -> halaman kosong ekstra; buang dari layout */
+            body *:not(:has(#print-area)):not(#print-area):not(#print-area *) {
+                display: none !important;
+            }
             #print-area, #print-area * {
                 visibility: visible;
             }
@@ -28,6 +32,11 @@ const PrintStyles = () => (
             }
             .page-break {
                 page-break-after: always;
+            }
+            /* Nota terakhir tidak perlu page break, agar tidak ada halaman kosong di akhir */
+            .page-break:last-child {
+                page-break-after: auto;
+                break-after: auto;
             }
             @page {
                 size: portrait;
@@ -127,6 +136,17 @@ const PrintStyles = () => (
     `}} />
 );
 
+// Nomor nota UD ini dari transaksi.nota_nomor (kosong untuk transaksi lama)
+const getNomorNota = (data, udId) =>
+    data.nota_nomor?.find((n) => String(n.ud_id?._id || n.ud_id) === String(udId))?.nomor || '';
+
+// Nomor nota gaya contoh client ("No Nota : K301"); baris sendiri tepat di atas tabel,
+// rata kiri/tengah/kanan mengikuti tepi tabel (jangan pakai margin/absolute agar tidak tumpang tindih)
+const NomorNota = ({ data, udId, className = '' }) => {
+    const nomor = getNomorNota(data, udId);
+    return nomor ? <div className={`text-xl break-words ${className}`}>No Nota : {nomor}</div> : null;
+};
+
 // Template 1: UD. EMPAT SAUDARA CEMERLANG (ESC)
 const TemplateESC = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-calibri text-black bg-white">
@@ -146,6 +166,7 @@ const TemplateESC = ({ data, udData, udId }) => (
             </div>
         </div>
 
+        <NomorNota data={data} udId={udId} className="text-right mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -231,6 +252,7 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
             </div>
         </div>
 
+        <NomorNota data={data} udId={udId} className="text-left mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -313,6 +335,7 @@ const TemplateASM = ({ data, udData, udId }) => (
             </div>
         </div>
 
+        <NomorNota data={data} udId={udId} className="text-center mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -397,6 +420,7 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
             </div>
         </div>
 
+        <NomorNota data={data} udId={udId} className="text-left mb-2" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -470,6 +494,7 @@ const TemplateBogaFood = ({ data, udData, udId }) => (
             </div>
         </div>
 
+        <NomorNota data={data} udId={udId} className="text-right mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -548,6 +573,7 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
             </div>
         </div>
 
+        <NomorNota data={data} udId={udId} className="text-center mb-2" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -628,6 +654,7 @@ const TemplateMayurSehat = ({ data, udData, udId }) => (
             </div>
         </div>
 
+        <NomorNota data={data} udId={udId} className="text-right mb-1" />
         <table className="nota-table no-repeat-header">
             <thead>
                 <tr className="bg-gray-200">
@@ -708,6 +735,7 @@ const TemplateGeneric = ({ data, udData, udId }) => (
             </div>
         </div>
 
+        <NomorNota data={data} udId={udId} className="text-left mb-2" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -790,6 +818,7 @@ const TemplateKaryaBesar = ({ data, udData, udId }) => (
 
         <div className="text-center mb-2">Mataram, Nusa Tenggara Barat</div>
 
+        <NomorNota data={data} udId={udId} className="text-left mb-1" />
         <table className="nota-table w-full border-collapse border border-black text-sm">
             <thead>
                 <tr className="bg-white">
@@ -874,6 +903,7 @@ const TemplateAsyura = ({ data, udData, udId }) => (
             </div>
         </div>
 
+        <NomorNota data={data} udId={udId} className="text-center mt-8 mb-1" />
         <table className="nota-table w-full border-collapse border border-black">
             <thead>
                 <tr className="bg-white">

@@ -63,6 +63,8 @@ export const udAPI = {
     create: (data) => api.post('/ud', data),
     update: (id, data) => api.put(`/ud/${id}`, data),
     delete: (id) => api.delete(`/ud/${id}`),
+    getNotaCounter: (id) => api.get(`/ud/${id}/nota-counter`),
+    setNotaCounter: (id, data) => api.put(`/ud/${id}/nota-counter`, data),
 };
 
 // ============ Barang API ============

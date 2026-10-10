@@ -11,6 +11,7 @@ import {
     Loader2,
     X,
     Eye,
+    AlertTriangle,
 } from 'lucide-react';
 import { udAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,6 +36,8 @@ const INITIAL_FORM = {
     nama_pemilik: '',
     bank: '',
     no_rekening: '',
+    nota_prefix: '',
+    nota_terakhir: '',
     kbli: [],
     kbliLainnya: '',
     isActive: true,
@@ -65,11 +68,29 @@ export default function UDManagementPage() {
     // View modal state
     const [viewModalOpen, setViewModalOpen] = useState(false);
     const [viewingItem, setViewingItem] = useState(null);
+    const [viewCounter, setViewCounter] = useState(null);
 
     // Delete state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deletingItem, setDeletingItem] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+
+    // Nomor nota terakhir (bulan berjalan) + konfirmasi kode saat diubah
+    const [notaCounter, setNotaCounter] = useState(null);
+    const [counterDialogOpen, setCounterDialogOpen] = useState(false);
+    const [counterVerifCode, setCounterVerifCode] = useState('');
+    const [counterGeneratedCode, setCounterGeneratedCode] = useState('');
+
+    const generateVerifCode = (namaUD) => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        const initials = (namaUD || 'UD')
+            .split(' ')
+            .map((w) => w[0]?.toUpperCase() || '')
+            .join('')
+            .slice(0, 3);
+        const random = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        return `${initials}-${random}`;
+    };
 
     useEffect(() => {
         fetchData();
@@ -150,27 +171,49 @@ export default function UDManagementPage() {
             nama_pemilik: item.nama_pemilik || '',
             bank: item.bank || '',
             no_rekening: item.no_rekening || '',
+            nota_prefix: item.nota_prefix || '',
+            nota_terakhir: '',
             kbli: uniqueKbli,
             kbliLainnya: kbliLainnya,
             isActive: item.isActive ?? true,
         });
+        setNotaCounter(null);
         setModalOpen(true);
+
+        udAPI.getNotaCounter(item._id)
+            .then((res) => {
+                const counter = res.data.data;
+                setNotaCounter(counter);
+                setFormData((prev) => ({ ...prev, nota_terakhir: String(counter.terakhir) }));
+            })
+            .catch((error) => toast.error(getErrorMessage(error)));
     };
 
     const closeModal = () => {
         setModalOpen(false);
         setEditingItem(null);
         setFormData(INITIAL_FORM);
+        setNotaCounter(null);
     };
+
+    const isCounterChanged = () =>
+        Boolean(editingItem && notaCounter && formData.nota_terakhir !== '' &&
+            Number(formData.nota_terakhir) !== notaCounter.terakhir);
 
     const openViewModal = (item) => {
         setViewingItem(item);
+        setViewCounter(null);
         setViewModalOpen(true);
+
+        udAPI.getNotaCounter(item._id)
+            .then((res) => setViewCounter(res.data.data))
+            .catch(() => setViewCounter(false)); // false = gagal dimuat
     };
 
     const closeViewModal = () => {
         setViewModalOpen(false);
         setViewingItem(null);
+        setViewCounter(null);
     };
 
     const handleFormChange = (e) => {
@@ -205,6 +248,35 @@ export default function UDManagementPage() {
             return;
         }
 
+        if (isCounterChanged()) {
+            const terakhir = Number(formData.nota_terakhir);
+            if (!Number.isInteger(terakhir) || terakhir < 0) {
+                toast.warning('Nomor nota terakhir harus bilangan bulat >= 0');
+                return;
+            }
+            // Perubahan nomor nota harus dikonfirmasi dengan kode
+            setCounterGeneratedCode(generateVerifCode(formData.nama_ud));
+            setCounterVerifCode('');
+            setCounterDialogOpen(true);
+            return;
+        }
+
+        await saveUD();
+    };
+
+    const handleConfirmCounter = async () => {
+        if (counterVerifCode !== counterGeneratedCode) {
+            toast.error('Kode konfirmasi tidak sesuai');
+            return;
+        }
+        const saved = await saveUD();
+        if (!saved) return; // gagal: dialog tetap terbuka, error sudah di-toast
+        setCounterDialogOpen(false);
+        setCounterVerifCode('');
+        setCounterGeneratedCode('');
+    };
+
+    const saveUD = async () => {
         try {
             setFormLoading(true);
 
@@ -220,9 +292,13 @@ export default function UDManagementPage() {
             };
             // Remove helper field before sending to API
             delete submissionData.kbliLainnya;
+            delete submissionData.nota_terakhir;
 
             if (editingItem) {
                 await udAPI.update(editingItem._id, submissionData);
+                if (isCounterChanged()) {
+                    await udAPI.setNotaCounter(editingItem._id, { terakhir: Number(formData.nota_terakhir) });
+                }
                 toast.success('UD berhasil diperbarui');
             } else {
                 await udAPI.create(submissionData);
@@ -231,8 +307,10 @@ export default function UDManagementPage() {
 
             closeModal();
             fetchData();
+            return true;
         } catch (error) {
             toast.error(getErrorMessage(error));
+            return false;
         } finally {
             setFormLoading(false);
         }
@@ -563,6 +641,50 @@ export default function UDManagementPage() {
                         </div>
                     </div>
 
+                    {/* Prefix Nomor Nota */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Prefix Nomor Nota
+                        </label>
+                        <input
+                            type="text"
+                            name="nota_prefix"
+                            value={formData.nota_prefix}
+                            onChange={handleFormChange}
+                            placeholder={editingItem?.kode_ud || 'Contoh: asm'}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg
+                         focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                            Format nota: prefix/001/MM-YY. Kosongkan untuk memakai kode UD.
+                        </p>
+                    </div>
+
+                    {/* Nomor Nota Terakhir (hanya saat edit) */}
+                    {editingItem && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Nomor Nota Terakhir {notaCounter ? `(periode ${notaCounter.periode})` : ''}
+                            </label>
+                            <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                name="nota_terakhir"
+                                value={formData.nota_terakhir}
+                                onChange={handleFormChange}
+                                disabled={!notaCounter}
+                                placeholder={notaCounter ? '' : 'Memuat...'}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg
+                         focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-50"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Nota berikutnya bulan ini memakai nomor {formData.nota_terakhir !== '' ? String(Number(formData.nota_terakhir) + 1).padStart(3, '0') : '-'}.
+                                Perubahan butuh kode konfirmasi.
+                            </p>
+                        </div>
+                    )}
+
                     {/* KBLI */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -707,6 +829,26 @@ export default function UDManagementPage() {
                             </div>
                         </div>
 
+                        {/* Nomor Nota */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                    Prefix Nomor Nota
+                                </label>
+                                <p className="text-gray-900 font-mono">{viewingItem.nota_prefix || viewingItem.kode_ud || '-'}</p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                    Nomor Nota Terakhir {viewCounter ? `(${viewCounter.periode})` : ''}
+                                </label>
+                                <p className="text-gray-900 font-mono">
+                                    {viewCounter
+                                        ? `${String(viewCounter.terakhir).padStart(3, '0')} — berikutnya ${String(viewCounter.terakhir + 1).padStart(3, '0')}`
+                                        : viewCounter === false ? '-' : 'Memuat...'}
+                                </p>
+                            </div>
+                        </div>
+
                         {/* KBLI Categories */}
                         <div className="pt-2">
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
@@ -768,6 +910,65 @@ export default function UDManagementPage() {
                     </div>
                 )}
             </Modal>
+
+            {/* Konfirmasi Ubah Nomor Nota — dengan kode verifikasi */}
+            <div className={`fixed inset-0 z-[60] flex items-center justify-center p-4 ${counterDialogOpen ? 'visible' : 'hidden'}`}>
+                <div
+                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    onClick={() => { if (!formLoading) setCounterDialogOpen(false); }}
+                />
+                <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6 animate-fade-in text-center">
+                    <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                        <AlertTriangle className="w-8 h-8 text-amber-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">Ubah Nomor Nota Terakhir</h3>
+                    <p className="text-gray-500 mb-5 text-sm">
+                        Nomor nota terakhir <span className="font-bold text-gray-900">{formData.nama_ud}</span> periode {notaCounter?.periode} akan
+                        diubah dari <span className="font-bold text-gray-900">{notaCounter?.terakhir}</span> menjadi{' '}
+                        <span className="font-bold text-gray-900">{formData.nota_terakhir}</span>.
+                        Nota berikutnya akan memakai nomor {formData.nota_terakhir !== '' ? String(Number(formData.nota_terakhir) + 1).padStart(3, '0') : '-'}.
+                    </p>
+                    <div className="mb-5 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest mb-1">Kode Konfirmasi</p>
+                        <p className="font-mono text-2xl font-black text-amber-700 tracking-[0.3em]">{counterGeneratedCode}</p>
+                    </div>
+                    <div className="mb-6 text-left">
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                            Ketik Kode di Atas untuk Konfirmasi
+                        </label>
+                        <input
+                            type="text"
+                            value={counterVerifCode}
+                            onChange={(e) => setCounterVerifCode(e.target.value.toUpperCase())}
+                            placeholder={counterGeneratedCode}
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-mono text-center text-lg tracking-[0.2em] transition-all uppercase"
+                        />
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setCounterDialogOpen(false)}
+                            disabled={formLoading}
+                            className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-all disabled:opacity-50"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleConfirmCounter}
+                            disabled={formLoading || counterVerifCode !== counterGeneratedCode}
+                            className="flex-[1.5] px-4 py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:grayscale disabled:shadow-none active:scale-95"
+                        >
+                            {formLoading ? (
+                                <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>Menyimpan...</span>
+                                </div>
+                            ) : 'Ya, Simpan'}
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             {/* Delete Confirm Dialog */}
             <ConfirmDialog
