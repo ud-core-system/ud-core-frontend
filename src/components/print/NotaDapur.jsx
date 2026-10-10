@@ -17,6 +17,10 @@ const PrintStyles = () => (
             body * {
                 visibility: hidden;
             }
+            /* visibility saja masih menyisakan tinggi halaman admin -> halaman kosong ekstra; buang dari layout */
+            body *:not(:has(#print-area)):not(#print-area):not(#print-area *) {
+                display: none !important;
+            }
             #print-area, #print-area * {
                 visibility: visible;
             }
@@ -28,6 +32,11 @@ const PrintStyles = () => (
             }
             .page-break {
                 page-break-after: always;
+            }
+            /* Nota terakhir tidak perlu page break, agar tidak ada halaman kosong di akhir */
+            .page-break:last-child {
+                page-break-after: auto;
+                break-after: auto;
             }
             @page {
                 size: portrait;
