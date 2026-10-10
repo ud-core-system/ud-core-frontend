@@ -142,9 +142,14 @@ const getNomorNota = (data, udId) =>
 
 // Nomor nota gaya contoh client ("No Nota : K301"); baris sendiri tepat di atas/bawah tabel (beda per template),
 // rata kiri/tengah/kanan mengikuti tepi tabel (jangan pakai margin/absolute agar tidak tumpang tindih)
+// Draft belum punya nomor final: tampilkan perkiraan dari backend (nota_nomor_preview) dengan label (draft)
 const NomorNota = ({ data, udId, className = '' }) => {
     const nomor = getNomorNota(data, udId);
-    return nomor ? <div className={`text-xl break-words ${className}`}>No Nota : {nomor}</div> : null;
+    const preview = !nomor && data.status === 'draft'
+        ? getNomorNota({ nota_nomor: data.nota_nomor_preview }, udId)
+        : '';
+    if (!nomor && !preview) return null;
+    return <div className={`text-xl break-words ${className}`}>No Nota : {nomor || `${preview} (draft)`}</div>;
 };
 
 // Template 1: UD. EMPAT SAUDARA CEMERLANG (ESC)
