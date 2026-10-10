@@ -15,6 +15,9 @@ import {
     X,
     FileSpreadsheet,
     RefreshCw,
+    GripVertical,
+    ChevronUp,
+    ChevronDown,
 } from 'lucide-react';
 import { transaksiAPI, periodeAPI, dapurAPI, barangAPI, udAPI } from '@/lib/api';
 import DatePicker from '@/components/ui/DatePicker';
@@ -77,6 +80,9 @@ export default function NewTransaksiPage() {
     const [tableSearch, setTableSearch] = useState('');
     const [tableUdFilter, setTableUdFilter] = useState('');
     const [groupingMode, setGroupingMode] = useState('ud');
+    const [dragId, setDragId] = useState(null);
+    const [dragHandleId, setDragHandleId] = useState(null);
+    const [dragUdId, setDragUdId] = useState(null);
 
     const SESSION_STORAGE_KEY = 'new_transaksi_state';
     const [isLoaded, setIsLoaded] = useState(false);
@@ -427,6 +433,112 @@ export default function NewTransaksiPage() {
     const handleRemoveItem = (barangId) => {
         setItems((prev) => prev.filter((item) => item.barang_id !== barangId));
     };
+
+    // Reorder items (urutan array = urutan tersimpan di DB)
+    const handleMoveItem = (fromId, toId) => {
+        if (!fromId || !toId || fromId === toId) return;
+        setItems((prev) => {
+            const next = [...prev];
+            const from = next.findIndex((i) => i.barang_id === fromId);
+            const to = next.findIndex((i) => i.barang_id === toId);
+            if (from < 0 || to < 0) return prev;
+            const [moved] = next.splice(from, 1);
+            next.splice(to, 0, moved);
+            return next;
+        });
+    };
+
+    // Reorder grup UD: semua barang UD dipindah sebagai satu blok
+    const handleMoveGroup = (fromUd, toUd) => {
+        if (!fromUd || !toUd || fromUd === toUd) return;
+        setItems((prev) => {
+            const udKey = (i) => i.ud_id || 'others';
+            const order = [...new Set(prev.map(udKey))];
+            const from = order.indexOf(fromUd);
+            const to = order.indexOf(toUd);
+            if (from < 0 || to < 0) return prev;
+            const [moved] = order.splice(from, 1);
+            order.splice(to, 0, moved);
+            return order.flatMap((ud) => prev.filter((i) => udKey(i) === ud));
+        });
+    };
+
+    // Drag & drop props untuk header grup UD (desktop)
+    const getDragGroupProps = (udId) => ({
+        draggable: true,
+        onDragStart: (e) => {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', udId);
+            setDragUdId(udId);
+        },
+        onDragOver: (e) => e.preventDefault(),
+        onDrop: (e) => {
+            e.preventDefault();
+            if (dragUdId) handleMoveGroup(dragUdId, udId);
+            setDragUdId(null);
+        },
+        onDragEnd: () => setDragUdId(null),
+    });
+
+    // Drag & drop props untuk baris tabel desktop; drag hanya aktif lewat grip
+    const getDragRowProps = (item) => ({
+        draggable: dragHandleId === item.barang_id,
+        onDragStart: (e) => {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', item.barang_id);
+            setDragId(item.barang_id);
+        },
+        onDragOver: (e) => e.preventDefault(),
+        onDrop: (e) => {
+            e.preventDefault();
+            if (dragUdId) {
+                // Grup UD di-drop ke baris barang milik UD lain
+                handleMoveGroup(dragUdId, item.ud_id || 'others');
+                setDragUdId(null);
+                return;
+            }
+            const dragged = items.find((i) => i.barang_id === dragId);
+            // Mode per-UD: hanya boleh pindah dalam UD yang sama
+            if (dragged && (groupingMode === 'none' || (dragged.ud_id || 'others') === (item.ud_id || 'others'))) {
+                handleMoveItem(dragId, item.barang_id);
+            }
+            setDragId(null);
+            setDragHandleId(null);
+        },
+        onDragEnd: () => {
+            setDragId(null);
+            setDragHandleId(null);
+        },
+    });
+
+    const renderDragHandle = (item) => (
+        <GripVertical
+            onMouseDown={() => setDragHandleId(item.barang_id)}
+            onMouseUp={() => setDragHandleId(null)}
+            className="inline-block w-4 h-4 mr-1 text-gray-400 cursor-move align-middle"
+        />
+    );
+
+    const renderMoveButtons = (list, index, move = handleMoveItem, getId = (x) => x.barang_id) => (
+        <div className="flex flex-col">
+            <button
+                onClick={() => move(getId(list[index]), list[index - 1] && getId(list[index - 1]))}
+                disabled={index === 0}
+                className="p-0.5 text-gray-400 hover:text-blue-600 disabled:opacity-30"
+                title="Naikkan"
+            >
+                <ChevronUp className="w-4 h-4" />
+            </button>
+            <button
+                onClick={() => move(getId(list[index]), list[index + 1] && getId(list[index + 1]))}
+                disabled={index === list.length - 1}
+                className="p-0.5 text-gray-400 hover:text-blue-600 disabled:opacity-30"
+                title="Turunkan"
+            >
+                <ChevronDown className="w-4 h-4" />
+            </button>
+        </div>
+    );
 
     const calculateSubtotal = (item) => {
         const qty = parseFloat(item.qty) || 0;
@@ -829,8 +941,8 @@ export default function NewTransaksiPage() {
                                         </tr>
                                     ) : groupingMode === 'none' ? (
                                         filteredItems.map((item, index) => (
-                                            <tr key={item.barang_id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-4 py-4 text-gray-600">{index + 1}</td>
+                                            <tr key={item.barang_id} {...getDragRowProps(item)} className={`hover:bg-gray-50 transition-colors ${dragId === item.barang_id ? 'opacity-50' : ''}`}>
+                                                <td className="px-4 py-4 text-gray-600 whitespace-nowrap">{renderDragHandle(item)}{index + 1}</td>
                                                 <td className="px-4 py-4">
                                                     <input
                                                         type="text"
@@ -925,17 +1037,18 @@ export default function NewTransaksiPage() {
 
                                             return groups.map((group) => (
                                                 <Fragment key={group.udId}>
-                                                    <tr className="bg-gray-100/50">
+                                                    <tr {...getDragGroupProps(group.udId)} className={`bg-gray-100/50 cursor-move ${dragUdId === group.udId ? 'opacity-50' : ''}`}>
                                                         <td colSpan="9" className="px-4 py-2">
                                                             <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">
+                                                                <GripVertical className="inline-block w-4 h-4 mr-1 text-gray-400 align-middle" />
                                                                 {group.ud_nama || 'Tanpa UD'} ({group.items.length} Barang)
                                                             </p>
                                                         </td>
                                                     </tr>
                                                     {group.items.map((item, localIndex) => (
-                                                        <tr key={item.barang_id} className="hover:bg-gray-50 transition-colors">
-                                                            <td className="px-4 py-4 text-gray-600 font-medium text-xs">
-                                                                {localIndex + 1}
+                                                        <tr key={item.barang_id} {...getDragRowProps(item)} className={`hover:bg-gray-50 transition-colors ${dragId === item.barang_id ? 'opacity-50' : ''}`}>
+                                                            <td className="px-4 py-4 text-gray-600 font-medium text-xs whitespace-nowrap">
+                                                                {renderDragHandle(item)}{localIndex + 1}
                                                             </td>
                                                             <td className="px-4 py-4">
                                                                 <input
@@ -1050,6 +1163,7 @@ export default function NewTransaksiPage() {
                                                     />
                                                     <p className="text-[10px] text-gray-500 uppercase">{item.ud_nama || 'Tanpa UD'}</p>
                                                 </div>
+                                                {renderMoveButtons(filteredItems, index)}
                                                 <button
                                                     onClick={() => handleRemoveItem(item.barang_id)}
                                                     className="p-2 text-red-500 hover:bg-red-50 rounded-lg shrink-0"
@@ -1155,12 +1269,13 @@ export default function NewTransaksiPage() {
                                         group.items.push(item);
                                     });
 
-                                    return groups.map((group) => (
+                                    return groups.map((group, groupIndex) => (
                                         <div key={group.udId} className="divide-y divide-gray-100">
-                                            <div className="bg-gray-50 px-4 py-2 border-y border-gray-100">
+                                            <div className="bg-gray-50 px-4 py-2 border-y border-gray-100 flex items-center justify-between gap-2">
                                                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
                                                     {group.ud_nama || 'Tanpa UD'} ({group.items.length} Barang)
                                                 </p>
+                                                {renderMoveButtons(groups, groupIndex, handleMoveGroup, (g) => g.udId)}
                                             </div>
                                             {group.items.map((item, localIndex) => (
                                                 <div key={item.barang_id} className="p-4 space-y-4 relative">
@@ -1179,6 +1294,7 @@ export default function NewTransaksiPage() {
                                                             />
                                                             <p className="text-[10px] text-gray-500 uppercase">{item.ud_nama || 'Tanpa UD'}</p>
                                                         </div>
+                                                        {renderMoveButtons(group.items, localIndex)}
                                                         <button
                                                             onClick={() => handleRemoveItem(item.barang_id)}
                                                             className="p-2 text-red-500 hover:bg-red-50 rounded-lg shrink-0"
