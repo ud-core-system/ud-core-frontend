@@ -140,7 +140,8 @@ const PrintStyles = () => (
 const getNomorNota = (data, udId) =>
     data.nota_nomor?.find((n) => String(n.ud_id?._id || n.ud_id) === String(udId))?.nomor || '';
 
-// Nomor nota gaya contoh client ("No Nota : K301"); baris sendiri tepat di atas/bawah tabel (beda per template),
+// Nomor nota gaya contoh client ("No Nota : K301"); baris sendiri di atas tabel: di atas kop atau di antara kop dan tabel (request client, tidak di bawah tabel;
+// kombinasi posisi + rata dibuat beda per template, maks 2 template sama),
 // rata kiri/tengah/kanan mengikuti tepi tabel (jangan pakai margin/absolute agar tidak tumpang tindih)
 // Draft belum punya nomor final: tampilkan perkiraan dari backend (nota_nomor_preview) dengan label (draft)
 const NomorNota = ({ data, udId, className = '' }) => {
@@ -257,6 +258,7 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
             </div>
         </div>
 
+        <NomorNota data={data} udId={udId} className="text-center mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -305,13 +307,13 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
                 </tr>
             </tfoot>
         </table>
-        <NomorNota data={data} udId={udId} className="text-center mt-1" />
     </div>
 );
 
 // Template 3: UD. AMANAH SUMBER MAKMUR (ASM)
 const TemplateASM = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-trebuchet text-black bg-white">
+        <NomorNota data={data} udId={udId} className="text-right mb-2" />
         <div className="flex justify-between items-start mb-4">
             <div className="flex flex-col items-center flex-1">
                 <img src="/logo asm.png" alt="ASM Logo" className="h-16 w-auto" />
@@ -340,7 +342,6 @@ const TemplateASM = ({ data, udData, udId }) => (
             </div>
         </div>
 
-        <NomorNota data={data} udId={udId} className="text-center mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -397,6 +398,7 @@ const TemplateASM = ({ data, udData, udId }) => (
 // Template 4: UD. BANYU MAS
 const TemplateBanyuMas = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
+        <NomorNota data={data} udId={udId} className="text-right mb-2" />
         <div className="flex justify-between items-end mb-4">
             <div className="border border-black flex-1 mr-12 mb-2">
                 <table className="text-sm w-full">
@@ -475,7 +477,6 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
                 </tr>
             </tfoot>
         </table>
-        <NomorNota data={data} udId={udId} className="text-right mt-1" />
     </div>
 );
 
@@ -578,6 +579,7 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
             </div>
         </div>
 
+        <NomorNota data={data} udId={udId} className="text-left mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -633,7 +635,6 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
                 </tr>
             </tfoot>
         </table>
-        <NomorNota data={data} udId={udId} className="text-left mt-1" />
     </div >
 );
 
@@ -721,6 +722,7 @@ const TemplateMayurSehat = ({ data, udData, udId }) => (
 // Template 8: Generic Template (for new UDs without specific branding)
 const TemplateGeneric = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
+        <NomorNota data={data} udId={udId} className="text-center mb-2" />
         <div className="text-center mb-6">
             <div className="font-bold text-xl uppercase">{udData.nama_ud}</div>
             <div className="text-sm">LOMBOK - NTB</div>
@@ -790,13 +792,13 @@ const TemplateGeneric = ({ data, udData, udId }) => (
                 </tr>
             </tfoot>
         </table>
-        <NomorNota data={data} udId={udId} className="text-center mt-1" />
     </div>
 );
 
 // Template 9: UD KARYA BESAR
 const TemplateKaryaBesar = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-nirmala text-black bg-white">
+        <NomorNota data={data} udId={udId} className="text-right mb-2" />
         <div className="flex items-center gap-10 mb-4 ml-10">
             <div className="flex-shrink-0">
                 <img src="/LOGO KARYA BESAR.png" alt="Karya Besar Logo" className="h-33 w-auto" />
@@ -863,7 +865,6 @@ const TemplateKaryaBesar = ({ data, udData, udId }) => (
                 </tr>
             </tfoot>
         </table>
-        <NomorNota data={data} udId={udId} className="text-right mt-1" />
 
         <div className="flex justify-between mt-16 px-16 no-break">
             <div className="text-center">
