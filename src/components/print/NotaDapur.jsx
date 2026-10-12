@@ -140,17 +140,21 @@ const PrintStyles = () => (
 const getNomorNota = (data, udId) =>
     data.nota_nomor?.find((n) => String(n.ud_id?._id || n.ud_id) === String(udId))?.nomor || '';
 
-// Nomor nota gaya contoh client ("No Nota : K301"); baris sendiri di atas tabel: di atas kop atau di antara kop dan tabel (request client, tidak di bawah tabel;
-// kombinasi posisi + rata dibuat beda per template, maks 2 template sama),
-// rata kiri/tengah/kanan mengikuti tepi tabel (jangan pakai margin/absolute agar tidak tumpang tindih)
+// Nomor nota gaya contoh client ("No Nota : K301"); ditaruh di dalam informasi kop tepat di bawah nama dapur (request client),
+// font/size mengikuti baris kop di sekitarnya sesuai pattern masing-masing template
 // Draft belum punya nomor final: tampilkan perkiraan dari backend (nota_nomor_preview) dengan label (draft)
-const NomorNota = ({ data, udId, className = '' }) => {
+const getNomorNotaText = (data, udId) => {
     const nomor = getNomorNota(data, udId);
     const preview = !nomor && data.status === 'draft'
         ? getNomorNota({ nota_nomor: data.nota_nomor_preview }, udId)
         : '';
-    if (!nomor && !preview) return null;
-    return <div className={`text-xl break-words ${className}`}>No Nota : {nomor || `${preview} (draft)`}</div>;
+    return nomor || (preview ? `${preview} (draft)` : '');
+};
+
+const NomorNota = ({ data, udId, className = '' }) => {
+    const text = getNomorNotaText(data, udId);
+    if (!text) return null;
+    return <div className={`break-words ${className}`}>No Nota : {text}</div>;
 };
 
 // Template 1: UD. EMPAT SAUDARA CEMERLANG (ESC)
@@ -169,10 +173,10 @@ const TemplateESC = ({ data, udData, udId }) => (
                 <div className="text-sm">Kepada Yth. <span className="font-bold">{data.dapur_id?.nama_dapur || 'Dapur'}</span></div>
                 <div className="text-sm">Di -</div>
                 <div className="text-sm font-bold">{data.dapur_id?.alamat || 'Pagutan Mataram'}</div>
+                <NomorNota data={data} udId={udId} className="text-sm" />
             </div>
         </div>
 
-        <NomorNota data={data} udId={udId} className="text-right mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -248,6 +252,7 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
                 <div className="text-sm font-bold">Tuan/Toko : <span className="font-bold">{data.dapur_id?.nama_dapur || 'Dapur'}</span></div>
                 <div className="text-sm">Di -</div>
                 <div className="text-sm font-bold uppercase">{data.dapur_id?.alamat || 'Pagutan Kota Mataram'}</div>
+                <NomorNota data={data} udId={udId} className="text-sm font-bold" />
             </div>
             <div className="w-1/3 text-center pt-2">
                 <div className="font-bold text-xl uppercase">UD PILAR PANGAN MANDIRI</div>
@@ -258,7 +263,6 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
             </div>
         </div>
 
-        <NomorNota data={data} udId={udId} className="text-center mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -313,7 +317,6 @@ const TemplatePilarPangan = ({ data, udData, udId }) => (
 // Template 3: UD. AMANAH SUMBER MAKMUR (ASM)
 const TemplateASM = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-trebuchet text-black bg-white">
-        <NomorNota data={data} udId={udId} className="text-right mb-2" />
         <div className="flex justify-between items-start mb-4">
             <div className="flex flex-col items-center flex-1">
                 <img src="/logo asm.png" alt="ASM Logo" className="h-16 w-auto" />
@@ -333,10 +336,16 @@ const TemplateASM = ({ data, udData, udId }) => (
                             <td className="px-2 py-1 font-bold border-r border-black">Kepada</td>
                             <td className="px-2 py-1">{data.dapur_id?.nama_dapur}</td>
                         </tr>
-                        <tr>
+                        <tr className={getNomorNotaText(data, udId) ? 'border-b border-black' : ''}>
                             <td className="px-2 py-1 font-bold border-r border-black">Alamat</td>
                             <td className="px-2 py-1">{data.dapur_id?.alamat}</td>
                         </tr>
+                        {getNomorNotaText(data, udId) && (
+                            <tr>
+                                <td className="px-2 py-1 font-bold border-r border-black">No Nota</td>
+                                <td className="px-2 py-1">{getNomorNotaText(data, udId)}</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -398,7 +407,6 @@ const TemplateASM = ({ data, udData, udId }) => (
 // Template 4: UD. BANYU MAS
 const TemplateBanyuMas = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
-        <NomorNota data={data} udId={udId} className="text-right mb-2" />
         <div className="flex justify-between items-end mb-4">
             <div className="border border-black flex-1 mr-12 mb-2">
                 <table className="text-sm w-full">
@@ -411,10 +419,16 @@ const TemplateBanyuMas = ({ data, udData, udId }) => (
                             <td className="px-2 py-1 font-bold border-r border-black">Kepada</td>
                             <td className="px-2 py-1">: {data.dapur_id?.nama_dapur}</td>
                         </tr>
-                        <tr>
+                        <tr className={getNomorNotaText(data, udId) ? 'border-b border-black' : ''}>
                             <td className="px-2 py-1 font-bold border-r border-black">Alamat</td>
                             <td className="px-2 py-1">: {data.dapur_id?.alamat}</td>
                         </tr>
+                        {getNomorNotaText(data, udId) && (
+                            <tr>
+                                <td className="px-2 py-1 font-bold border-r border-black">No Nota</td>
+                                <td className="px-2 py-1">: {getNomorNotaText(data, udId)}</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -497,10 +511,10 @@ const TemplateBogaFood = ({ data, udData, udId }) => (
                     return `${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`;
                 })()}</div>
                 <div>Penerima. {data.dapur_id?.nama_dapur || 'SPPG Batu Layar'}</div>
+                <NomorNota data={data} udId={udId} />
             </div>
         </div>
 
-        <NomorNota data={data} udId={udId} className="text-left mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -575,11 +589,11 @@ const TemplateKayaAlam = ({ data, udData, udId }) => (
                     <div>Kepada Yth. <span className="font-bold">{data.dapur_id?.nama_dapur || 'Dapur SPPG'}</span></div>
                     <div>Di -</div>
                     <div className="font-bold">{data.dapur_id?.alamat || 'Rembige Mataram'}</div>
+                    <NomorNota data={data} udId={udId} />
                 </div>
             </div>
         </div>
 
-        <NomorNota data={data} udId={udId} className="text-left mb-1" />
         <table className="nota-table">
             <thead>
                 <tr>
@@ -647,11 +661,14 @@ const TemplateMayurSehat = ({ data, udData, udId }) => (
                 <img src="/LOGO MAYUR SEHAT.jpeg" alt="Mayur Sehat Logo" className="h-40 w-auto" />
             </div>
             <div className="w-1/2 flex flex-col">
-                <div className="p-2 border-b-2 border-black text-center h-12 flex items-center justify-center text-lg font-bold">
-                    Tanggal Transaksi. {(() => {
-                        const d = new Date(data.tanggal);
-                        return `${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`;
-                    })()}
+                <div className="border-b-2 border-black">
+                    <div className="p-2 text-center h-12 flex items-center justify-center text-lg font-bold">
+                        Tanggal Transaksi. {(() => {
+                            const d = new Date(data.tanggal);
+                            return `${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`;
+                        })()}
+                    </div>
+                    <NomorNota data={data} udId={udId} className="px-2 pb-2 text-center text-lg font-bold" />
                 </div>
                 <br />
                 <div className="p-2 text-center h-12 flex items-center justify-center text-lg font-bold italic">
@@ -660,7 +677,6 @@ const TemplateMayurSehat = ({ data, udData, udId }) => (
             </div>
         </div>
 
-        <NomorNota data={data} udId={udId} className="text-right mb-1" />
         <table className="nota-table no-repeat-header">
             <thead>
                 <tr className="bg-gray-200">
@@ -722,7 +738,6 @@ const TemplateMayurSehat = ({ data, udData, udId }) => (
 // Template 8: Generic Template (for new UDs without specific branding)
 const TemplateGeneric = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-arial text-black bg-white">
-        <NomorNota data={data} udId={udId} className="text-center mb-2" />
         <div className="text-center mb-6">
             <div className="font-bold text-xl uppercase">{udData.nama_ud}</div>
             <div className="text-sm">LOMBOK - NTB</div>
@@ -739,6 +754,11 @@ const TemplateGeneric = ({ data, udData, udId }) => (
                 <div className="col-span-2">
                     <span className="font-bold">Alamat:</span> {data.dapur_id?.alamat || '-'}
                 </div>
+                {getNomorNotaText(data, udId) && (
+                    <div className="col-span-2">
+                        <span className="font-bold">No Nota:</span> {getNomorNotaText(data, udId)}
+                    </div>
+                )}
             </div>
         </div>
 
@@ -798,7 +818,6 @@ const TemplateGeneric = ({ data, udData, udId }) => (
 // Template 9: UD KARYA BESAR
 const TemplateKaryaBesar = ({ data, udData, udId }) => (
     <div id={`nota-${udId}`} className="nota-container page-break font-nirmala text-black bg-white">
-        <NomorNota data={data} udId={udId} className="text-right mb-2" />
         <div className="flex items-center gap-10 mb-4 ml-10">
             <div className="flex-shrink-0">
                 <img src="/LOGO KARYA BESAR.png" alt="Karya Besar Logo" className="h-33 w-auto" />
@@ -819,6 +838,9 @@ const TemplateKaryaBesar = ({ data, udData, udId }) => (
                 <div className="grid grid-cols-[100px_10px_1fr] gap-x-2">
                     <span>Hari Tanggal</span><span>:</span><span>{formatDate(data.tanggal)}</span>
                     <span>Penerima</span><span>:</span><span>{data.dapur_id?.nama_dapur || 'Dapur'}</span>
+                    {getNomorNotaText(data, udId) && (
+                        <><span>No Nota</span><span>:</span><span>{getNomorNotaText(data, udId)}</span></>
+                    )}
                 </div>
             </div>
         </div>
@@ -892,6 +914,7 @@ const TemplateAsyura = ({ data, udData, udId }) => (
                 })()}</div>
                 <div>Dapur MBG. <span className="font-bold">{data.dapur_id?.nama_dapur || 'SPPG Monjok'}</span></div>
                 <div className="uppercase font-bold">MATARAM</div>
+                <NomorNota data={data} udId={udId} />
             </div>
 
             {/* Title in the center */}
@@ -909,7 +932,6 @@ const TemplateAsyura = ({ data, udData, udId }) => (
             </div>
         </div>
 
-        <NomorNota data={data} udId={udId} className="text-center mt-8 mb-1" />
         <table className="nota-table w-full border-collapse border border-black">
             <thead>
                 <tr className="bg-white">
